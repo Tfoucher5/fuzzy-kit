@@ -35,6 +35,28 @@ jobs:
       - name: Package contents
         run: npm pack --dry-run
 
+  hygiene:
+    name: Zero dependencies, no vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: No runtime dependencies
+        run: |
+          node -e "
+            const p = require('./package.json');
+            const deps = Object.keys({ ...p.dependencies, ...p.optionalDependencies, ...p.bundleDependencies });
+            if (deps.length) { console.error('fuzzy-toolkit must have no runtime dependencies, found: ' + deps.join(', ')); process.exit(1); }
+          "
+      - name: What users install has no known vulnerability
+        run: npm audit --omit=dev
+      - name: Dev tools have no high vulnerability
+        run: npm audit --audit-level=high
+
   size:
     name: Bundle size budget
     runs-on: ubuntu-latest

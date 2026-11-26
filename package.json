@@ -143,7 +143,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.25.12",
     "fastest-levenshtein": "^1.0.16",
     "fuse.js": "^7.5.0",
     "fuzzysort": "^4.0.2",
@@ -163,5 +163,9 @@
     }
   },
   "unpkg": "./dist/browser/fuzzy-toolkit.iife.min.js",
-  "jsdelivr": "./dist/browser/fuzzy-toolkit.iife.min.js"
+  "jsdelivr": "./dist/browser/fuzzy-toolkit.iife.min.js",
+  "overrides": {
+    "esbuild": "$esbuild",
+    "vite": "^6.4.4"
+  }
 }
