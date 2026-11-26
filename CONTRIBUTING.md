@@ -10,7 +10,10 @@ faster algorithm. You can write issues and pull requests in English or French.
   reverse) are the most useful bug reports. Use the "Wrong result" template.
 - **Add a language.** Numbers in words, articles, stop words and phonetic
   rules for your language. See [Languages and presets](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions),
-  and test it with `assertLanguage()` from `fuzzy-toolkit/testing`.
+  and test it with `assertLanguage()` from `fuzzy-toolkit/testing`. The
+  [coverage table](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions#what-each-pack-reads)
+  shows what each built-in pack reads and what is missing; after changing a
+  pack, update it with `npm run languages:coverage`.
   Open a "Language request" issue first if you want help or want to avoid
   duplicate work.
 - **Share a preset.** Publish it on npm as `fuzzy-toolkit-preset-<name>` with

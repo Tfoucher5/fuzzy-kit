@@ -25,8 +25,22 @@ compare('bamos', 'Vamos', { languages: [es], phonetic: true })
 | Italian | `fuzzy-toolkit/lang/it` | `ventitré`, `quarantotto`, `seconda` → `2º` | c/ch/k, gli/li, gn, z/ts |
 | Dutch | `fuzzy-toolkit/lang/nl` | `eenentwintig`, `een en twintig`, `tweede` | ij/ei, au/ou, v/f, z/s, ch/g, final d/t |
 
-Numbers are read from 0 to 99, plus 100. Community packs for other languages
-are published on npm as `fuzzy-toolkit-lang-<code>`.
+Community packs for other languages are published on npm as
+`fuzzy-toolkit-lang-<code>`.
+
+### What each pack reads
+
+Measured on the same cases for every language (`seventeen`, `forty five`,
+`one hundred`, `three hundred forty two`, `one thousand`,
+`two thousand twenty five`, `second`, `twenty first` and their translations),
+then counted: articles, stop words and sound rules.
+
+<!--@include: ../.vitepress/language-coverage.md-->
+
+Numbers above 100 and compound ordinals are not read yet, in any language.
+**Help wanted**: see the [open language issues](https://github.com/Tfoucher5/fuzzy-toolkit/issues?q=is%3Aopen+label%3Alanguage),
+or improve a pack you speak. After changing a pack, run `npm run languages:coverage`
+to update this table.
 
 - Without `languages`, English and French are active, as in every earlier version.
 - English and French can be named by their code: `'en'`, `'fr'`. The other
