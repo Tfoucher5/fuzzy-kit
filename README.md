@@ -209,7 +209,9 @@ claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
 ```
 
-Coding assistants get [`llms.txt`](llms.txt) and `llms-full.txt` in the package, examples in every type declaration, and warnings for the usual mistakes (unknown option, a `0.8` threshold when scores go to 100, a `keys` name no item has). See [AI agents and assistants](https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents).
+To tell the assistants working on your project how to use the library, run `npx fuzzy-toolkit ai-setup`: it adds a short block to `AGENTS.md`, `CLAUDE.md`, Cursor rules or Copilot instructions (whichever you have), and updates it in place next time.
+
+Coding assistants also get [`llms.txt`](llms.txt) and `llms-full.txt` in the package, examples in every type declaration, and warnings for the usual mistakes (unknown option, a `0.8` threshold when scores go to 100, a `keys` name no item has). See [AI agents and assistants](https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents).
 
 ## API
 
@@ -364,6 +366,26 @@ Same inputs for everyone, public data, `npm run bench:versus` ([details](https:/
 | `getLevenshteinDistance(a, b)` | `levenshtein(a, b)` |
 
 Default scores changed: `smart` tolerates swapped letters, word order and missing spaces, so similar texts generally score higher than with v1's `levenshtein`. Re-check your thresholds.
+
+## FAQ
+
+**What can replace `string-similarity`?**
+`fuzzy-toolkit`. `string-similarity` is no longer maintained; `require('fuzzy-toolkit/string-similarity')` gives the same `compareTwoStrings` and `findBestMatch` with the same results, 2 to 3.5 times faster. For new code, `similarity()` and `closest()` also handle typos, accents, word order and missing spaces.
+
+**How do I do fuzzy string matching in JavaScript or TypeScript?**
+`npm install fuzzy-toolkit`, then `similarity(a, b)` for a 0-100 score, `isMatch(a, b)` for a yes/no, `closest(query, list)?.item` for "did you mean", `search(query, items, { keys })` for a list.
+
+**fuzzy-toolkit or Fuse.js?**
+For search-as-you-type on 26k songs, fuzzy-toolkit is about 5 times faster with a reusable index ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)), and it also does what Fuse.js doesn't: grading answers, deduping, joining lists, finding names in a text. Scores are 0-100 where higher means closer (Fuse.js: 0-1, lower is closer).
+
+**How do I check quiz or blind test answers with typos?**
+`check(guess, answer)` returns `correct`, `close` or `wrong`. For a title and an artist in one guess, `checkAll(guess, { title, artist })`. The `music` preset ignores `feat.`, `- Remastered 2011` and `(Live)`. See [Quizzes and blind tests](https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz).
+
+**How do I remove near-duplicates or match two lists?**
+`dedupe(items, { keys })` and `join(left, right, { left, right })`, or from a terminal: `npx fuzzy-toolkit dedupe file.csv` and `npx fuzzy-toolkit join a.csv b.csv`.
+
+**Does it work with AI assistants and agents?**
+Yes. `npx fuzzy-toolkit mcp` gives agents the tools directly, and `npx fuzzy-toolkit ai-setup` adds usage notes to your project's `AGENTS.md`, `CLAUDE.md`, Cursor rules or Copilot instructions so generated code uses it correctly.
 
 ## Documentation
 

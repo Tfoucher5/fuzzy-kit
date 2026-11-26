@@ -116,3 +116,30 @@ test('warnings: a key no item has', () => {
 test('errors: options that are not an object', () => {
   assert.throws(() => closest('a', ['a'], 'name'), /Options must be an object.*keys/);
 });
+
+/* ai-setup -------------------------------------------------------------------- */
+
+test('ai-setup: writes the block once, keeps the rest of the file', async () => {
+  const { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join: joinPath } = await import('node:path');
+  const { setup, detect, upsertBlock } = await import('../bin/ai-setup.mjs');
+
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
+  assert.deepEqual(detect(dir), ['agents']);
+  assert.deepEqual(setup(dir, ['agents']), ['created  AGENTS.md']);
+  assert.match(readFileSync(joinPath(dir, 'AGENTS.md'), 'utf8'), /fuzzy-toolkit:start[\s\S]*closest\('pari'[\s\S]*fuzzy-toolkit:end/);
+
+  writeFileSync(joinPath(dir, 'CLAUDE.md'), '# Rules\n\nUse tabs.\n');
+  mkdirSync(joinPath(dir, '.cursor'));
+  assert.deepEqual(detect(dir), ['agents', 'claude', 'cursor']);
+  assert.deepEqual(setup(dir, detect(dir)), ['unchanged AGENTS.md', 'updated  CLAUDE.md', 'created  .cursor/rules/fuzzy-toolkit.mdc']);
+  const claude = readFileSync(joinPath(dir, 'CLAUDE.md'), 'utf8');
+  assert.ok(claude.startsWith('# Rules\n\nUse tabs.\n\n<!-- fuzzy-toolkit:start -->'));
+  assert.match(readFileSync(joinPath(dir, '.cursor/rules/fuzzy-toolkit.mdc'), 'utf8'), /^---\ndescription: .*\nalwaysApply: false\n---/);
+  assert.ok(existsSync(joinPath(dir, 'AGENTS.md')));
+
+  // An old block is replaced, text around it is kept.
+  const updated = upsertBlock('a\n<!-- fuzzy-toolkit:start -->\nold\n<!-- fuzzy-toolkit:end -->\nb\n', 'new');
+  assert.equal(updated, 'a\n<!-- fuzzy-toolkit:start -->\nnew\n<!-- fuzzy-toolkit:end -->\nb\n');
+});

@@ -16,6 +16,8 @@ Usage
   fuzzy-toolkit compare <a> <b>                Score two texts and show how they were read
   fuzzy-toolkit mcp                            Start an MCP server so AI agents (Claude,
                                                Cursor, VS Code...) can use these tools
+  fuzzy-toolkit ai-setup                       Tell the AI assistants of this project how to
+                                               use fuzzy-toolkit (AGENTS.md, CLAUDE.md, Cursor...)
 
 Files can be CSV (comma, semicolon or tab, detected), .json (an array) or
 plain text (one item per line). Use - to read from standard input.

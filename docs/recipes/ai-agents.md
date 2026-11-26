@@ -52,6 +52,16 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 
 ## For assistants writing code
 
+### Tell them in your project
+
+```sh
+npx fuzzy-toolkit ai-setup
+```
+
+Adds a short block (what to import, examples, mistakes to avoid) to the instruction files your project already has: `AGENTS.md` (Codex, Jules, Cursor, Copilot, Zed...), `CLAUDE.md` (Claude Code), `.cursor/rules/fuzzy-toolkit.mdc` and `.github/copilot-instructions.md`. With none of them, it creates `AGENTS.md`. The block sits between `<!-- fuzzy-toolkit:start -->` markers: running the command again updates it and leaves the rest of the file alone. `--claude`, `--cursor`, `--copilot`, `--agents` or `--all` pick the files, `--print` only shows the block.
+
+### What ships in the package
+
 The package ships what assistants read to write correct code:
 
 - **`llms.txt`** (short) and **`llms-full.txt`** (the whole documentation, in one file) at the root of the package, also served at [tfoucher5.github.io/fuzzy-toolkit/llms.txt](https://tfoucher5.github.io/fuzzy-toolkit/llms.txt) and [llms-full.txt](https://tfoucher5.github.io/fuzzy-toolkit/llms-full.txt).

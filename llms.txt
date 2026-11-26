@@ -85,6 +85,8 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 
+`npx fuzzy-toolkit ai-setup` adds usage notes for AI assistants to the project's AGENTS.md, CLAUDE.md, Cursor rules or Copilot instructions.
+
 ## Common mistakes
 
 - Scores go from 0 to 100, not 0 to 1: write `similarity(a, b) >= 80` or `isMatch(a, b)`, never `> 0.8`. `threshold` is 0-100 too. Only `fuzzy-toolkit/string-similarity` returns 0-1 ratings.

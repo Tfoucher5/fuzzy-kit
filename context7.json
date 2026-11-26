@@ -1,0 +1,16 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "fuzzy-toolkit",
+  "description": "Fuzzy string matching for JavaScript and TypeScript, and a drop-in replacement for string-similarity: similarity scores, did-you-mean, search-as-you-type, highlight, dedupe, join lists, quiz answer checking, Levenshtein, Dice, Jaro-Winkler. Zero dependencies.",
+  "folders": ["docs"],
+  "excludeFolders": ["docs/.vitepress", "docs/public"],
+  "excludeFiles": ["changelog.md"],
+  "rules": [
+    "Scores go from 0 to 100, not 0 to 1: write similarity(a, b) >= 80 or isMatch(a, b), never > 0.8. The threshold option is 0-100 too.",
+    "closest() returns a Match ({ item, score, index, text }) or undefined: use closest(query, list)?.item to get the value.",
+    "Items that are objects need the keys option: search(query, users, { keys: ['name', 'email'] }).",
+    "Options are always an object in the last argument.",
+    "To search the same list on every keystroke, build createIndex(items, options) once and call index.search(query).",
+    "To replace string-similarity without changing code, import from 'fuzzy-toolkit/string-similarity' (compareTwoStrings and findBestMatch, 0-1 ratings, same results)."
+  ]
+}
