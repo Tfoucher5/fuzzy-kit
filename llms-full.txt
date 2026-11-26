@@ -44,7 +44,7 @@ check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' 
 diff('rapsody', 'Rhapsody')                              // what was misspelled
 ```
 
-Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
+Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
 
 ## Raw metrics (no normalization)
 
@@ -186,6 +186,8 @@ quiz.similarity('Hey Jude - Remastered', 'hey jude') // 100
 quiz.search('queen', songs, { keys: 'artist' })
 ```
 
+A matcher carries every method, so a bundler keeps all of them (about 14 kB min+gzip). When the size of a browser bundle matters, import only the functions you call and pass them the same options object: `check` and `checkAll` alone are about 10 kB. See [Size](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks#size).
+
 ## Work with objects
 
 List functions accept strings or objects. With objects, tell them where the text is with `keys`: a property, several properties, or a function. TypeScript only lets you name properties that hold text.
@@ -221,10 +223,14 @@ A preset is a ready-made set of options. Anything you pass yourself wins over it
 | Preset | For | What it sets |
 | --- | --- | --- |
 | `music` | song titles, artists | `strip: ['featuring', 'version', 'brackets', 'articles']`, `replace: { '&': 'and', '+': 'and', n: 'and' }` |
-| `search` | search boxes | `partial: true`, `threshold: 70` |
+| `search` | search boxes | `partial: true`, `acronyms: true`, `threshold: 70`, `numbers: false` |
 | `strict` | codes, references | `ignoreWordOrder: false`, `ignoreSpaces: false`, `threshold: 90` |
 
-## Matching
+A built-in preset does not change within a major version: what it sets in 2.x stays the same until 3.0, and a test enforces it. New behavior arrives as an option you turn on yourself.
+
+**`search` and acronyms**
+2.2.0 broke that rule: it added `acronyms: true` to the `search` preset, so `nyc` started to find New York City, and short queries can return more results than in 2.0 and 2.1. To get the 2.0 behavior back, pass `{ preset: 'search', acronyms: false }`.
+
 
 | Option | Default | Effect |
 | --- | --- | --- |
@@ -233,6 +239,7 @@ A preset is a ready-made set of options. Anything you pass yourself wins over it
 | `ignoreSpaces` | `true` | `stairwaytoheaven` matches `stairway to heaven`. |
 | `partial` | `false` | The shorter text may match a part of the longer one, starting at a word. A full match always scores higher. |
 | `acronyms` | `false` (`true` with the `search` preset) | A single word may be the initials of the other text: `nyc` = `New York City`, one typo allowed from 3 letters on. Scores 90, or 80 with a typo. In lists, only the query can be the acronym. |
+| `substring` | `false` | Like `partial`, and a match may also start inside a word: `phone` finds `iPhone 15` and `Smartphone`, `ville` finds `Belleville`. Turns `partial` on. A match from the start of a word still ranks first (inside a word counts 95 %). For search-as-you-type over product names, file names, codes. |
 | `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
 | `algorithm` | `'smart'` | See [How it works](https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works#algorithms). |
 
@@ -951,7 +958,7 @@ fuzzy-toolkit is built to be used by AI coding assistants and agents as much as 
 | `search` | Items of a list matching a query, best first (strings or objects with `keys`) |
 | `dedupe` | A list without its near-duplicates, plus the groups that were merged |
 | `join` | Each item of a list paired with its best match in another |
-| `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms) |
+| `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms). It is the engine's verdict with the options given, not your app's: an app usually adds its own rules. |
 | `find` | Occurrences of a name inside a longer text, with positions |
 
 Every tool takes the usual options: `threshold`, `preset` (`music`, `search`, `strict`), `phonetic`, `ignoreWords`, `languages`.
@@ -996,7 +1003,9 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 npx fuzzy-toolkit ai-setup
 ```
 
-Adds a short block (what to import, examples, mistakes to avoid) to the instruction files your project already has: `AGENTS.md` (Codex, Jules, Cursor, Copilot, Zed...), `CLAUDE.md` (Claude Code), `.cursor/rules/fuzzy-toolkit.mdc` and `.github/copilot-instructions.md`. With none of them, it creates `AGENTS.md`. The block sits between `<!-- fuzzy-toolkit:start -->` markers: running the command again updates it and leaves the rest of the file alone. `--claude`, `--cursor`, `--copilot`, `--agents` or `--all` pick the files, `--print` only shows the block.
+Run it after `npm install fuzzy-toolkit`: it only writes when `package.json` lists the package (`--force` to write anyway). It adds a short block (the mistakes to avoid, a link to the reference, and a reminder to go through the code that already calls fuzzy-toolkit) to the instruction files your project already has: `AGENTS.md` (Codex, Jules, Cursor, Copilot, Zed...), `CLAUDE.md` (Claude Code), `.cursor/rules/fuzzy-toolkit.mdc` and `.github/copilot-instructions.md`. With none of them, it creates `AGENTS.md`.
+
+The block sits between `<!-- fuzzy-toolkit:start -->` markers: running the command again updates it and leaves the rest of the file alone. If you edit the block yourself, in your own words or language, it stays as you wrote it (`--force` replaces it). `--claude`, `--cursor`, `--copilot`, `--agents` or `--all` pick the files, `--print` only shows the block.
 
 ### What ships in the package
 
