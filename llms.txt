@@ -31,23 +31,27 @@ closest('javascrpt', ['java', 'javascript', 'typescript'])?.item // 'javascript'
 search('iphone', products, { keys: ['name', 'brand.name'], limit: 10 }) // [{ item, score, index, text }]
 search('bohem', songs, { keys: 'title', preset: 'search', includeMatches: true }) // + key, ranges to highlight
 const index = createIndex(items, { keys: ['title'], preset: 'search' }) // reuse for search-as-you-type
-index.search('quer', { limit: 5 }); index.add(item); index.remove((i) => i.id === 1)
+index.search('quer', { limit: 5 }); index.search('nyc') /* acronyms */; index.add(item); index.remove((i) => i.id === 1)
+const saved = JSON.stringify(index); loadIndex(items, JSON.parse(saved), sameOptions) // prebuilt index
 highlight('Bohemian Rhapsody', 'bohem')  // [{ text: 'Bohem', match: true }, { text: 'ian Rhapsody', match: false }]
 find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
+dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
+fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
 join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
 check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' | 'wrong'
 diff('rapsody', 'Rhapsody')                              // what was misspelled
 ```
 
-Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `phonetic` (sounds-alike, EN/FR), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
+Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
 
 ## Raw metrics (no normalization)
 
 ```ts
-import { levenshtein, damerau, jaroWinkler, dice, jaccard, cosine, hamming, lcs } from 'fuzzy-toolkit'
+import { levenshtein, damerau, jaro, jaroWinkler, dice, jaccard, cosine, overlap, tversky, ratcliffObershelp, hamming, lcs } from 'fuzzy-toolkit'
 levenshtein('kitten', 'sitting') // 3
+levenshtein(a, b, { max: 2 })    // stops early, returns 3 when further apart
 damerau('teh', 'the')            // 1
 jaroWinkler('martha', 'marhta')  // 0.961
 dice('healed', 'sealed')         // 0.8
@@ -56,6 +60,16 @@ cosine('aaaa', 'aaa')            // 1
 hamming('karolin', 'kathrin')    // 3
 lcs('ABCBDAB', 'BDCABA')         // 4
 ```
+
+## React and browsers
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+const results = useFuzzySearch(items, query, { keys: ['title'], limit: 20 })
+results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
+```
+
+CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
 
 ## Command line
 

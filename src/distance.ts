@@ -86,44 +86,128 @@ function osa32(pattern: string, text: string): number {
   return score;
 }
 
-function dp(a: string, b: string, transpositions: boolean): number {
-  const n = a.length;
-  ensureRows(n + 1);
-  let prev2 = rowC;
-  let prev = rowA;
-  let curr = rowB;
-  for (let i = 0; i <= n; i += 1) prev[i] = i;
+/**
+ * Myers' bit-parallel Levenshtein for patterns longer than 32 characters,
+ * processed in blocks of 32 rows (Hyyrö 2003). O(⌈m/32⌉·n).
+ */
+let carryP = new Int32Array(8);
+let carryM = new Int32Array(8);
 
-  for (let j = 1; j <= b.length; j += 1) {
-    const bj = b.charCodeAt(j - 1);
-    curr[0] = j;
-    for (let i = 1; i <= n; i += 1) {
-      const ai = a.charCodeAt(i - 1);
-      const cost = ai === bj ? 0 : 1;
-      let value = Math.min(prev[i]! + 1, curr[i - 1]! + 1, prev[i - 1]! + cost);
-      if (
-        transpositions &&
-        i > 1 &&
-        j > 1 &&
-        ai === b.charCodeAt(j - 2) &&
-        a.charCodeAt(i - 2) === bj
-      ) {
-        value = Math.min(value, prev2[i - 2]! + 1);
-      }
-      curr[i] = value;
-    }
-    const tmp = prev2;
-    prev2 = prev;
-    prev = curr;
-    curr = tmp;
+function myersBlocks(pattern: string, text: string): number {
+  const m = pattern.length;
+  const n = text.length;
+  const hsize = Math.ceil(n / 32);
+  if (carryP.length < hsize) {
+    carryP = new Int32Array(hsize * 2);
+    carryM = new Int32Array(hsize * 2);
   }
-  return prev[n]!;
+  carryP.fill(-1, 0, hsize);
+  carryM.fill(0, 0, hsize);
+  const blocks = Math.ceil(m / 32);
+  let score = m;
+  for (let block = 0; block < blocks; block += 1) {
+    const start = block * 32;
+    const end = Math.min(start + 32, m);
+    const last = block === blocks - 1;
+    const top = (end - start - 1) & 31;
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)]! |= 1 << (k - start);
+    let pv = -1;
+    let mv = 0;
+    for (let i = 0; i < n; i += 1) {
+      const word = i >>> 5;
+      const bit = 1 << (i & 31);
+      const eq = peq[text.charCodeAt(i)]! | 0;
+      const pb = carryP[word]! & bit ? 1 : 0;
+      const mb = carryM[word]! & bit ? 1 : 0;
+      const xv = eq | mv;
+      const xh = ((((eq | mb) & pv) + pv) ^ pv) | eq | mb;
+      let ph = mv | ~(xh | pv);
+      let mh = pv & xh;
+      if (last) {
+        score += (ph >>> top) & 1;
+        score -= (mh >>> top) & 1;
+      }
+      if ((ph >>> 31) ^ pb) carryP[word]! ^= bit;
+      if ((mh >>> 31) ^ mb) carryM[word]! ^= bit;
+      ph = (ph << 1) | pb;
+      mh = (mh << 1) | mb;
+      pv = mh | ~(xv | ph);
+      mv = ph & xv;
+    }
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)] = 0;
+  }
+  return score;
+}
+
+let carryT = new Int32Array(8);
+
+/**
+ * Hyyrö's bit-parallel optimal string alignment distance in blocks of 32
+ * rows, for patterns longer than 32 characters.
+ */
+function osaBlocks(pattern: string, text: string): number {
+  const m = pattern.length;
+  const n = text.length;
+  const hsize = Math.ceil(n / 32);
+  if (carryP.length < hsize) {
+    carryP = new Int32Array(hsize * 2);
+    carryM = new Int32Array(hsize * 2);
+  }
+  if (carryT.length < hsize) carryT = new Int32Array(hsize * 2);
+  carryP.fill(-1, 0, hsize);
+  carryM.fill(0, 0, hsize);
+  carryT.fill(0, 0, hsize);
+  const blocks = Math.ceil(m / 32);
+  let score = m;
+  for (let block = 0; block < blocks; block += 1) {
+    const start = block * 32;
+    const end = Math.min(start + 32, m);
+    const last = block === blocks - 1;
+    const top = (end - start - 1) & 31;
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)]! |= 1 << (k - start);
+    let vp = -1;
+    let vn = 0;
+    let d0 = 0;
+    let pmOld = 0;
+    for (let i = 0; i < n; i += 1) {
+      const word = i >>> 5;
+      const bit = 1 << (i & 31);
+      const pm = peq[text.charCodeAt(i)]! | 0;
+      const pb = carryP[word]! & bit ? 1 : 0;
+      const mb = carryM[word]! & bit ? 1 : 0;
+      const tb = carryT[word]! & bit ? 1 : 0;
+      const swap = ~d0 & pm;
+      if ((swap >>> 31) ^ tb) carryT[word]! ^= bit;
+      const tr = ((swap << 1) | tb) & pmOld;
+      const x = pm | mb;
+      d0 = (((x & vp) + vp) ^ vp) | x | vn | tr;
+      let hp = vn | ~(d0 | vp);
+      let hn = d0 & vp;
+      if (last) {
+        score += (hp >>> top) & 1;
+        score -= (hn >>> top) & 1;
+      }
+      if ((hp >>> 31) ^ pb) carryP[word]! ^= bit;
+      if ((hn >>> 31) ^ mb) carryM[word]! ^= bit;
+      hp = (hp << 1) | pb;
+      hn = (hn << 1) | mb;
+      vp = hn | ~(d0 | hp);
+      vn = hp & d0;
+      pmOld = pm;
+    }
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)] = 0;
+  }
+  return score;
 }
 
 function editDistance(a: string, b: string, transpositions: boolean): number {
   if (a === b) return 0;
   // Keep the shorter string as the pattern.
-  if (a.length > b.length) [a, b] = [b, a];
+  if (a.length > b.length) {
+    const t = a;
+    a = b;
+    b = t;
+  }
 
   // Trim the common prefix and suffix: cheap and very common for near-matches.
   let start = 0;
@@ -134,12 +218,14 @@ function editDistance(a: string, b: string, transpositions: boolean): number {
     endA -= 1;
     endB -= 1;
   }
-  a = a.slice(start, endA);
-  b = b.slice(start, endB);
+  if (start > 0 || endA < a.length) {
+    a = a.slice(start, endA);
+    b = b.slice(start, endB);
+  }
 
   if (a.length === 0) return b.length;
   if (a.length <= 32) return transpositions ? osa32(a, b) : myers32(a, b);
-  return dp(a, b, transpositions);
+  return transpositions ? osaBlocks(a, b) : myersBlocks(a, b);
 }
 
 const bag = new Int32Array(0x10000);
@@ -185,6 +271,27 @@ export function bagMissingLetters(): number {
   return lastMissingLetters;
 }
 
+/** Options of {@link levenshtein} and {@link damerau}. */
+export interface DistanceOptions {
+  /**
+   * Largest distance you care about. Above it, the computation stops early
+   * and returns `max + 1`. Ideal to filter many pairs.
+   */
+  max?: number;
+}
+
+function bounded(a: string, b: string, transpositions: boolean, options: DistanceOptions | undefined): number {
+  if (typeof a !== 'string') a = String(a);
+  if (typeof b !== 'string') b = String(b);
+  const max = options?.max;
+  if (max === undefined || max === Infinity) return editDistance(a, b, transpositions);
+  const limit = Math.max(0, Math.floor(max));
+  // Cheap lower bounds first: length difference, then characters one lacks.
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+  if (limit < Math.min(a.length, b.length) && bagDistance(a, b) > limit) return limit + 1;
+  return Math.min(editDistance(a, b, transpositions), limit + 1);
+}
+
 /**
  * Levenshtein distance: minimum number of single-character insertions,
  * deletions and substitutions turning `a` into `b`.
@@ -193,9 +300,10 @@ export function bagMissingLetters(): number {
  *
  * @example
  * levenshtein('kitten', 'sitting') // 3
+ * levenshtein('kitten', 'sitting', { max: 2 }) // 3 (more than 2: gives up early, returns max + 1)
  */
-export function levenshtein(a: string, b: string): number {
-  return editDistance(String(a), String(b), false);
+export function levenshtein(a: string, b: string, options?: DistanceOptions): number {
+  return bounded(a, b, false, options);
 }
 
 /**
@@ -207,10 +315,11 @@ export function levenshtein(a: string, b: string): number {
  *
  * @example
  * damerau('teh', 'the')     // 1
+ * damerau(a, b, { max: 3 }) // stops at 4 when the texts are further apart
  * levenshtein('teh', 'the') // 2
  */
-export function damerau(a: string, b: string): number {
-  return editDistance(String(a), String(b), true);
+export function damerau(a: string, b: string, options?: DistanceOptions): number {
+  return bounded(a, b, true, options);
 }
 
 /**
@@ -351,15 +460,16 @@ export function prefixDistance(query: string, word: string): number {
 }
 
 /**
- * Jaro-Winkler similarity between 0 and 1. Favors strings sharing a prefix,
- * which makes it a good fit for short strings such as names.
+ * Jaro similarity, from 0 to 1: shared characters in about the same place,
+ * and how many of them are swapped. {@link jaroWinkler} adds a bonus for a
+ * shared prefix.
  *
  * Operates on raw strings: no normalization is applied.
  *
  * @example
- * jaroWinkler('martha', 'marhta') // 0.961
+ * jaro('martha', 'marhta') // 0.944
  */
-export function jaroWinkler(a: string, b: string): number {
+export function jaro(a: string, b: string): number {
   a = String(a);
   b = String(b);
   if (a === b) return 1;
@@ -395,12 +505,27 @@ export function jaroWinkler(a: string, b: string): number {
     k += 1;
   }
 
-  const jaro =
-    (matches / lenA + matches / lenB + (matches - transpositions / 2) / matches) / 3;
+  return (matches / lenA + matches / lenB + (matches - transpositions / 2) / matches) / 3;
+}
 
+/**
+ * Jaro-Winkler similarity, from 0 to 1. Rewards a shared prefix,
+ * which makes it a good fit for short strings such as names.
+ *
+ * Operates on raw strings: no normalization is applied.
+ *
+ * @example
+ * jaroWinkler('martha', 'marhta') // 0.961
+ */
+export function jaroWinkler(a: string, b: string): number {
+  a = String(a);
+  b = String(b);
+  const jaroScore = jaro(a, b);
+  const lenA = a.length;
+  const lenB = b.length;
   let prefix = 0;
   const maxPrefix = Math.min(4, lenA, lenB);
   while (prefix < maxPrefix && a.charCodeAt(prefix) === b.charCodeAt(prefix)) prefix += 1;
 
-  return jaro + prefix * 0.1 * (1 - jaro);
+  return jaroScore + prefix * 0.1 * (1 - jaroScore);
 }

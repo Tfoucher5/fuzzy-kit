@@ -18,7 +18,7 @@ const PRESETS: Readonly<Record<Preset, MatchOptions>> = {
     replace: { '&': 'and', '+': 'and', n: 'and' },
   },
   // Digits would break prefixes while typing: "sev" must still find "Seven".
-  search: { partial: true, threshold: 70, numbers: false },
+  search: { partial: true, acronyms: true, threshold: 70, numbers: false },
   strict: { ignoreWordOrder: false, ignoreSpaces: false, threshold: 90 },
 };
 
@@ -42,6 +42,8 @@ export interface Engine {
   readonly normalize: Normalizer;
   /** Normalizes and prepares a raw text for comparisons. */
   readonly read: (text: string) => Prepared;
+  /** Rebuilds what {@link read} returned from its normalized texts. */
+  readonly restore: (text: string, alt: string | null) => Prepared;
 }
 
 /** A normalized text and the variants `smart` needs, computed once. */
@@ -98,6 +100,7 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     punctuation: merged.punctuation ?? 'space',
     numbers: merged.numbers ?? true,
     phonetic: merged.phonetic ?? false,
+    acronyms: merged.acronyms ?? false,
     strip: Object.freeze([...(merged.strip ?? [])]),
     ignoreWords: Object.freeze([...(merged.ignoreWords ?? [])]),
     replace: Object.freeze({ ...merged.replace }),
@@ -129,7 +132,11 @@ export function compileEngine(options: MatchOptions = {}): Engine {
     const written = asWritten(raw);
     return written === text ? prepared : { ...prepared, alt: prepare(written, sounds) };
   };
-  return { options: resolved, normalize, read };
+  const restore = (text: string, alt: string | null): Prepared => {
+    const prepared = prepare(text, sounds);
+    return alt === null ? prepared : { ...prepared, alt: prepare(alt, sounds) };
+  };
+  return { options: resolved, normalize, read, restore };
 }
 
 /**
@@ -323,8 +330,11 @@ function smart(
   // "I Don't Care", but "I Do" is not a match for "i don".
   const partial = options.partial && (queryFirst ? a.text.length < b.text.length : a.text.length !== b.text.length);
   const sound = options.phonetic ? soundScore(a, b, options, floor) : 0;
+  // In a search, only the query may be the acronym.
+  const acronym = options.acronyms && (!queryFirst || a.words.length === 1) ? acronymScore(a, b) : 0;
+  if (acronym > 0) record(scores, 'acronym', acronym);
   // In lists, most candidates are far off: rule them out with cheap bounds.
-  if (floor > 0 && !scores && !canReach(a, b, options, partial, floor - 0.01)) return sound;
+  if (floor > 0 && !scores && !canReach(a, b, options, partial, floor - 0.01)) return Math.max(sound, acronym);
 
   let best = record(scores, 'characters', ratio(damerau(a.text, b.text), a.text, b.text));
   const multiWord = a.words.length > 1 || b.words.length > 1;
@@ -353,7 +363,35 @@ function smart(
     record(scores, 'phonetic', sound);
     if (sound > best) best = sound;
   }
-  return best;
+  return acronym > best ? acronym : best;
+}
+
+/** Score of an acronym match. */
+export const ACRONYM_SCORE = 90;
+
+/** Whether one side is a single word that could be the initials of the other. */
+function acronymPair(a: Prepared, b: Prepared): [Prepared, Prepared] | null {
+  if (a.words.length === 1 && b.words.length >= 2) return [a, b];
+  if (b.words.length === 1 && a.words.length >= 2) return [b, a];
+  return null;
+}
+
+/**
+ * `nyc` against `new york city`: 90 for the exact initials, 80 with one typo
+ * (3 letters or more), 0 otherwise.
+ */
+function acronymScore(a: Prepared, b: Prepared): number {
+  const pair = acronymPair(a, b);
+  if (!pair) return 0;
+  const [short, long] = pair;
+  const n = short.text.length;
+  const words = long.words.length;
+  if (n < 2 || Math.abs(n - words) > 1) return 0;
+  let initials = '';
+  for (const word of long.words) initials += word[0];
+  if (initials === short.text) return ACRONYM_SCORE;
+  if (n >= 3 && damerau(short.text, initials) === 1) return ACRONYM_SCORE - 10;
+  return 0;
 }
 
 /**
@@ -464,6 +502,7 @@ function maxOne(a: Prepared, b: Prepared, options: ResolvedOptions): number {
   if (algorithm === 'smart' && options.ignoreSpaces) {
     best = Math.max(best, lengthBound(a.compact.length, b.compact.length));
   }
+  if (algorithm === 'smart' && options.acronyms && acronymPair(a, b)) best = Math.max(best, ACRONYM_SCORE);
   if (algorithm === 'smart' && options.phonetic && a.sound !== undefined && b.sound !== undefined) {
     best = Math.max(best, lengthBound(a.sound.length, b.sound.length) * PHONETIC_WEIGHT);
   }

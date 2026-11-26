@@ -24,6 +24,7 @@ import type {
   ListOptions,
   Match,
   MatchOptions,
+  NormalizeOptions,
   MultiCheckResult,
 } from './types.js';
 
@@ -69,6 +70,11 @@ export interface MatcherCheckOptions {
 
 /** A pre-processed list of items, ready to be searched many times. */
 export interface Index<T> {
+  /**
+   * The normalized texts and options, as plain JSON, to load later with
+   * {@link loadIndex} and skip normalizing again. `JSON.stringify(index)` calls it.
+   */
+  toJSON(): SavedIndex;
   /** Number of items in the index. */
   readonly size: number;
   /** The indexed items, in order. `Match.index` is a position in this list. */
@@ -161,6 +167,42 @@ interface Entry<T> {
   prepared: readonly Prepared[];
   /** Whether the last prepared text joins all the others. */
   joined: boolean;
+  /** Characters present in any of the texts (see {@link letterMask}). */
+  mask: number;
+  /** Length of the longest prepared text. */
+  longest: number;
+  /** Largest key weight. */
+  heaviest: number;
+}
+
+/**
+ * The characters of a text as 32 bits: one per letter, the others share the
+ * remaining bits. A query character whose bit is missing from a text costs
+ * at least one edit, which rules most of a list out in one AND.
+ */
+const LETTER_BITS = new Int32Array(128);
+for (let c = 0; c < 128; c += 1) LETTER_BITS[c] = c === 32 ? 0 : 1 << (c >= 97 && c <= 122 ? c - 97 : 26 + (c % 6));
+
+function letterMask(text: string): number {
+  let mask = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text.charCodeAt(i);
+    mask |= c < 128 ? LETTER_BITS[c]! : 1 << (26 + (c % 6));
+  }
+  return mask;
+}
+
+function popcount(x: number): number {
+  x -= (x >>> 1) & 0x55555555;
+  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+  return (Math.imul((x + (x >>> 4)) & 0x0f0f0f0f, 0x01010101) >>> 24);
+}
+
+/** Whether the letter filter is exact for these options (every score is `1 - edits / length` or better bounded). */
+function canFilterLetters(engine: Engine): boolean {
+  const { algorithm, phonetic } = engine.options;
+  if (algorithm === 'smart') return !phonetic;
+  return algorithm === 'levenshtein' || algorithm === 'damerau' || algorithm === 'tokenSort';
 }
 
 interface ItemTexts {
@@ -232,7 +274,22 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
   };
 }
 
-function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Entry<T>[] {
+/** An index saved with `index.toJSON()`. */
+export interface SavedIndex {
+  /** Format version. */
+  version: 1;
+  /** The options the index was built with, to refuse loading it with others. */
+  options: string;
+  /** Normalized texts of each item: text, then the text with numbers as written (or null). */
+  texts: (string | null)[][];
+}
+
+function buildEntries<T>(
+  items: readonly T[],
+  keys: KeysOption<T> | undefined,
+  engine: Engine,
+  saved?: SavedIndex['texts'],
+): Entry<T>[] {
   if (!Array.isArray(items)) {
     throw new TypeError('[fuzzy-toolkit] Expected an array of items.');
   }
@@ -248,7 +305,26 @@ function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, e
       names.push(undefined);
     }
     const joined = joinTexts && texts.length > 2;
-    return { item, index, texts, weights, keys: names, joined, prepared: texts.map((t) => engine.read(t)) };
+    let prepared: Prepared[];
+    if (saved) {
+      const row = saved[index];
+      if (!row || row.length !== texts.length * 2) {
+        throw new Error('[fuzzy-toolkit] The saved index does not match these items: rebuild it with createIndex().');
+      }
+      prepared = texts.map((_, i) => engine.restore(row[i * 2]!, row[i * 2 + 1] ?? null));
+    } else prepared = texts.map((t) => engine.read(t));
+    let mask = 0;
+    let longest = 0;
+    for (const p of prepared) {
+      mask |= letterMask(p.text);
+      longest = Math.max(longest, p.text.length);
+      if (p.alt) {
+        mask |= letterMask(p.alt.text);
+        longest = Math.max(longest, p.alt.text.length);
+      }
+    }
+    const heaviest = weights.length > 0 ? Math.max(...weights) : 1;
+    return { item, index, texts, weights, keys: names, joined, prepared, mask, longest, heaviest };
   });
 }
 
@@ -293,16 +369,41 @@ function rank<T>(
 ): Match<T>[] {
   const results = rankEntries(query, entries, engine, threshold, limit, includeMatches);
   if (includeMatches) {
-    for (const match of results) {
-      let at = 0;
-      match.ranges = [];
-      for (const segment of highlightIn(match.text, toText(query), engine, engine.options.threshold)) {
-        if (segment.match) match.ranges.push([at, at + segment.text.length]);
-        at += segment.text.length;
-      }
-    }
+    for (const match of results) match.ranges = rangesOf(match.text, toText(query), engine);
   }
   return results;
+}
+
+const exactEngines = new WeakMap<Engine, Engine>();
+
+/**
+ * Parts of `text` to highlight for `query`: what was typed, to the character
+ * ("New Yo|rk"), or the initials of an acronym match.
+ */
+function rangesOf(text: string, query: string, engine: Engine): [number, number][] {
+  // Partial matching would light up whole words: highlight what was typed instead.
+  let exact = exactEngines.get(engine);
+  if (!exact) {
+    const { preset: _preset, ...options } = engine.options;
+    exact = engine.options.partial || engine.options.acronyms
+      ? compileEngine({ ...options, partial: false, acronyms: false })
+      : engine;
+    exactEngines.set(engine, exact);
+  }
+  const ranges: [number, number][] = [];
+  let at = 0;
+  for (const segment of highlightIn(text, query, exact, Math.max(80, engine.options.threshold))) {
+    if (segment.match) ranges.push([at, at + segment.text.length]);
+    at += segment.text.length;
+  }
+  if (ranges.length === 0 && engine.options.acronyms) {
+    const words = [...text.matchAll(/[\p{L}\p{N}]+/gu)];
+    const initials = words.map((w) => engine.normalize(w[0]).charAt(0)).join('');
+    if (words.length >= 2 && initials.length > 0 && engine.normalize(query).replace(/ /g, '').length <= words.length + 1) {
+      for (const w of words) ranges.push([w.index!, w.index! + 1]);
+    }
+  }
+  return ranges;
 }
 
 function rankEntries<T>(
@@ -317,9 +418,27 @@ function rankEntries<T>(
   const max = Math.max(0, Math.floor(limit));
   if (max === 0) return [];
 
+  // Letters of the query that an entry lacks each cost an edit.
+  const filter = canFilterLetters(engine) && prepared.text !== '';
+  const queryMask = letterMask(prepared.text);
+  const altMask = prepared.alt ? letterMask(prepared.alt.text) : queryMask;
+  const queryLength = Math.max(prepared.text.length, prepared.alt?.text.length ?? 0);
+  const acronymQuery = engine.options.acronyms && prepared.words.length === 1;
+  const hopeless = (entry: Entry<T>, floor: number): boolean => {
+    if (!filter) return false;
+    const missing = Math.min(popcount(queryMask & ~entry.mask), popcount(altMask & ~entry.mask));
+    if (missing === 0) return false;
+    // An acronym with a typo may lack one letter.
+    if (missing === 1 && acronymQuery) return false;
+    const lowest = floor / Math.max(entry.heaviest, 1e-9) - 0.01;
+    // Whatever the text's length, `missing` edits leave at most this score.
+    return 100 * (1 - missing / (queryLength + missing)) < lowest;
+  };
+
   if (!Number.isFinite(limit) || max >= entries.length) {
     const results: Match<T>[] = [];
     for (const entry of entries) {
+      if (hopeless(entry, threshold)) continue;
       const match = bestOf(prepared, entry, engine, threshold, withKey);
       if (match) results.push(match);
     }
@@ -331,6 +450,7 @@ function rankEntries<T>(
   const top: Match<T>[] = [];
   let floor = threshold;
   for (const entry of entries) {
+    if (hopeless(entry, floor)) continue;
     const match = bestOf(prepared, entry, engine, floor, withKey);
     if (!match) continue;
     if (top.length === max && match.score <= top[max - 1]!.score) continue;
@@ -471,11 +591,39 @@ function joinLists<L, R>(
   return rows;
 }
 
-function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: number): T[][] {
+function textKey(entry: Entry<unknown>): string {
+  let key = '';
+  for (const p of entry.prepared) key += `${p.text}\u0001${p.alt?.text ?? ''}\u0002`;
+  return key;
+}
+
+function cluster<T>(
+  entries: readonly Entry<T>[],
+  engine: Engine,
+  threshold: number,
+  method: 'fuzzy' | 'fingerprint' = 'fuzzy',
+): T[][] {
+  if (method === 'fingerprint') {
+    const byKey = new Map<string, T[]>();
+    for (const entry of entries) {
+      const key = entry.prepared.map((p) => fingerprintOf(p.text)).join('\u0001');
+      const members = byKey.get(key);
+      if (members) members.push(entry.item);
+      else byKey.set(key, [entry.item]);
+    }
+    return [...byKey.values()];
+  }
   const groups: { leader: Entry<T>; members: T[] }[] = [];
   const blocker = canBlock(engine, threshold) ? createBlocker(entries.map((e) => e.prepared), threshold) : null;
+  // Items that read the same land where the first of them did.
+  const seen = new Map<string, (typeof groups)[number]>();
   for (const entry of entries) {
-    let home: (typeof groups)[number] | undefined;
+    const key = textKey(entry);
+    let home: (typeof groups)[number] | undefined = seen.get(key);
+    if (home) {
+      home.members.push(entry.item);
+      continue;
+    }
     const ids = blocker ? blocker.candidates(entry.prepared) : null;
     const count = ids ? ids.length : groups.length;
     outer: for (let g = 0; g < count; g += 1) {
@@ -493,8 +641,9 @@ function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: num
     if (home) home.members.push(entry.item);
     else {
       blocker?.add(groups.length, entry.prepared);
-      groups.push({ leader: entry, members: [entry.item] });
+      groups.push((home = { leader: entry, members: [entry.item] }));
     }
+    seen.set(key, home);
   }
   return groups.map((g) => g.members);
 }
@@ -515,8 +664,28 @@ function compareWith(a: string, b: string, engine: Engine): Comparison {
   };
 }
 
-function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Index<T> {
-  let entries = buildEntries(items, keys, engine);
+function optionsKey(engine: Engine): string {
+  return JSON.stringify(engine.options);
+}
+
+function makeIndex<T>(
+  items: readonly T[],
+  keys: KeysOption<T> | undefined,
+  engine: Engine,
+  saved?: SavedIndex,
+): Index<T> {
+  if (saved) {
+    if (saved.version !== 1 || !Array.isArray(saved.texts)) {
+      throw new Error('[fuzzy-toolkit] Unknown saved index format: rebuild it with createIndex().');
+    }
+    if (saved.options !== optionsKey(engine)) {
+      throw new Error('[fuzzy-toolkit] The saved index was built with other options: pass the same options to loadIndex().');
+    }
+    if (saved.texts.length !== items.length) {
+      throw new Error('[fuzzy-toolkit] The saved index does not match these items: rebuild it with createIndex().');
+    }
+  }
+  let entries = buildEntries(items, keys, engine, saved?.texts);
   let snapshot: readonly T[] | null = null;
   const renumber = (): void => {
     entries.forEach((entry, i) => (entry.index = i));
@@ -529,6 +698,11 @@ function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engi
     get items() {
       return (snapshot ??= Object.freeze(entries.map((entry) => entry.item)));
     },
+    toJSON: () => ({
+      version: 1,
+      options: optionsKey(engine),
+      texts: entries.map((entry) => entry.prepared.flatMap((p) => [p.text, p.alt?.text ?? null])),
+    }),
     search: (query, options = {}) =>
       rank(
         query,
@@ -653,6 +827,22 @@ export function createMatcher(options: MatchOptions = {}): Matcher {
 export function createIndex<T>(items: readonly T[], ...args: ItemsArgs<T, ListOptions<T>>): Index<T> {
   const options = args[0] as ListOptions<T> | undefined;
   return makeIndex(items, options?.keys, getEngine(options));
+}
+
+/**
+ * Rebuilds an index saved with `index.toJSON()`, without normalizing the
+ * items again: build it once (at build time, on a server), ship it as JSON,
+ * load it fast. Pass the same items, in the same order, and the same options.
+ *
+ * @example
+ * // build step
+ * writeFileSync('songs.index.json', JSON.stringify(createIndex(songs, { keys: 'title', preset: 'search' })))
+ * // app
+ * const index = loadIndex(songs, savedJson, { keys: 'title', preset: 'search' })
+ */
+export function loadIndex<T>(items: readonly T[], saved: SavedIndex, ...args: ItemsArgs<T, ListOptions<T>>): Index<T> {
+  const options = args[0] as ListOptions<T> | undefined;
+  return makeIndex(items, options?.keys, getEngine(options), saved);
 }
 
 /**
@@ -823,7 +1013,26 @@ export function dedupe<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOption
 export function group<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOptions<T>>): T[][] {
   const options = args[0] as GroupOptions<T> | undefined;
   const engine = getEngine(options);
-  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold);
+  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold, options?.method);
+}
+
+/**
+ * A key that is the same for texts with the same words once normalized, in
+ * any order, repeats ignored: `"Doe, John"` and `"john DOE"` both give
+ * `"doe john"`. Group by it to dedupe huge lists instantly (no typos though),
+ * or use `group(items, { method: 'fingerprint' })`.
+ *
+ * @example
+ * fingerprint('The Beatles - Hey Jude (Remastered)', { preset: 'music' }) // 'beatles hey jude'
+ */
+export function fingerprint(text: string, options?: NormalizeOptions & Pick<MatchOptions, 'preset'>): string {
+  const engine = getEngine(options);
+  return fingerprintOf(engine.normalize(toText(text)));
+}
+
+function fingerprintOf(normalized: string): string {
+  if (normalized === '') return '';
+  return [...new Set(normalized.split(' '))].sort().join(' ');
 }
 
 /**

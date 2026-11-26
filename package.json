@@ -81,6 +81,16 @@
         "default": "./dist/cjs/compat/string-similarity.js"
       }
     },
+    "./react": {
+      "import": {
+        "types": "./dist/esm/react.d.ts",
+        "default": "./dist/esm/react.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react.d.ts",
+        "default": "./dist/cjs/react.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -104,14 +114,30 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "bench:real": "npm run build && node bench/real-data.mjs",
-    "bench:versus": "npm run build && node bench/versus.mjs"
+    "bench:versus": "npm run build && node bench/versus.mjs",
+    "size": "npm run build && node scripts/size.mjs"
   },
   "devDependencies": {
+    "@types/react": "^18.3.12",
+    "esbuild": "^0.24.2",
     "fastest-levenshtein": "^1.0.16",
     "fuse.js": "^7.5.0",
     "fuzzysort": "^4.0.2",
+    "match-sorter": "^6.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "string-similarity": "^4.0.4",
     "typescript": "^5.9.3",
     "vitepress": "^1.6.4"
-  }
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "unpkg": "./dist/browser/fuzzy-toolkit.iife.min.js",
+  "jsdelivr": "./dist/browser/fuzzy-toolkit.iife.min.js"
 }

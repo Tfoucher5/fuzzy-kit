@@ -14,7 +14,7 @@
 - **Accurate**: on 3,000 simulated blind-test guesses over 26k Spotify tracks, 97.6 % of right answers accepted and 0 % of wrong ones (v1: 70 %).
 - **Fast**: bit-parallel edit distances and reusable indexes. Searching 26k songs takes about 40 ms per keystroke, 5 times faster than Fuse.js.
 - **Fully typed**: every option autocompletes, and object keys are checked against your data.
-- **Tiny**: about 6 kB minified and gzipped, no dependencies, ESM and CommonJS.
+- **Small**: no dependencies, ESM and CommonJS, tree-shakable. Minified and gzipped: 7 kB for `similarity`, 10 kB for search, 13 kB for everything, 1.3 kB for raw distances (`npm run size`).
 
 ```sh
 npm install fuzzy-toolkit
@@ -118,12 +118,26 @@ const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' }
 
 index.search('bohem', { limit: 5 })  // prefixes match
 index.search('zep stair')            // words in any order, each one a prefix
+index.search('nyc')                  // initials: New York City
 index.closest('queen')?.item         // best hit
 ```
 
 Nested properties are dotted paths, arrays included: `keys: ['title', 'artist.name', 'tags.label']`. Add `includeMatches: true` to get, on each result, the property that matched (`key`) and the parts of `text` to highlight (`ranges`, as `[start, end]` positions).
 
 `createIndex()` normalizes your list once, so every keystroke only scores the query. When the list changes, update the index instead of rebuilding it: `index.add(song)`, `index.remove((s) => s.id === 42)`, `index.refresh((s) => s === edited)`. With the `search` preset, a full match always ranks above a partial one, and a match at the start of a title above one in the middle.
+
+Build the index once (at build time, on a server) and load it fast: `JSON.stringify(index)`, then `loadIndex(songs, saved, sameOptions)`, 2.5 times faster than rebuilding.
+
+With React, `fuzzy-toolkit/react` does the indexing, the memoization and the highlighting:
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} /></li>)
+```
+
+Without a bundler: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` gives a global `fuzzyToolkit`, or `import { search } from 'https://cdn.jsdelivr.net/npm/fuzzy-toolkit/dist/browser/fuzzy-toolkit.min.js'`.
 
 Show what matched with `highlight()`, and make a field count less with a weight:
 
@@ -159,6 +173,10 @@ group(['Jean Dupont', 'Dupont Jean', 'Marie Curie'])
 // [['Jean Dupont', 'Dupont Jean'], ['Marie Curie']]
 
 dedupe(customers, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc'] })
+
+// Huge file? Same words in any order, case, accents and punctuation aside: instant.
+dedupe(rows, { keys: 'name', method: 'fingerprint' })   // 20,000 rows in a few ms
+fingerprint('Doe, John') === fingerprint('john DOE')    // true
 
 // Reconcile two exports: each order gets its customer, each customer used once.
 join(orders, customers, { left: 'customerName', right: 'name', unique: true })
@@ -197,9 +215,12 @@ Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` li
 | `diff(from, to, options?)` | `{ text, type: 'same' \| 'added' \| 'removed' }[]`, what turns `from` into `to` |
 | `normalize(text, options?)` | the cleaned-up text |
 | `createMatcher(options)` | all of the above with options compiled once |
-| `createIndex(items, options)` | `{ search, closest, add, remove, refresh }` over a pre-processed list |
-| `levenshtein(a, b)`, `damerau(a, b)`, `hamming(a, b)`, `lcs(a, b)` | raw distances, no normalization |
-| `jaroWinkler(a, b)`, `dice(a, b)`, `jaccard(a, b, n?)`, `cosine(a, b, n?)` | raw similarities from 0 to 1, no normalization |
+| `createIndex(items, options)` | `{ search, closest, add, remove, refresh, toJSON }` over a pre-processed list |
+| `loadIndex(items, saved, options)` | an index saved with `toJSON()`, without normalizing again |
+| `fingerprint(text, options?)` | a key equal for texts with the same words in any order |
+| `levenshtein(a, b, { max }?)`, `damerau(a, b, { max }?)`, `hamming(a, b)`, `lcs(a, b)` | raw distances, no normalization; `max` stops early |
+| `jaro`, `jaroWinkler`, `dice`, `jaccard`, `cosine`, `overlap`, `tversky`, `ratcliffObershelp` | raw similarities from 0 to 1, no normalization |
+| `fuzzy-toolkit/react`: `useFuzzySearch(items, query, options)`, `<Highlight>` | search-as-you-type in React |
 
 A `Match<T>` is `{ item, score, index, text }`, plus `key` and `ranges` with `includeMatches: true`. Items can be strings or objects; with objects, `keys` is required and only accepts properties that hold text (TypeScript checks it). Keys can be weighted: `['title', { name: 'artist', weight: 0.8 }]`.
 
@@ -277,11 +298,12 @@ Same inputs for everyone, public data, `npm run bench:versus` ([details](https:/
 
 | Task | Others | fuzzy-toolkit |
 | --- | --- | --- |
-| `compareTwoStrings`, 20k pairs (same results) | string-similarity: 47 ms | **22 ms** |
-| `findBestMatch`, 1k queries × 2k titles (same results) | string-similarity: 4.0 s | **1.1 s** |
-| "Did you mean", 500 typos vs 20k words | string-similarity: 35.6 % right, 6.7 s | **94.8 % right, 0.96 s** |
-| Search 23k song titles, typo in the query, top 10 | Fuse.js: 75.3 % found, 72 ms/query | **89.0 % found, 13 ms/query** |
-| Levenshtein, 40k pairs | fastest-levenshtein: 17.1 ms | **12.6 ms** |
+| `compareTwoStrings`, 20k pairs (same results) | string-similarity: 45 ms | **22 ms** |
+| `findBestMatch`, 1k queries × 2k titles (same results) | string-similarity: 4.0 s | **1.2 s** |
+| "Did you mean", 500 typos vs 20k words | string-similarity: 39 % right, 6.9 s | **93 % right, 0.21 s** |
+| Search 23k song titles, typo in the query, top 10 | Fuse.js: 65 % found, 82 ms/query | **83 % found, 11 ms/query** |
+| Acronyms (`nyc`) in 151k cities, top 10 | match-sorter: 59 % found, 104 ms/query | **82 % found, 19 ms/query** |
+| Levenshtein, sentences of 100-400 characters | fastest-levenshtein: 25 ms | **12 ms** |
 
 ## Upgrading from v1
 

@@ -219,13 +219,57 @@ index.refresh((s) => s === song)                               // re-read items 
 
 `Match.index` is the position in `index.items`, which follows these changes.
 
+## loadIndex
+
+```ts
+loadIndex<T>(items: readonly T[], saved: SavedIndex, options?: ListOptions<T>): Index<T>
+```
+
+`JSON.stringify(index)` (or `index.toJSON()`) saves the normalized texts and the options. `loadIndex()` rebuilds the index from it without normalizing again, about 2.5 times faster. Pass the same items in the same order and the same options; otherwise it throws.
+
+```ts
+// build step
+writeFileSync('cities.index.json', JSON.stringify(createIndex(cities, { preset: 'search' })))
+// app
+const index = loadIndex(cities, await (await fetch('/cities.index.json')).json(), { preset: 'search' })
+```
+
+## fingerprint
+
+```ts
+fingerprint(text: string, options?: NormalizeOptions & { preset?: Preset }): string
+```
+
+The words of the normalized text, once each, sorted: `fingerprint('Doe, John') === fingerprint('john DOE')`. `group(items, { method: 'fingerprint' })` and `dedupe(items, { method: 'fingerprint' })` group by it: no typo tolerance, but instant on any size of list.
+
+## React
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+
+function Search({ songs }) {
+  const [query, setQuery] = useState('')
+  const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+  return (
+    <>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <ul>{results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} /></li>)}</ul>
+    </>
+  )
+}
+```
+
+`useFuzzySearch(items, query, options)` uses the `search` preset by default, indexes the list once (again only when `items` or the options change) and returns results with `ranges`. An empty query returns every item (`whenEmpty: 'none'` returns nothing). `<Highlight text ranges as?>` wraps matching parts in `<mark>` (or `as`).
+
 ## Raw algorithms
 
 No normalization, plain strings in:
 
 ```ts
 levenshtein('kitten', 'sitting') // 3
+levenshtein('kitten', 'sitting', { max: 2 }) // 3: above max, stops early and returns max + 1
 damerau('teh', 'the')            // 1
+jaro('martha', 'marhta')         // 0.944
 jaroWinkler('martha', 'marhta')  // 0.961…
 hamming('karolin', 'kathrin')    // 3
 lcs('ABCBDAB', 'BDCABA')         // 4, longest common subsequence
@@ -237,6 +281,9 @@ Similarities from 0 to 1, on chunks of `n` letters (pairs by default):
 dice('healed', 'sealed')         // 0.8, spaces ignored (same as string-similarity)
 jaccard('night', 'nacht')        // 0.143, shared chunks / all distinct chunks
 cosine('aaaa', 'aaa')            // 1, chunk counts compared as vectors
+overlap('york', 'new york')      // 1, shared chunks / chunks of the smaller text
+tversky('york', 'new york', { alpha: 1, beta: 0 }) // 1, how much of the first is in the second
+ratcliffObershelp('WIKIMEDIA', 'WIKIMANIA') // 0.778, Python's difflib ratio
 jaccard('night', 'nacht', 3)     // on chunks of 3 letters
 ```
 

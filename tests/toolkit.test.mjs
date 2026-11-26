@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { closest, cosine, dedupe, dice, group, hamming, isMatch, jaccard, join, lcs, search, similarity } from '../dist/esm/index.js';
+import { closest, compare, cosine, damerau, dedupe, dice, group, hamming, isMatch, jaccard, jaro, join, lcs, levenshtein, overlap, ratcliffObershelp, search, similarity, tversky } from '../dist/esm/index.js';
 import stringSimilarity, { compareTwoStrings, findBestMatch } from '../dist/esm/compat/string-similarity.js';
 
 /* metrics -------------------------------------------------------------------- */
@@ -75,7 +75,7 @@ test('includeMatches: ranges to highlight and the key that matched', () => {
   assert.deepEqual(hit.ranges, [[4, 12]]);
   assert.equal(hit.text.slice(...hit.ranges[0]), 'Zeppelin');
   const [prefix] = search('stair', ['Stairway to Heaven'], { preset: 'search', includeMatches: true });
-  assert.equal(prefix.text.slice(...prefix.ranges[0]), 'Stairway');
+  assert.equal(prefix.text.slice(...prefix.ranges[0]), 'Stair');
   // Off by default: results keep their v2.1 shape.
   assert.deepEqual(Object.keys(search('queen', songs, { keys: 'artist.name' })[0]), ['item', 'score', 'index', 'text']);
 });
@@ -148,4 +148,74 @@ test('string-similarity: identical to the original on random input', async () =>
     const q = text();
     assert.deepEqual(findBestMatch(q, targets), original.findBestMatch(q, targets));
   }
+});
+
+/* distances and more metrics ------------------------------------------------- */
+
+function referenceDistance(a, b, transpositions) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 0; j <= b.length; j += 1) d[0][j] = j;
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (transpositions && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[a.length][b.length];
+}
+
+test('levenshtein/damerau: exact on long texts (blocked bit-parallel)', () => {
+  let seed = 3;
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const text = (n) => Array.from({ length: n }, () => 'abcx '[Math.floor(random() * 5)]).join('');
+  const mutate = (s) => {
+    for (let k = 0; k < 1 + random() * 8; k += 1) {
+      const i = Math.floor(random() * (s.length - 1));
+      const r = random();
+      s = r < 0.4 ? s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2) : r < 0.7 ? s.slice(0, i) + s.slice(i + 1) : s.slice(0, i) + 'z' + s.slice(i);
+    }
+    return s;
+  };
+  for (let t = 0; t < 400; t += 1) {
+    const a = text(20 + Math.floor(random() * 120));
+    const b = random() < 0.7 ? mutate(a) : text(Math.floor(random() * 140));
+    assert.equal(levenshtein(a, b), referenceDistance(a, b, false), `lev ${a} / ${b}`);
+    assert.equal(damerau(a, b), referenceDistance(a, b, true), `osa ${a} / ${b}`);
+  }
+});
+
+test('levenshtein/damerau: max stops early and returns max + 1', () => {
+  assert.equal(levenshtein('kitten', 'sitting', { max: 5 }), 3);
+  assert.equal(levenshtein('kitten', 'sitting', { max: 2 }), 3);
+  assert.equal(levenshtein('a', 'abcdef', { max: 1 }), 2);
+  assert.equal(damerau('teh', 'the', { max: 0 }), 1);
+  assert.equal(damerau('abc', 'xyz', { max: 1 }), 2);
+  assert.equal(levenshtein('same', 'same', { max: 0 }), 0);
+});
+
+test('metrics: jaro, overlap, tversky, ratcliffObershelp', () => {
+  assert.equal(jaro('martha', 'marhta').toFixed(4), '0.9444');
+  assert.equal(overlap('york', 'new york'), 1);
+  assert.equal(tversky('york', 'new york', { alpha: 1, beta: 0 }), 1);
+  assert.equal(tversky('night', 'nacht'), jaccard('night', 'nacht'));
+  // Same as Python: difflib.SequenceMatcher(None, a, b, autojunk=False).ratio()
+  assert.equal(ratcliffObershelp('WIKIMEDIA', 'WIKIMANIA'), 7 / 9);
+  assert.equal(ratcliffObershelp('GESTALT PATTERN MATCHING', 'GESTALT PRACTICE'), 0.6);
+  assert.equal(ratcliffObershelp('', ''), 1);
+});
+
+/* acronyms ------------------------------------------------------------------ */
+
+test('acronyms: initials match, off by default, on with the search preset', () => {
+  assert.equal(similarity('nyc', 'New York City', { acronyms: true }), 90);
+  assert.equal(similarity('nyx', 'New York City', { acronyms: true }), 80);
+  assert.ok(similarity('nyc', 'New York City') < 50);
+  assert.equal(compare('nyc', 'New York City', { acronyms: true }).scores.acronym, 90);
+  const [hit] = search('nyc', ['Nice', 'Nyack', 'New York City'], { preset: 'search', includeMatches: true });
+  assert.equal(hit.item, 'New York City');
+  assert.deepEqual(hit.ranges.map((r) => hit.text.slice(...r)), ['N', 'Y', 'C']);
+  // A real match still ranks first.
+  assert.equal(search('gs', ['git status', 'gs'], { preset: 'search' })[0].item, 'gs');
 });

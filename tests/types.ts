@@ -113,3 +113,15 @@ search('queen', tracks, { keys: ['artist.formed'] });
 search('queen', tracks, { keys: ['artist.label'] });
 
 export { nested, ranges };
+
+// Saved indexes and React helpers.
+import { loadIndex, type SavedIndex } from '../src/index.js';
+import { useFuzzySearch, Highlight } from '../src/react.js';
+const saved: SavedIndex = createIndex(songs, { keys: 'title' }).toJSON();
+const reloaded: Song | undefined = loadIndex(songs, saved, { keys: 'title' }).closest('x')?.item;
+// @ts-expect-error keys is required for objects
+loadIndex(songs, saved);
+declare const query: string;
+const hits: Match<Song>[] = useFuzzySearch(songs, query, { keys: ['title'], limit: 5 });
+const el = Highlight({ text: 'abc', ranges: [[0, 1]] });
+export { reloaded, hits, el };
