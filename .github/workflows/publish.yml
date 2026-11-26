@@ -50,6 +50,10 @@ jobs:
             echo "docs/guide/changelog.md has no \"## $tag\" section. Rename Unreleased to $tag in the release PR."
             exit 1
           fi
+          # Credit first-time contributors: GitHub's "New Contributors" section, if any.
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" -q .body \
+            | awk '/^## New Contributors/{on=1} /^\*\*Full Changelog/{on=0} on' > contributors.md || true
+          if [ -s contributors.md ]; then printf '\n' >> notes.md; cat contributors.md >> notes.md; fi
           gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file notes.md
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 

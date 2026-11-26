@@ -25,7 +25,7 @@ The project follows **semantic versioning**:
 ## v2.5.0
 
 ### Added
-- Dutch language pack: `fuzzy-toolkit/lang/nl`. Numbers in words with units first (`eenentwintig`, `een en twintig`), ordinals, articles, stop words and phonetic rules (ij/ei, au/ou, v/f, z/s, ch/g). Also in the CLI (`--lang nl`) and the MCP server. Thanks to @techkayacodes, the first outside contribution!
+- Dutch language pack: `fuzzy-toolkit/lang/nl`. Numbers in words with units first (`eenentwintig`, `een en twintig`), ordinals, articles, stop words and phonetic rules (ij/ei, au/ou, v/f, z/s, ch/g). Also in the CLI (`--lang nl`) and the MCP server. Thanks to [@techkayacodes](https://github.com/techkayacodes), the first outside contribution!
 
 ### Project
 - Property-based tests (fast-check): random Unicode input against the laws of distances, scores and `normalize`.

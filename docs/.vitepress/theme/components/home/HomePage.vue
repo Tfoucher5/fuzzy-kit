@@ -9,7 +9,6 @@ import HomeCode from './HomeCode.vue'
 import HomeCli from './HomeCli.vue'
 import HomeTrust from './HomeTrust.vue'
 import HomeCta from './HomeCta.vue'
-import './home.css'
 </script>
 
 <template>

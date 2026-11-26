@@ -37,6 +37,7 @@ export default defineConfig({
           { text: 'Changelog', link: '/guide/changelog' },
           { text: 'Releases', link: `${repo}/releases` },
           { text: 'npm', link: 'https://www.npmjs.com/package/fuzzy-toolkit' },
+          { text: 'Contributors', link: '/contributors' },
           { text: 'Contributing', link: `${repo}/blob/master/CONTRIBUTING.md` },
           { text: 'Support on Ko-fi', link: 'https://ko-fi.com/theofoucher' }
         ]
