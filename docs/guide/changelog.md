@@ -11,6 +11,12 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.6.0
+
+**For apps using `preset: 'search'` since 2.0 or 2.1:** 2.2.0 added `acronyms: true` to this preset, so short queries can return more results. Pass `{ preset: 'search', acronyms: false }` to get the old results back. Nothing in 2.6.0 changes a score.
+
 ### Added
 - `substring` option: like `partial`, and a match may also start inside a word, so `phone` finds `iPhone 15` and `ville` finds `Belleville`. No more `includes()` next to a search. Opt-in: scores without it are unchanged. Also in the MCP server.
 - [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
