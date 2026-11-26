@@ -398,7 +398,8 @@ Yes. `npx fuzzy-toolkit mcp` gives agents the tools directly, and `npx fuzzy-too
 
 ## Contributing
 
-Bug reports with a wrong score, new languages and presets are very welcome.
+Bug reports with a wrong score, new languages, presets and **feature ideas** are
+very welcome: open an issue or a [discussion](https://github.com/Tfoucher5/fuzzy-toolkit/discussions).
 See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ## License
