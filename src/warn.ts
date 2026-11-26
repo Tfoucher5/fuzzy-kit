@@ -14,7 +14,7 @@ export function warnOnce(message: string): void {
 /** Every option a public function reads, to catch typos such as `treshold`. */
 const KNOWN_OPTIONS = new Set([
   // MatchOptions
-  'preset', 'threshold', 'algorithm', 'ignoreWordOrder', 'ignoreSpaces', 'partial', 'phonetic', 'acronyms',
+  'preset', 'threshold', 'algorithm', 'ignoreWordOrder', 'ignoreSpaces', 'partial', 'phonetic', 'acronyms', 'substring',
   // NormalizeOptions
   'caseSensitive', 'accentSensitive', 'punctuation', 'strip', 'ignoreWords', 'replace', 'numbers', 'languages',
   'stopwords', 'stripPatterns',

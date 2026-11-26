@@ -69,7 +69,11 @@ Minified and gzipped, with `npm run size`:
 | --- | --- |
 | `levenshtein`, `damerau` | 1.3 kB |
 | `fuzzy-toolkit/string-similarity` | 0.8 kB |
-| `similarity`, `isMatch` | 7.1 kB |
-| `check`, `checkAll` | 7.8 kB |
-| `createIndex`, `search`, `highlight` | 9.7 kB |
-| everything | 13.4 kB |
+| `similarity`, `isMatch` | 9.5 kB |
+| `check`, `checkAll` | 10.2 kB |
+| `createIndex`, `search`, `highlight` | 12.4 kB |
+| `createMatcher` (every method) | 13.9 kB |
+| everything | 17.0 kB |
+| one extra language (`lang/es`) | +0.6 kB |
+
+The package is marked `"sideEffects": false`, so bundlers keep only what you import. A matcher from `createMatcher` is one object with every method, so it always carries all of them: import the functions you call when size matters.

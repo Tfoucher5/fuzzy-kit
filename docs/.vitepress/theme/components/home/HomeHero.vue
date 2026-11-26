@@ -111,7 +111,7 @@ onBeforeUnmount(() => clearTimeout(timer))
 
       <p class="sub ft-fade-up" style="animation-delay: 0.2s">
         Fuzzy string matching for JavaScript and TypeScript. Typos, accents, word order, numbers in words and noise like
-        "(feat. X)" are handled for you, in about 6 kB with zero dependencies.
+        "(feat. X)" are handled for you, in about 10 kB with zero dependencies.
       </p>
 
       <div class="actions ft-fade-up" style="animation-delay: 0.3s">

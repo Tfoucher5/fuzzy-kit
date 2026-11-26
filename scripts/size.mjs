@@ -14,6 +14,7 @@ const cases = {
   'everything': `export * from './dist/esm/index.js'`,
   'similarity / isMatch': `export { similarity, isMatch } from './dist/esm/index.js'`,
   'check / checkAll (quiz)': `export { check, checkAll } from './dist/esm/index.js'`,
+  'createMatcher (every method)': `export { createMatcher } from './dist/esm/index.js'`,
   'createIndex / search / highlight': `export { createIndex, search, highlight } from './dist/esm/index.js'`,
   'levenshtein / damerau': `export { levenshtein, damerau } from './dist/esm/index.js'`,
   'fuzzy-toolkit/string-similarity': `export * from './dist/esm/compat/string-similarity.js'`,

@@ -70,7 +70,13 @@ export function findIn(text: string, query: string, engine: Engine, threshold: n
   return kept.sort((a, b) => a.start - b.start);
 }
 
-export function highlightIn(text: string, query: string, engine: Engine, threshold: number): Segment[] {
+export function highlightIn(
+  text: string,
+  query: string,
+  engine: Engine,
+  threshold: number,
+  inside = engine.options.substring,
+): Segment[] {
   const ranges: [number, number][] = findIn(text, query, engine, threshold).map((f) => [f.start, f.end]);
 
   // Word by word too, so "bohem" lights up the start of "Bohemian".
@@ -79,7 +85,13 @@ export function highlightIn(text: string, query: string, engine: Engine, thresho
     for (const token of tokenize(text, engine)) {
       for (const word of words) {
         const typos = allowance(word.length);
-        if (prefixDistance(word, token.normalized) > typos) continue;
+        if (prefixDistance(word, token.normalized) > typos) {
+          // `substring`: the word typed as is, inside this word ("phone" in "iPhone").
+          const at = inside ? token.normalized.indexOf(word, 1) : -1;
+          if (at === -1 || token.normalized.length !== token.end - token.start) continue;
+          ranges.push([token.start + at, token.start + at + word.length]);
+          break;
+        }
         const whole = word.length >= token.normalized.length - typos;
         const length = whole ? token.end - token.start : Math.min(word.length, token.end - token.start);
         ranges.push([token.start, token.start + length]);

@@ -58,7 +58,7 @@ function move(event: PointerEvent) {
           <h3>Tiny, no baggage</h3>
           <p>ESM and CommonJS, Node 18+ and every browser. Language packs only weigh in when you import them.</p>
           <div class="pair">
-            <div><strong>~6 kB</strong><span>min + gzip</span></div>
+            <div><strong>~10 kB</strong><span>min + gzip</span></div>
             <div><strong>0</strong><span>dependencies</span></div>
           </div>
         </article>

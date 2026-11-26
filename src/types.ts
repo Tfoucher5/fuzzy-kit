@@ -279,6 +279,16 @@ export interface MatchOptions extends NormalizeOptions {
    * @default false (true with the `search` preset)
    */
   acronyms?: boolean;
+
+  /**
+   * `smart` only: like `partial`, and a match may also start in the middle of
+   * a word: `phone` finds `iPhone 15`, `ville` finds `Villeneuve` and
+   * `Belleville`. Turns `partial` on. A match from the start of a word still
+   * ranks first: a mid-word match counts 95 %. Opt-in, scores are unchanged
+   * without it.
+   * @default false
+   */
+  substring?: boolean;
 }
 
 /** Options of {@link check}. */

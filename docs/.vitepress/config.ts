@@ -6,7 +6,7 @@ const repo = 'https://github.com/Tfoucher5/fuzzy-toolkit'
 
 export default defineConfig({
   title: 'fuzzy-toolkit',
-  description: 'Fuzzy string matching for JavaScript and TypeScript: typos, accents, word order and numbers in words, in about 6 kB with zero dependencies.',
+  description: 'Fuzzy string matching for JavaScript and TypeScript: typos, accents, word order and numbers in words, in about 10 kB with zero dependencies.',
 
   base: '/fuzzy-toolkit/',
   cleanUrls: true,
@@ -16,7 +16,7 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#4338ca' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'fuzzy-toolkit: close enough is a match' }],
-    ['meta', { property: 'og:description', content: 'Fuzzy string matching for JavaScript and TypeScript. Typos, accents, word order and numbers in words, in about 6 kB with zero dependencies.' }],
+    ['meta', { property: 'og:description', content: 'Fuzzy string matching for JavaScript and TypeScript. Typos, accents, word order and numbers in words, in about 10 kB with zero dependencies.' }],
   ],
 
   markdown: {

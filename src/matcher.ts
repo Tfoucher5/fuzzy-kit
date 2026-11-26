@@ -409,13 +409,13 @@ function rangesOf(text: string, query: string, engine: Engine): [number, number]
   if (!exact) {
     const { preset: _preset, ...options } = engine.options;
     exact = engine.options.partial || engine.options.acronyms
-      ? compileEngine({ ...options, partial: false, acronyms: false })
+      ? compileEngine({ ...options, partial: false, acronyms: false, substring: false })
       : engine;
     exactEngines.set(engine, exact);
   }
   const ranges: [number, number][] = [];
   let at = 0;
-  for (const segment of highlightIn(text, query, exact, Math.max(80, engine.options.threshold))) {
+  for (const segment of highlightIn(text, query, exact, Math.max(80, engine.options.threshold), engine.options.substring)) {
     if (segment.match) ranges.push([at, at + segment.text.length]);
     at += segment.text.length;
   }
