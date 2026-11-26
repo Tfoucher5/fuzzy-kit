@@ -17,8 +17,10 @@ Maintainers only. Releases go out from `master`.
 
 - **npm trusted publishing**: on npmjs.com, package `fuzzy-toolkit` >
   Settings > Trusted publishing > GitHub Actions: owner `Tfoucher5`,
-  repository `fuzzy-toolkit`, workflow `publish.yml`, environment `npm`.
-  No npm token is stored anywhere.
+  repository `fuzzy-toolkit`, workflow `publish.yml`, environment `npm`,
+  and tick **Allow npm publish** (without it the publish step fails with
+  `403 OIDC permission denied for this action`). No npm token is stored
+  anywhere.
 - **GitHub environment `npm`**: Settings > Environments > New environment
   `npm`, with yourself as required reviewer, so a release waits for your
   click before publishing.

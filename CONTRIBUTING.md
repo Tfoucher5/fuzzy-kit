@@ -9,7 +9,8 @@ faster algorithm. You can write issues and pull requests in English or French.
 - **Report a wrong result.** Two texts that should match and don't (or the
   reverse) are the most useful bug reports. Use the "Wrong result" template.
 - **Add a language.** Numbers in words, articles, stop words and phonetic
-  rules for your language. See [Languages and presets](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions).
+  rules for your language. See [Languages and presets](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions),
+  and test it with `assertLanguage()` from `fuzzy-toolkit/testing`.
   Open a "Language request" issue first if you want help or want to avoid
   duplicate work.
 - **Share a preset.** Publish it on npm as `fuzzy-toolkit-preset-<name>` with
@@ -34,7 +35,8 @@ npm test
 | --- | --- |
 | `src/distance.ts`, `src/metrics.ts` | Raw algorithms (Levenshtein, Damerau, Jaro, Dice...). |
 | `src/normalize.ts`, `src/numbers.ts`, `src/phonetic.ts` | Text cleanup, numbers in words, sounds-alike keys. |
-| `src/lang/` | Built-in language packs (`en`, `fr`). |
+| `src/lang/` | Language packs (`en`, `fr`, `es`, `de`, `it`). |
+| `src/testing.ts` | `fuzzy-toolkit/testing`, the kit to test a pack or a preset. |
 | `src/presets.ts`, `src/core.ts`, `src/define.ts` | Presets and the extension API. |
 | `src/engine.ts` | Scoring (`smart` and the other algorithms). |
 | `src/matcher.ts` | The public API: `compare`, `check`, `search`, `createIndex`... |

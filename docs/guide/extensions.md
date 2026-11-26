@@ -121,8 +121,54 @@ punctuation turned into spaces. Write `dieciseis`, not `dieciséis`.
 | `phonetic` | `[RegExp, replacement]` rules, applied in order to each word with `phonetic: true`. |
 
 `defineLanguage()` checks the pack and explains what is wrong. The built-in
-packs are good examples: `fuzzy-toolkit/lang/en` and `fuzzy-toolkit/lang/fr`
+packs are good examples: `fuzzy-toolkit/lang/en`, `/fr`, `/es`, `/de` and `/it`
 ([source](https://github.com/Tfoucher5/fuzzy-toolkit/tree/master/src/lang)).
+
+## Testing your pack
+
+`fuzzy-toolkit/testing` checks a pack against the cases you expect, with any
+test runner (node:test, Vitest, Jest...). `assertLanguage()` throws one error
+that lists every case that fails and what came out instead:
+
+```js
+import test from 'node:test'
+import { assertLanguage } from 'fuzzy-toolkit/testing'
+import pt from './index.js'
+
+test('Portuguese', () => {
+  assertLanguage(pt, {
+    numbers: [['vinte e um', '21'], ['cem', '100']],   // read as digits
+    articles: [['Os Mutantes', 'mutantes']],             // with strip: ['articles']
+    stopwords: [['Cidade de Deus', 'cidade deus']],      // with stopwords: true
+    sounds: [['kasa', 'casa']],                          // must match with phonetic: true
+    distinct: [['pato', 'gato']],                        // must not match, even by sound
+  })
+})
+```
+
+```text
+Error: [fuzzy-toolkit] Language "pt": 2 problems
+  numbers: "cem" gives "cem", expected "100".
+  sounds: "kasa" and "casa" should match (score 75).
+```
+
+It also checks the pack itself (a valid `code`, a `name`) and that normalized
+text stays the same when normalized again. Presets work the same way:
+
+```js
+import { assertPreset } from 'fuzzy-toolkit/testing'
+
+assertPreset(companyNames, {
+  matches: [['ACME Inc.', 'Acme']],
+  differs: [['Acme', 'Apex']],
+  normalized: [['ACME Inc.', 'acme']],
+})
+```
+
+`checkLanguage()` and `checkPreset()` return the problems as an array instead
+of throwing. A good set of cases is what reviewers look at first: a dozen
+numbers, a few articles and stop words, and pairs that must and must not
+sound alike.
 
 ## Publishing
 

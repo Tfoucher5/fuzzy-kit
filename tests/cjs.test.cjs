@@ -31,3 +31,10 @@ test('CommonJS: Spanish, German and Italian packs', () => {
   assert.equal(normalize('einundzwanzig', { languages: [de] }), '21');
   assert.equal(normalize('ventitre', { languages: [it] }), '23');
 });
+
+test('CommonJS: the testing kit', () => {
+  const { assertLanguage } = require('../dist/cjs/testing.js');
+  const es = require('../dist/cjs/lang/es.js').default;
+  assertLanguage(es, { numbers: [['treinta y dos', '32']] });
+  assert.throws(() => assertLanguage(es, { numbers: [['dos', '3']] }), /1 problem/);
+});
