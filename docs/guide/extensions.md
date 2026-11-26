@@ -23,6 +23,7 @@ compare('bamos', 'Vamos', { languages: [es], phonetic: true })
 | Spanish | `fuzzy-toolkit/lang/es` | `treinta y dos`, `veintiuno`, `segunda` → `2º` | b/v, c/s/z, silent h, ll/y |
 | German | `fuzzy-toolkit/lang/de` | `einundzwanzig`, `dreißig`, `zweite` | ue/ü, v/f, w/v, z/ts, ei/ai/ey |
 | Italian | `fuzzy-toolkit/lang/it` | `ventitré`, `quarantotto`, `seconda` → `2º` | c/ch/k, gli/li, gn, z/ts |
+| Dutch | `fuzzy-toolkit/lang/nl` | `eenentwintig`, `een en twintig`, `tweede` | ij/ei, au/ou, v/f, z/s, ch/g, final d/t |
 
 Numbers are read from 0 to 99, plus 100. Community packs for other languages
 are published on npm as `fuzzy-toolkit-lang-<code>`.
@@ -121,7 +122,7 @@ punctuation turned into spaces. Write `dieciseis`, not `dieciséis`.
 | `phonetic` | `[RegExp, replacement]` rules, applied in order to each word with `phonetic: true`. |
 
 `defineLanguage()` checks the pack and explains what is wrong. The built-in
-packs are good examples: `fuzzy-toolkit/lang/en`, `/fr`, `/es`, `/de` and `/it`
+packs are good examples: `fuzzy-toolkit/lang/en`, `/fr`, `/es`, `/de`, `/it` and `/nl`
 ([source](https://github.com/Tfoucher5/fuzzy-toolkit/tree/master/src/lang)).
 
 ## Testing your pack
