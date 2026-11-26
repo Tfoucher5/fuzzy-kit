@@ -122,7 +122,7 @@ fuzzy-toolkit as a peer dependency:
 {
   "name": "fuzzy-toolkit-preset-company-names",
   "keywords": ["fuzzy-toolkit-plugin", "fuzzy-toolkit-preset"],
-  "peerDependencies": { "fuzzy-toolkit": "^2.3.0" }
+  "peerDependencies": { "fuzzy-toolkit": "^2.2.0" }
 }
 ```
 
