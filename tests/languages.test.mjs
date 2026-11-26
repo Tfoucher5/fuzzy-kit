@@ -5,8 +5,9 @@ import { compare, normalize } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
+import { assertLanguage } from '../dist/esm/testing.js';
 
-/** [input, normalized] with the pack, and pairs that must sound alike. */
+/** [input, normalized] with the pack, pairs that must sound alike and pairs that must not. */
 const PACKS = {
   es: {
     pack: es,
@@ -18,6 +19,7 @@ const PACKS = {
     articles: [['Los Lobos', 'lobos'], ['La Oreja de Van Gogh', 'oreja de van gogh'], ['Un Verano Sin Ti', 'verano sin ti']],
     stopwords: [['Casa de Papel', 'casa papel']],
     sounds: [['bamos', 'vamos'], ['jente', 'gente'], ['kaballo', 'caballo'], ['yuvia', 'lluvia'], ['ola', 'hola'], ['sapato', 'zapato']],
+    distinct: [['pato', 'gato'], ['casa', 'cosa']],
   },
   de: {
     pack: de,
@@ -28,6 +30,7 @@ const PACKS = {
     articles: [['Die Ärzte', 'arzte'], ['Der Untergang', 'untergang'], ['Das Boot', 'boot']],
     stopwords: [['Herr der Ringe', 'herr ringe']],
     sounds: [['Mueller', 'Müller'], ['Schmitt', 'Schmidt'], ['Fogel', 'Vogel'], ['Mayer', 'Meier'], ['Maier', 'Meyer']],
+    distinct: [['Haus', 'Maus'], ['Bach', 'Buch']],
   },
   it: {
     pack: it,
@@ -38,31 +41,18 @@ const PACKS = {
     articles: [["L'amica geniale", 'amica geniale'], ['Il Volo', 'volo'], ['Gli Uccelli', 'uccelli']],
     stopwords: [['La Vita è Bella', 'vita bella'], ['Nel blu dipinto di blu', 'blu dipinto blu']],
     sounds: [['kiesa', 'chiesa'], ['pitsa', 'pizza'], ['familia', 'famiglia'], ['latsio', 'Lazio']],
+    distinct: [['pane', 'cane'], ['sole', 'sale']],
   },
 };
 
-for (const [code, { pack, numbers, articles, stopwords, sounds }] of Object.entries(PACKS)) {
+for (const [code, { pack, ...cases }] of Object.entries(PACKS)) {
   test(`${code}: pack metadata`, () => {
     assert.equal(pack.code, code);
     assert.equal(pack.kind, 'language');
     assert.ok(Object.isFrozen(pack));
   });
-  test(`${code}: numbers in words`, () => {
-    for (const [input, expected] of numbers) assert.equal(normalize(input, { languages: [pack] }), expected, input);
-  });
-  test(`${code}: leading articles`, () => {
-    for (const [input, expected] of articles) {
-      assert.equal(normalize(input, { languages: [pack], strip: ['articles'] }), expected, input);
-    }
-  });
-  test(`${code}: stop words`, () => {
-    for (const [input, expected] of stopwords) {
-      assert.equal(normalize(input, { languages: [pack], stopwords: true }), expected, input);
-    }
-  });
-  test(`${code}: spelled by ear`, () => {
-    for (const [a, b] of sounds) assert.equal(compare(a, b, { languages: [pack], phonetic: true }).match, true, `${a} / ${b}`);
-  });
+  // The same kit contributors use for their own packs.
+  test(`${code}: numbers, articles, stop words and sounds`, () => assertLanguage(pack, cases));
 }
 
 test('packs combine: Spanish and English numbers together', () => {
