@@ -161,6 +161,40 @@ interface Entry<T> {
   prepared: readonly Prepared[];
   /** Whether the last prepared text joins all the others. */
   joined: boolean;
+  /** Characters present in any of the texts (see {@link letterMask}). */
+  mask: number;
+  /** Length of the longest prepared text. */
+  longest: number;
+  /** Largest key weight. */
+  heaviest: number;
+}
+
+/**
+ * The characters of a text as 32 bits: one per letter, the others share the
+ * remaining bits. A query character whose bit is missing from a text costs
+ * at least one edit, which rules most of a list out in one AND.
+ */
+function letterMask(text: string): number {
+  let mask = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text.charCodeAt(i);
+    if (c === 32) continue;
+    mask |= 1 << (c >= 97 && c <= 122 ? c - 97 : 26 + (c % 6));
+  }
+  return mask;
+}
+
+function popcount(x: number): number {
+  x -= (x >>> 1) & 0x55555555;
+  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+  return (Math.imul((x + (x >>> 4)) & 0x0f0f0f0f, 0x01010101) >>> 24);
+}
+
+/** Whether the letter filter is exact for these options (every score is `1 - edits / length` or better bounded). */
+function canFilterLetters(engine: Engine): boolean {
+  const { algorithm, phonetic } = engine.options;
+  if (algorithm === 'smart') return !phonetic;
+  return algorithm === 'levenshtein' || algorithm === 'damerau' || algorithm === 'tokenSort';
 }
 
 interface ItemTexts {
@@ -248,7 +282,19 @@ function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, e
       names.push(undefined);
     }
     const joined = joinTexts && texts.length > 2;
-    return { item, index, texts, weights, keys: names, joined, prepared: texts.map((t) => engine.read(t)) };
+    const prepared = texts.map((t) => engine.read(t));
+    let mask = 0;
+    let longest = 0;
+    for (const p of prepared) {
+      mask |= letterMask(p.text);
+      longest = Math.max(longest, p.text.length);
+      if (p.alt) {
+        mask |= letterMask(p.alt.text);
+        longest = Math.max(longest, p.alt.text.length);
+      }
+    }
+    const heaviest = weights.length > 0 ? Math.max(...weights) : 1;
+    return { item, index, texts, weights, keys: names, joined, prepared, mask, longest, heaviest };
   });
 }
 
@@ -342,9 +388,27 @@ function rankEntries<T>(
   const max = Math.max(0, Math.floor(limit));
   if (max === 0) return [];
 
+  // Letters of the query that an entry lacks each cost an edit.
+  const filter = canFilterLetters(engine) && prepared.text !== '';
+  const queryMask = letterMask(prepared.text);
+  const altMask = prepared.alt ? letterMask(prepared.alt.text) : queryMask;
+  const queryLength = Math.max(prepared.text.length, prepared.alt?.text.length ?? 0);
+  const acronymQuery = engine.options.acronyms && prepared.words.length === 1;
+  const hopeless = (entry: Entry<T>, floor: number): boolean => {
+    if (!filter) return false;
+    const missing = Math.min(popcount(queryMask & ~entry.mask), popcount(altMask & ~entry.mask));
+    if (missing === 0) return false;
+    // An acronym with a typo may lack one letter.
+    if (missing === 1 && acronymQuery) return false;
+    const lowest = floor / Math.max(entry.heaviest, 1e-9) - 0.01;
+    // Whatever the text's length, `missing` edits leave at most this score.
+    return 100 * (1 - missing / (queryLength + missing)) < lowest;
+  };
+
   if (!Number.isFinite(limit) || max >= entries.length) {
     const results: Match<T>[] = [];
     for (const entry of entries) {
+      if (hopeless(entry, threshold)) continue;
       const match = bestOf(prepared, entry, engine, threshold, withKey);
       if (match) results.push(match);
     }
@@ -356,6 +420,7 @@ function rankEntries<T>(
   const top: Match<T>[] = [];
   let floor = threshold;
   for (const entry of entries) {
+    if (hopeless(entry, floor)) continue;
     const match = bestOf(prepared, entry, engine, floor, withKey);
     if (!match) continue;
     if (top.length === max && match.score <= top[max - 1]!.score) continue;

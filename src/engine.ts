@@ -324,7 +324,8 @@ function smart(
   // "I Don't Care", but "I Do" is not a match for "i don".
   const partial = options.partial && (queryFirst ? a.text.length < b.text.length : a.text.length !== b.text.length);
   const sound = options.phonetic ? soundScore(a, b, options, floor) : 0;
-  const acronym = options.acronyms ? acronymScore(a, b) : 0;
+  // In a search, only the query may be the acronym.
+  const acronym = options.acronyms && (!queryFirst || a.words.length === 1) ? acronymScore(a, b) : 0;
   if (acronym > 0) record(scores, 'acronym', acronym);
   // In lists, most candidates are far off: rule them out with cheap bounds.
   if (floor > 0 && !scores && !canReach(a, b, options, partial, floor - 0.01)) return Math.max(sound, acronym);
