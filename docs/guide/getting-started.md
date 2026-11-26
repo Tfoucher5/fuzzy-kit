@@ -78,6 +78,8 @@ quiz.similarity('Hey Jude - Remastered', 'hey jude') // 100
 quiz.search('queen', songs, { keys: 'artist' })
 ```
 
+A matcher carries every method, so a bundler keeps all of them (about 14 kB min+gzip). When the size of a browser bundle matters, import only the functions you call and pass them the same options object: `check` and `checkAll` alone are about 10 kB. See [Size](/guide/benchmarks#size).
+
 ## Work with objects
 
 List functions accept strings or objects. With objects, tell them where the text is with `keys`: a property, several properties, or a function. TypeScript only lets you name properties that hold text.

@@ -12,9 +12,19 @@ The project follows **semantic versioning**:
 ## Unreleased
 
 ### Added
+- `substring` option: like `partial`, and a match may also start inside a word, so `phone` finds `iPhone 15` and `ville` finds `Belleville`. No more `includes()` next to a search. Opt-in: scores without it are unchanged. Also in the MCP server.
 - [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
 
+### Changed
+- `npx fuzzy-toolkit ai-setup` only writes when the project's `package.json` lists fuzzy-toolkit (`--force` to write anyway), writes a shorter block that tells assistants to go through the project's existing calls, links the online `llms.txt` instead of a `node_modules` path that may not exist, and never replaces a block someone edited by hand (`--force` does).
+- The MCP `check` tool says in its description that it gives the engine's verdict, not the verdict of a given app, which adds its own rules.
+
+### Project
+- A test freezes what each built-in preset sets: a preset only changes in a major version. New behavior comes as an option to turn on.
+
 ### Docs
+- `search` preset: 2.2.0 added `acronyms: true` in a minor version, which can return more results than 2.1. Documented, with `acronyms: false` to get the old behavior back.
+- Size: `createMatcher` carries every method (about 14 kB); import the functions you call for a smaller bundle.
 - New design for the documentation site. The home page has a live demo scored by the real library, benchmarks and examples for each function.
 - New [Playground](/playground) page.
 - Getting started shows pnpm, yarn, bun and CDN installs; the search recipe covers React.
@@ -75,6 +85,8 @@ The project follows **semantic versioning**:
 - Nested keys: `keys: ['artist.name', 'tags.label']`, arrays included, checked by TypeScript.
 - `includeMatches` option of `search()`, `closest()` and indexes: each result gets `key` (the property that matched) and `ranges` (the parts of `text` to highlight, to the character: `New Yo|rk`).
 - `acronyms` option, on with the `search` preset: `nyc` finds New York City, one typo allowed from 3 letters on.
+
+  **Behavior change** (noted after the fact): with `preset: 'search'`, a single-word query now also matches as initials, so it can return more results than in 2.1. Pass `acronyms: false` to keep the 2.1 behavior. Presets are now frozen within a major version.
 - `index.toJSON()` and `loadIndex()`: save an index as JSON and load it 2.5 times faster than rebuilding it.
 - `fingerprint()` and `group`/`dedupe` `method: 'fingerprint'`: instant grouping of texts with the same words in any order.
 - `levenshtein(a, b, { max })` and `damerau(a, b, { max })`: stop early above a distance.

@@ -1,7 +1,7 @@
 <h1 align="center">fuzzy-toolkit</h1>
 
 <p align="center"><strong>Close enough is a match.</strong><br>
-Fuzzy string matching for JavaScript and TypeScript: typos, accents, word order, numbers in words and noise are handled for you, in about 6 kB with zero dependencies.</p>
+Fuzzy string matching for JavaScript and TypeScript: typos, accents, word order, numbers in words and noise are handled for you, in about 10 kB with zero dependencies.</p>
 
 <p align="center">
 <a href="https://www.npmjs.com/package/fuzzy-toolkit"><img alt="npm version" src="https://img.shields.io/npm/v/fuzzy-toolkit?logo=npm&color=4338ca"></a>
@@ -48,7 +48,7 @@ Scores go from 0 to 100, and the default threshold is 80.
 - **One function per job.** Grade answers (`check`), search as you type (`createIndex`), suggest corrections (`closest`), spot names in a message (`find`), clean data (`dedupe`, `join`), show what was misspelled (`diff`).
 - **Finds more, waits less.** On song titles with typos it finds more than Fuse.js, 7 times faster ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)).
 - **Speaks 6 languages.** Numbers in words, articles and sounds in English, French, Spanish, German, Italian and Dutch, plus your own packs.
-- **Small and typed.** About 6 kB, no dependencies, ESM and CommonJS, Node 18+ and every browser. Every option autocompletes.
+- **Small and typed.** About 10 kB (min+gzip) for the usual imports, no dependencies, ESM and CommonJS, Node 18+ and every browser. Every option autocompletes.
 - **More than a library.** A React hook, a command line tool for CSV files, and an MCP server for AI agents.
 
 ## Coming from `string-similarity`

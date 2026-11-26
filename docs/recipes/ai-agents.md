@@ -13,7 +13,7 @@ fuzzy-toolkit is built to be used by AI coding assistants and agents as much as 
 | `search` | Items of a list matching a query, best first (strings or objects with `keys`) |
 | `dedupe` | A list without its near-duplicates, plus the groups that were merged |
 | `join` | Each item of a list paired with its best match in another |
-| `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms) |
+| `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms). It is the engine's verdict with the options given, not your app's: an app usually adds its own rules. |
 | `find` | Occurrences of a name inside a longer text, with positions |
 
 Every tool takes the usual options: `threshold`, `preset` (`music`, `search`, `strict`), `phonetic`, `ignoreWords`, `languages`.
@@ -58,7 +58,9 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 npx fuzzy-toolkit ai-setup
 ```
 
-Adds a short block (what to import, examples, mistakes to avoid) to the instruction files your project already has: `AGENTS.md` (Codex, Jules, Cursor, Copilot, Zed...), `CLAUDE.md` (Claude Code), `.cursor/rules/fuzzy-toolkit.mdc` and `.github/copilot-instructions.md`. With none of them, it creates `AGENTS.md`. The block sits between `<!-- fuzzy-toolkit:start -->` markers: running the command again updates it and leaves the rest of the file alone. `--claude`, `--cursor`, `--copilot`, `--agents` or `--all` pick the files, `--print` only shows the block.
+Run it after `npm install fuzzy-toolkit`: it only writes when `package.json` lists the package (`--force` to write anyway). It adds a short block (the mistakes to avoid, a link to the reference, and a reminder to go through the code that already calls fuzzy-toolkit) to the instruction files your project already has: `AGENTS.md` (Codex, Jules, Cursor, Copilot, Zed...), `CLAUDE.md` (Claude Code), `.cursor/rules/fuzzy-toolkit.mdc` and `.github/copilot-instructions.md`. With none of them, it creates `AGENTS.md`.
+
+The block sits between `<!-- fuzzy-toolkit:start -->` markers: running the command again updates it and leaves the rest of the file alone. If you edit the block yourself, in your own words or language, it stays as you wrote it (`--force` replaces it). `--claude`, `--cursor`, `--copilot`, `--agents` or `--all` pick the files, `--print` only shows the block.
 
 ### What ships in the package
 

@@ -46,6 +46,7 @@ const OPTIONS = {
     enum: ['music', 'search', 'strict'],
     description: 'music: song titles and artists (drops "feat.", "- Remastered", "(Live)"); search: as-you-type, prefixes and partial words; strict: codes, references.',
   },
+  substring: { type: 'boolean', description: 'Also match from inside a word ("phone" finds "iPhone", "ville" finds "Belleville"), for search. Default false.' },
   phonetic: { type: 'boolean', description: 'Also match texts that sound the same ("Filip" / "Philippe"). Default false.' },
   ignoreWords: { type: 'array', items: { type: 'string' }, description: 'Whole words to ignore, e.g. ["inc", "ltd", "sarl"].' },
   languages: {
@@ -168,7 +169,7 @@ const TOOLS = [
   tool(
     'check',
     'Grade an answer',
-    'Grades a guess against the accepted answer(s): "correct", "close" (almost) or "wrong". For a guess naming several things at once (a title and an artist), pass "answers" as an object such as {"title": "Bohemian Rhapsody", "artist": "Queen"}.',
+    'Grades a guess against the accepted answer(s): "correct", "close" (almost) or "wrong". This is the engine\'s verdict with these options, not the verdict of a given app: apps add their own rules (thresholds, required parts, extra normalization), so do not tell a user their app will accept an answer because this tool says "correct". For a guess naming several things at once (a title and an artist), pass "answers" as an object such as {"title": "Bohemian Rhapsody", "artist": "Queen"}.',
     {
       guess: { type: 'string', description: 'What was typed or said.' },
       answers: {

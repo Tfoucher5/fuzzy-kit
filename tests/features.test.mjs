@@ -5,7 +5,33 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join as joinPath } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, compare, createIndex, diff, search, similarity } from '../dist/esm/index.js';
+import { check, compare, createIndex, diff, highlight, search, similarity } from '../dist/esm/index.js';
+
+/* substring ----------------------------------------------------------------- */
+
+test('substring: a match may start inside a word, opt-in', () => {
+  const items = ['iPhone 15', 'Phone case', 'Galaxy S24', 'Smartphone Pro', 'Belleville'];
+  const names = (query, options) => search(query, items, options).map((r) => r.item);
+
+  // Off by default and with the search preset: same results as before.
+  assert.deepEqual(names('phone', { preset: 'search' }), ['Phone case', 'iPhone 15']);
+  assert.equal(similarity('phone', 'Smartphone Pro'), similarity('phone', 'Smartphone Pro', { substring: false }));
+
+  // On: inside words too, word starts still first.
+  assert.deepEqual(names('phone', { preset: 'search', substring: true }), ['Phone case', 'iPhone 15', 'Smartphone Pro']);
+  assert.deepEqual(names('ville', { substring: true }), ['Belleville']);
+  assert.deepEqual(names('smart pro', { substring: true }), ['Smartphone Pro']);
+  assert.deepEqual(createIndex(items, { substring: true }).search('phone').map((r) => r.item), ['Phone case', 'iPhone 15', 'Smartphone Pro']);
+  // It turns partial matching on.
+  assert.ok(similarity('phone', 'Smartphone Pro', { substring: true }) > similarity('phone', 'Smartphone Pro', { partial: true }));
+  assert.ok(similarity('phone', 'Phone case', { substring: true }) > similarity('phone', 'Smartphone', { substring: true }));
+  assert.equal(compare('phone', 'Smartphone', { substring: true }).scores.partial !== undefined, true);
+
+  // What matched is highlighted inside the word.
+  assert.deepEqual(search('phone', ['Smartphone Pro'], { substring: true, includeMatches: true })[0].ranges, [[5, 10]]);
+  assert.deepEqual(search('ville', ['Belleville'], { substring: true, includeMatches: true })[0].ranges, [[5, 10]]);
+  assert.ok(highlight('Smartphone Pro', 'phone', { substring: true }).some((s) => s.match));
+});
 
 /* phonetic ------------------------------------------------------------------ */
 

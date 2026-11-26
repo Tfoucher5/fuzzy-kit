@@ -123,23 +123,84 @@ test('ai-setup: writes the block once, keeps the rest of the file', async () => 
   const { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join: joinPath } = await import('node:path');
-  const { setup, detect, upsertBlock } = await import('../bin/ai-setup.mjs');
+  const { setup, detect, upsertBlock, block } = await import('../bin/ai-setup.mjs');
 
   const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
   assert.deepEqual(detect(dir), ['agents']);
   assert.deepEqual(setup(dir, ['agents']), ['created  AGENTS.md']);
-  assert.match(readFileSync(joinPath(dir, 'AGENTS.md'), 'utf8'), /fuzzy-toolkit:start[\s\S]*closest\('pari'[\s\S]*fuzzy-toolkit:end/);
+  const agents = readFileSync(joinPath(dir, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /fuzzy-toolkit:start [0-9a-f]{12} -->[\s\S]*0 to 100[\s\S]*fuzzy-toolkit:end/);
+  // Short, and no path that may not exist.
+  assert.ok(agents.split('\n').length < 15);
+  assert.match(agents, /https:\/\/tfoucher5\.github\.io\/fuzzy-toolkit\/llms\.txt/);
 
   writeFileSync(joinPath(dir, 'CLAUDE.md'), '# Rules\n\nUse tabs.\n');
   mkdirSync(joinPath(dir, '.cursor'));
   assert.deepEqual(detect(dir), ['agents', 'claude', 'cursor']);
   assert.deepEqual(setup(dir, detect(dir)), ['unchanged AGENTS.md', 'updated  CLAUDE.md', 'created  .cursor/rules/fuzzy-toolkit.mdc']);
   const claude = readFileSync(joinPath(dir, 'CLAUDE.md'), 'utf8');
-  assert.ok(claude.startsWith('# Rules\n\nUse tabs.\n\n<!-- fuzzy-toolkit:start -->'));
-  assert.match(readFileSync(joinPath(dir, '.cursor/rules/fuzzy-toolkit.mdc'), 'utf8'), /^---\ndescription: .*\nalwaysApply: false\n---/);
+  assert.ok(claude.startsWith('# Rules\n\nUse tabs.\n\n<!-- fuzzy-toolkit:start '));
+  assert.match(readFileSync(joinPath(dir, '.cursor/rules/fuzzy-toolkit.mdc'), 'utf8'), /^---\ndescription: .*\nalwaysApply: false\n---\n\n<!-- fuzzy-toolkit:start/);
   assert.ok(existsSync(joinPath(dir, 'AGENTS.md')));
 
-  // An old block is replaced, text around it is kept.
-  const updated = upsertBlock('a\n<!-- fuzzy-toolkit:start -->\nold\n<!-- fuzzy-toolkit:end -->\nb\n', 'new');
-  assert.equal(updated, 'a\n<!-- fuzzy-toolkit:start -->\nnew\n<!-- fuzzy-toolkit:end -->\nb\n');
+  // A block written by the tool is replaced, text around it is kept.
+  assert.equal(upsertBlock(`a\n${block('old')}\nb\n`, 'new'), `a\n${block('new')}\nb\n`);
+  assert.equal(upsertBlock(`a\r\n${block('old').replace(/\n/g, '\r\n')}\r\nb\r\n`, 'new'), `a\r\n${block('new')}\r\nb\r\n`);
+  // A block edited by hand is kept, unless forced.
+  const edited = `a\n${block('old').replace('old', 'mine')}\nb\n`;
+  assert.equal(upsertBlock(edited, 'new'), undefined);
+  assert.equal(upsertBlock(edited, 'new', true), `a\n${block('new')}\nb\n`);
+  assert.equal(upsertBlock('<!-- fuzzy-toolkit:start -->\nwritten by me\n<!-- fuzzy-toolkit:end -->\n', 'new'), undefined);
+  writeFileSync(joinPath(dir, 'CLAUDE.md'), claude.replace('0 to 100', 'zéro à cent'));
+  assert.match(setup(dir, ['claude'])[0], /^kept {5}CLAUDE\.md \(the fuzzy-toolkit block was edited by hand/);
+  assert.match(readFileSync(joinPath(dir, 'CLAUDE.md'), 'utf8'), /zéro à cent/);
+  assert.deepEqual(setup(dir, ['claude'], { force: true }), ['updated  CLAUDE.md']);
+  // A hand-written Cursor rule without markers is kept too.
+  writeFileSync(joinPath(dir, '.cursor/rules/fuzzy-toolkit.mdc'), 'my own rule\n');
+  assert.match(setup(dir, ['cursor'])[0], /^kept/);
+});
+
+test('ai-setup: replaces what 2.5.0 wrote', async () => {
+  const { mkdtempSync, mkdirSync, readFileSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join: joinPath } = await import('node:path');
+  const { setup } = await import('../bin/ai-setup.mjs');
+  const old = readFileSync(new URL('./fixtures/ai-setup-2.5.0.md', import.meta.url), 'utf8');
+
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
+  writeFileSync(joinPath(dir, 'AGENTS.md'), `# AGENTS.md\n\n<!-- fuzzy-toolkit:start -->\n${old}\n<!-- fuzzy-toolkit:end -->\n`);
+  mkdirSync(joinPath(dir, '.cursor/rules'), { recursive: true });
+  writeFileSync(
+    joinPath(dir, '.cursor/rules/fuzzy-toolkit.mdc'),
+    `---\ndescription: How to do fuzzy string matching (similarity, did you mean, fuzzy search, dedupe, matching lists) with fuzzy-toolkit\nalwaysApply: false\n---\n\n${old}\n`,
+  );
+  assert.deepEqual(setup(dir, ['agents', 'cursor']), ['updated  AGENTS.md', 'updated  .cursor/rules/fuzzy-toolkit.mdc']);
+  assert.doesNotMatch(readFileSync(joinPath(dir, 'AGENTS.md'), 'utf8'), /node_modules\/fuzzy-toolkit\/llms\.txt`/);
+});
+
+test('ai-setup: only writes when package.json lists fuzzy-toolkit', async () => {
+  const { mkdtempSync, writeFileSync, existsSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join: joinPath } = await import('node:path');
+  const { execFileSync, spawnSync } = await import('node:child_process');
+  const { isDependency } = await import('../bin/ai-setup.mjs');
+  const bin = new URL('../bin/fuzzy-toolkit.mjs', import.meta.url).pathname;
+
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
+  assert.equal(isDependency(dir), false);
+  const refused = spawnSync(process.execPath, [bin, 'ai-setup', '--dir', dir], { encoding: 'utf8' });
+  assert.equal(refused.status, 1);
+  assert.match(refused.stderr, /does not list fuzzy-toolkit, so nothing was written/);
+  assert.equal(existsSync(joinPath(dir, 'AGENTS.md')), false);
+
+  writeFileSync(joinPath(dir, 'package.json'), '{ "name": "app", "dependencies": { "left-pad": "1" } }');
+  assert.equal(isDependency(dir), false);
+  writeFileSync(joinPath(dir, 'package.json'), '{ not json');
+  assert.equal(isDependency(dir), false);
+  writeFileSync(joinPath(dir, 'package.json'), '{ "name": "app", "devDependencies": { "fuzzy-toolkit": "^2.5.0" } }');
+  assert.equal(isDependency(dir), true);
+  assert.match(execFileSync(process.execPath, [bin, 'ai-setup', '--dir', dir], { encoding: 'utf8' }), /created {2}AGENTS\.md/);
+
+  const forced = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
+  assert.match(execFileSync(process.execPath, [bin, 'ai-setup', '--dir', forced, '--force'], { encoding: 'utf8' }), /created {2}AGENTS\.md/);
 });

@@ -83,7 +83,8 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     algorithm,
     ignoreWordOrder: merged.ignoreWordOrder ?? true,
     ignoreSpaces: merged.ignoreSpaces ?? true,
-    partial: merged.partial ?? false,
+    partial: (merged.partial ?? false) || merged.substring === true,
+    substring: merged.substring ?? false,
     caseSensitive: merged.caseSensitive ?? false,
     accentSensitive: merged.accentSensitive ?? false,
     punctuation: merged.punctuation ?? 'space',
@@ -203,7 +204,7 @@ function tokenSet(a: Prepared, b: Prepared): number {
  * Score of the shorter text matching part of the longer one, or -1 when it
  * provably cannot exceed `floor` (checked first with cheap bit-parallel bounds).
  */
-function partialScore(short: Prepared, long: Prepared, floor: number): number {
+function partialScore(short: Prepared, long: Prepared, floor: number, substring: boolean): number {
   const s = short.text;
   const l = long.text;
   // A part never scores as high as the whole: weigh by how much is covered,
@@ -244,8 +245,32 @@ function partialScore(short: Prepared, long: Prepared, floor: number): number {
     best = Math.max(best, 1 - distance / letters);
   }
 
+  // `substring`: a match may also start inside a word ("phone" in "iPhone"),
+  // a bit below one from the start of a word.
+  if (substring && best < 1) {
+    let inside = wholeBound;
+    if (multiWord) {
+      let distance = 0;
+      let letters = 0;
+      for (const word of short.words) {
+        let wordBest = word.length;
+        for (const target of long.words) {
+          if (wordBest === 0) break;
+          wordBest = Math.min(wordBest, searchDistance(word, target));
+        }
+        distance += wordBest;
+        letters += word.length;
+      }
+      inside = Math.max(inside, 1 - distance / letters);
+    }
+    if (inside > best) return Math.max(0, best * coverage, inside * coverage * SUBSTRING_WEIGHT, fromStart);
+  }
+
   return Math.max(0, best * coverage, fromStart);
 }
+
+/** Weight of a match that starts inside a word, with `substring`. */
+const SUBSTRING_WEIGHT = 0.95;
 
 type Scores = Comparison['scores'];
 
@@ -352,7 +377,7 @@ function smart(
   }
   if (best < 100 && partial) {
     const [short, long] = a.text.length < b.text.length ? [a, b] : [b, a];
-    const value = partialScore(short, long, Math.max(best, floor - 0.01));
+    const value = partialScore(short, long, Math.max(best, floor - 0.01), options.substring);
     if (value >= 0) {
       record(scores, 'partial', value);
       if (round(value) > best) best = round(value);

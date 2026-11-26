@@ -13,8 +13,14 @@ A preset is a ready-made set of options. Anything you pass yourself wins over it
 | Preset | For | What it sets |
 | --- | --- | --- |
 | `music` | song titles, artists | `strip: ['featuring', 'version', 'brackets', 'articles']`, `replace: { '&': 'and', '+': 'and', n: 'and' }` |
-| `search` | search boxes | `partial: true`, `threshold: 70` |
+| `search` | search boxes | `partial: true`, `acronyms: true`, `threshold: 70`, `numbers: false` |
 | `strict` | codes, references | `ignoreWordOrder: false`, `ignoreSpaces: false`, `threshold: 90` |
+
+A built-in preset does not change within a major version: what it sets in 2.x stays the same until 3.0, and a test enforces it. New behavior arrives as an option you turn on yourself.
+
+::: warning `search` and acronyms
+2.2.0 broke that rule: it added `acronyms: true` to the `search` preset, so `nyc` started to find New York City, and short queries can return more results than in 2.0 and 2.1. To get the 2.0 behavior back, pass `{ preset: 'search', acronyms: false }`.
+:::
 
 ## Matching
 
@@ -25,6 +31,7 @@ A preset is a ready-made set of options. Anything you pass yourself wins over it
 | `ignoreSpaces` | `true` | `stairwaytoheaven` matches `stairway to heaven`. |
 | `partial` | `false` | The shorter text may match a part of the longer one, starting at a word. A full match always scores higher. |
 | `acronyms` | `false` (`true` with the `search` preset) | A single word may be the initials of the other text: `nyc` = `New York City`, one typo allowed from 3 letters on. Scores 90, or 80 with a typo. In lists, only the query can be the acronym. |
+| `substring` | `false` | Like `partial`, and a match may also start inside a word: `phone` finds `iPhone 15` and `Smartphone`, `ville` finds `Belleville`. Turns `partial` on. A match from the start of a word still ranks first (inside a word counts 95 %). For search-as-you-type over product names, file names, codes. |
 | `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
 | `algorithm` | `'smart'` | See [How it works](/guide/how-it-works#algorithms). |
 

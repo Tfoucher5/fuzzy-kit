@@ -16,3 +16,19 @@ is untrusted until reviewed:
   `scripts/`, tests (they run in CI), regular expressions (ReDoS), hidden or
   bidirectional Unicode, minified or encoded content.
 - Only then approve the fork's workflow runs.
+
+## Stability: never break dependents silently
+
+The package is used by apps that rely on its exact results. Top priority:
+
+- No behavior change in a minor or patch release: scores, verdicts, presets,
+  defaults, normalization, CLI output, MCP tool results. New behavior comes as
+  an option users turn on themselves; the default changes only in a major.
+- Built-in presets are frozen per major (`tests/stability.test.mjs`); scores
+  are pinned by `tests/golden/`. If either has to change, the change waits for
+  the next major. Never update them just to make a test pass.
+- Any change a dependent could notice is written as **Behavior change** in
+  `docs/guide/changelog.md`, with the one-line option that restores the old
+  behavior, and repeated in the release notes.
+- Keep it working everywhere: Node 18+, browsers, ESM and CommonJS, Windows,
+  zero runtime dependencies.
