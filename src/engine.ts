@@ -42,6 +42,8 @@ export interface Engine {
   readonly normalize: Normalizer;
   /** Normalizes and prepares a raw text for comparisons. */
   readonly read: (text: string) => Prepared;
+  /** Rebuilds what {@link read} returned from its normalized texts. */
+  readonly restore: (text: string, alt: string | null) => Prepared;
 }
 
 /** A normalized text and the variants `smart` needs, computed once. */
@@ -130,7 +132,11 @@ export function compileEngine(options: MatchOptions = {}): Engine {
     const written = asWritten(raw);
     return written === text ? prepared : { ...prepared, alt: prepare(written, sounds) };
   };
-  return { options: resolved, normalize, read };
+  const restore = (text: string, alt: string | null): Prepared => {
+    const prepared = prepare(text, sounds);
+    return alt === null ? prepared : { ...prepared, alt: prepare(alt, sounds) };
+  };
+  return { options: resolved, normalize, read, restore };
 }
 
 /**

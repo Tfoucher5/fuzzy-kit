@@ -12,10 +12,11 @@ export {
   highlight,
   isMatch,
   join,
+  loadIndex,
   search,
   similarity,
 } from './matcher.js';
-export type { Index, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
+export type { Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';
 export { diff } from './diff.js';
 export type { Change, DiffOptions } from './diff.js';

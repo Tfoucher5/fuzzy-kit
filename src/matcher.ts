@@ -70,6 +70,11 @@ export interface MatcherCheckOptions {
 
 /** A pre-processed list of items, ready to be searched many times. */
 export interface Index<T> {
+  /**
+   * The normalized texts and options, as plain JSON, to load later with
+   * {@link loadIndex} and skip normalizing again. `JSON.stringify(index)` calls it.
+   */
+  toJSON(): SavedIndex;
   /** Number of items in the index. */
   readonly size: number;
   /** The indexed items, in order. `Match.index` is a position in this list. */
@@ -175,12 +180,14 @@ interface Entry<T> {
  * remaining bits. A query character whose bit is missing from a text costs
  * at least one edit, which rules most of a list out in one AND.
  */
+const LETTER_BITS = new Int32Array(128);
+for (let c = 0; c < 128; c += 1) LETTER_BITS[c] = c === 32 ? 0 : 1 << (c >= 97 && c <= 122 ? c - 97 : 26 + (c % 6));
+
 function letterMask(text: string): number {
   let mask = 0;
   for (let i = 0; i < text.length; i += 1) {
     const c = text.charCodeAt(i);
-    if (c === 32) continue;
-    mask |= 1 << (c >= 97 && c <= 122 ? c - 97 : 26 + (c % 6));
+    mask |= c < 128 ? LETTER_BITS[c]! : 1 << (26 + (c % 6));
   }
   return mask;
 }
@@ -267,7 +274,22 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
   };
 }
 
-function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Entry<T>[] {
+/** An index saved with `index.toJSON()`. */
+export interface SavedIndex {
+  /** Format version. */
+  version: 1;
+  /** The options the index was built with, to refuse loading it with others. */
+  options: string;
+  /** Normalized texts of each item: text, then the text with numbers as written (or null). */
+  texts: (string | null)[][];
+}
+
+function buildEntries<T>(
+  items: readonly T[],
+  keys: KeysOption<T> | undefined,
+  engine: Engine,
+  saved?: SavedIndex['texts'],
+): Entry<T>[] {
   if (!Array.isArray(items)) {
     throw new TypeError('[fuzzy-toolkit] Expected an array of items.');
   }
@@ -283,7 +305,14 @@ function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, e
       names.push(undefined);
     }
     const joined = joinTexts && texts.length > 2;
-    const prepared = texts.map((t) => engine.read(t));
+    let prepared: Prepared[];
+    if (saved) {
+      const row = saved[index];
+      if (!row || row.length !== texts.length * 2) {
+        throw new Error('[fuzzy-toolkit] The saved index does not match these items: rebuild it with createIndex().');
+      }
+      prepared = texts.map((_, i) => engine.restore(row[i * 2]!, row[i * 2 + 1] ?? null));
+    } else prepared = texts.map((t) => engine.read(t));
     let mask = 0;
     let longest = 0;
     for (const p of prepared) {
@@ -635,8 +664,28 @@ function compareWith(a: string, b: string, engine: Engine): Comparison {
   };
 }
 
-function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Index<T> {
-  let entries = buildEntries(items, keys, engine);
+function optionsKey(engine: Engine): string {
+  return JSON.stringify(engine.options);
+}
+
+function makeIndex<T>(
+  items: readonly T[],
+  keys: KeysOption<T> | undefined,
+  engine: Engine,
+  saved?: SavedIndex,
+): Index<T> {
+  if (saved) {
+    if (saved.version !== 1 || !Array.isArray(saved.texts)) {
+      throw new Error('[fuzzy-toolkit] Unknown saved index format: rebuild it with createIndex().');
+    }
+    if (saved.options !== optionsKey(engine)) {
+      throw new Error('[fuzzy-toolkit] The saved index was built with other options: pass the same options to loadIndex().');
+    }
+    if (saved.texts.length !== items.length) {
+      throw new Error('[fuzzy-toolkit] The saved index does not match these items: rebuild it with createIndex().');
+    }
+  }
+  let entries = buildEntries(items, keys, engine, saved?.texts);
   let snapshot: readonly T[] | null = null;
   const renumber = (): void => {
     entries.forEach((entry, i) => (entry.index = i));
@@ -649,6 +698,11 @@ function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engi
     get items() {
       return (snapshot ??= Object.freeze(entries.map((entry) => entry.item)));
     },
+    toJSON: () => ({
+      version: 1,
+      options: optionsKey(engine),
+      texts: entries.map((entry) => entry.prepared.flatMap((p) => [p.text, p.alt?.text ?? null])),
+    }),
     search: (query, options = {}) =>
       rank(
         query,
@@ -773,6 +827,22 @@ export function createMatcher(options: MatchOptions = {}): Matcher {
 export function createIndex<T>(items: readonly T[], ...args: ItemsArgs<T, ListOptions<T>>): Index<T> {
   const options = args[0] as ListOptions<T> | undefined;
   return makeIndex(items, options?.keys, getEngine(options));
+}
+
+/**
+ * Rebuilds an index saved with `index.toJSON()`, without normalizing the
+ * items again: build it once (at build time, on a server), ship it as JSON,
+ * load it fast. Pass the same items, in the same order, and the same options.
+ *
+ * @example
+ * // build step
+ * writeFileSync('songs.index.json', JSON.stringify(createIndex(songs, { keys: 'title', preset: 'search' })))
+ * // app
+ * const index = loadIndex(songs, savedJson, { keys: 'title', preset: 'search' })
+ */
+export function loadIndex<T>(items: readonly T[], saved: SavedIndex, ...args: ItemsArgs<T, ListOptions<T>>): Index<T> {
+  const options = args[0] as ListOptions<T> | undefined;
+  return makeIndex(items, options?.keys, getEngine(options), saved);
 }
 
 /**
