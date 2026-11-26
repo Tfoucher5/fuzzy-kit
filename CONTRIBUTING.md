@@ -16,8 +16,14 @@ faster algorithm. You can write issues and pull requests in English or French.
 - **Share a preset.** Publish it on npm as `fuzzy-toolkit-preset-<name>` with
   the keyword `fuzzy-toolkit-plugin`. Presets of general interest can also
   be proposed for the core with the "Preset proposal" template.
+- **Propose a feature.** Missing an option, a function, a metric, an
+  integration? Open a "Feature request" issue, or start a
+  [discussion](https://github.com/Tfoucher5/fuzzy-toolkit/discussions) if the
+  idea is still rough. Say what you're trying to do; a solution is optional.
+  For a big change, wait for a go before writing the code.
 - **Improve the docs**, in `docs/`.
-- Issues labelled `good first issue` are a good place to start.
+- Issues labelled `good first issue` are a good place to start, and
+  `help wanted` ones are open to anyone.
 
 ## Setup
 
