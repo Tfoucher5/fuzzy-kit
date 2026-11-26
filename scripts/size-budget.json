@@ -1,0 +1,9 @@
+{
+  "everything": 16.5,
+  "similarity / isMatch": 9,
+  "check / checkAll (quiz)": 9.7,
+  "createIndex / search / highlight": 11.7,
+  "levenshtein / damerau": 1.5,
+  "fuzzy-toolkit/string-similarity": 1,
+  "fuzzy-toolkit/react": 11.9
+}

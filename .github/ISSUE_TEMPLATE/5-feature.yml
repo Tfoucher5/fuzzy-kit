@@ -1,0 +1,16 @@
+name: Feature request
+description: Something fuzzy-toolkit could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What you're trying to do
+      description: The problem first; a solution is welcome but optional.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How it could look
+      render: js

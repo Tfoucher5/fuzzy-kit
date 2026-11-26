@@ -1,0 +1,24 @@
+name: Bug
+description: A crash, a wrong type, a broken import or CLI command.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: Code to reproduce, what you see (error message, stack trace) and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: fuzzy-toolkit version
+      placeholder: '2.2.0'
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: Node version, browser or bundler, ESM or CommonJS.
+      placeholder: Node 22, ESM

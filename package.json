@@ -128,18 +128,22 @@
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs tests/*.test.cjs",
+    "golden:update": "npm run build && node scripts/golden.mjs --update",
     "bench": "npm run build && node bench/bench.mjs",
     "prepublishOnly": "npm test",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "bench:real": "npm run build && node bench/real-data.mjs",
+    "bench:check": "npm run build && node bench/real-data.mjs --check",
+    "bench:baseline": "npm run build && node bench/real-data.mjs --update-baseline",
     "bench:versus": "npm run build && node bench/versus.mjs",
-    "size": "npm run build && node scripts/size.mjs"
+    "size": "npm run build && node scripts/size.mjs",
+    "size:check": "npm run build && node scripts/size.mjs --check"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.25.12",
     "fastest-levenshtein": "^1.0.16",
     "fuse.js": "^7.5.0",
     "fuzzysort": "^4.0.2",
@@ -159,5 +163,9 @@
     }
   },
   "unpkg": "./dist/browser/fuzzy-toolkit.iife.min.js",
-  "jsdelivr": "./dist/browser/fuzzy-toolkit.iife.min.js"
+  "jsdelivr": "./dist/browser/fuzzy-toolkit.iife.min.js",
+  "overrides": {
+    "esbuild": "$esbuild",
+    "vite": "^6.4.4"
+  }
 }

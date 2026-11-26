@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/Tfoucher5/fuzzy-toolkit/discussions
+    about: Ask how to do something, or discuss an idea before opening an issue.
+  - name: Security issue
+    url: https://github.com/Tfoucher5/fuzzy-toolkit/security/advisories/new
+    about: Report a vulnerability privately. Please don't open a public issue.

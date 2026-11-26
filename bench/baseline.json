@@ -1,0 +1,10 @@
+{
+  "Spotify: guesses accepted (typos, accents, no \"feat\", no \"Remaster\")": 97.6,
+  "Spotify: wrong songs accepted (random other title)": 0,
+  "Spotify: with phonetic: guesses accepted": 97.7,
+  "Spotify: with phonetic: wrong songs accepted": 0,
+  "Spotify: search(): wanted song in top 10 (partial query)": 82.3,
+  "Cities: typo + no accents: right city in top 5": 100,
+  "Spelling: one typo: right word first (\"did you mean\")": 88.6,
+  "Spelling: one typo: right word in top 3": 98.9
+}

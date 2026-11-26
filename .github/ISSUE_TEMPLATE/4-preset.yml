@@ -1,0 +1,36 @@
+name: Preset proposal
+description: Propose a preset for one kind of data (addresses, company names, medicine...).
+title: 'Preset: '
+labels: [preset]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most presets are best published as their own npm package (`fuzzy-toolkit-preset-<name>`, keyword `fuzzy-toolkit-plugin`).
+        Propose one here if you think it belongs in the core, or if you want feedback before publishing.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      placeholder: company-names
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: What data it is for, with examples that should match
+      placeholder: |
+        'ACME Inc.' = 'Acme'
+        'Dupont & Fils SARL' = 'dupont et fils'
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options it would set
+      render: js
+      placeholder: |
+        definePreset({
+          name: 'company-names',
+          options: { ignoreWords: ['inc', 'sarl'], replace: { '&': 'and' } },
+        })

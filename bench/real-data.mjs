@@ -8,6 +8,10 @@
 // Optional comparisons, if installed (`npm i --no-save fuse.js string-similarity`):
 // Fuse.js for search, string-similarity for answer checking.
 // Set GUESS_RATER_V1=/path/to/v1/src/index.js to compare with guess-rater 1.x.
+//
+// `npm run bench:check` fails if fuzzy-toolkit's accuracy got worse than in
+// bench/baseline.json (the typos are seeded, so results are reproducible).
+// After an intended improvement, refresh it with `npm run bench:baseline`.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
@@ -227,4 +231,31 @@ await cities();
 await spelling();
 
 if (process.env.BENCH_JSON) writeFileSync(process.env.BENCH_JSON, JSON.stringify(rows, null, 2));
+
+// Accuracy rows of fuzzy-toolkit itself: percentages, other libraries left out.
+const OTHERS = /Fuse|string-similarity|guess-rater|rated "close"/;
+const accuracy = Object.fromEntries(
+  rows.filter((r) => r.value.endsWith(' %') && !OTHERS.test(r.metric)).map((r) => [`${r.dataset}: ${r.metric}`, Number.parseFloat(r.value)]),
+);
+const BASELINE = new URL('./baseline.json', import.meta.url);
+if (process.argv.includes('--update-baseline')) {
+  writeFileSync(BASELINE, `${JSON.stringify(accuracy, null, 2)}\n`);
+  console.log(`\nWrote ${BASELINE.pathname}`);
+}
+if (process.argv.includes('--check')) {
+  const baseline = JSON.parse(readFileSync(BASELINE, 'utf8'));
+  const failures = [];
+  for (const [metric, before] of Object.entries(baseline)) {
+    const now = accuracy[metric];
+    // "wrong" rates must not go up, every other rate must not go down.
+    const worse = now === undefined || (/wrong/.test(metric) ? now > before : now < before);
+    if (worse) failures.push(`  ${metric}: ${before} % -> ${now ?? 'missing'} %`);
+  }
+  if (failures.length > 0) {
+    console.error(`\nAccuracy got worse than bench/baseline.json:\n${failures.join('\n')}`);
+    console.error('If this is intended, run `npm run bench:baseline` and explain why in the pull request.');
+    process.exit(1);
+  }
+  console.log('\nAccuracy is at least as good as bench/baseline.json.');
+}
 console.log(`\nNode ${process.version}, ${process.platform} ${process.arch}`);
