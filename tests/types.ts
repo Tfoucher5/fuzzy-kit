@@ -8,7 +8,11 @@ import {
   search,
   similarity,
   diff,
+  defineLanguage,
+  definePreset,
   type Change,
+  type Language,
+  type PresetPack,
   type CheckResult,
   type Match,
 } from '../src/index.js';
@@ -125,3 +129,15 @@ declare const query: string;
 const hits: Match<Song>[] = useFuzzySearch(songs, query, { keys: ['title'], limit: 5 });
 const el = Highlight({ text: 'abc', ranges: [[0, 1]] });
 export { reloaded, hits, el };
+
+// Extensions
+const es: Language = defineLanguage({ code: 'es', numbers: { units: ['cero', 'uno'], joiner: 'y' }, phonetic: [[/v/g, 'b']] });
+const addresses: PresetPack = definePreset({ name: 'addresses', extends: 'strict', options: { replace: { bd: 'boulevard' }, languages: ['fr'] } });
+definePreset({ name: 'x', extends: addresses, options: { stripPatterns: [/cedex/g] } });
+similarity('a', 'b', { preset: addresses, languages: ['en', es], stopwords: true });
+// @ts-expect-error built-in languages are typed
+similarity('a', 'b', { languages: ['es'] });
+// @ts-expect-error options cannot set a preset, use extends
+definePreset({ name: 'x', options: { preset: 'music' } });
+// @ts-expect-error phonetic rules are [RegExp, string]
+defineLanguage({ code: 'es', phonetic: [['v', 'b']] });

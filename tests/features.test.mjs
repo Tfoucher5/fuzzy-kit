@@ -140,3 +140,16 @@ test('cli: text from stdin, JSON, compare and errors', () => {
   assert.match(run(['--help']), /Usage/);
   assert.throws(() => run(['nope']), /unknown command/);
 });
+
+test('cli: --preset and --lang load extensions from files', () => {
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const lib = new URL('../dist/esm/index.js', import.meta.url).href;
+  const preset = joinPath(dir, 'companies.mjs');
+  writeFileSync(preset, `import { definePreset } from '${lib}';\nexport default definePreset({ name: 'companies', options: { ignoreWords: ['sarl'] } });\n`);
+  const lang = joinPath(dir, 'es.mjs');
+  writeFileSync(lang, `import { defineLanguage } from '${lib}';\nexport const es = defineLanguage({ code: 'es', numbers: { units: ['cero', 'uno', 'dos'] } });\n`);
+  assert.equal(JSON.parse(run(['compare', 'Dupont SARL', 'dupont', '-p', preset, '--json'])).score, 100);
+  assert.equal(JSON.parse(run(['compare', 'dos', '2', '--lang', lang, '--json'])).score, 100);
+  assert.equal(JSON.parse(run(['compare', 'two', '2', '--lang', `fr,${lang}`, '--json'])).score < 100, true);
+  assert.throws(() => run(['compare', 'a', 'b', '-p', lang]), /does not export a preset/);
+});

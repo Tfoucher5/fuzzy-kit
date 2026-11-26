@@ -12,3 +12,12 @@ test('CommonJS: string-similarity drop-in', () => {
   assert.equal(stringSimilarity.compareTwoStrings('healed', 'sealed'), 0.8);
   assert.equal(stringSimilarity.findBestMatch('healed', ['edward', 'sealed']).bestMatchIndex, 1);
 });
+
+test('CommonJS: extensions', () => {
+  const { defineLanguage, definePreset, normalize } = require('../dist/cjs/index.js');
+  const fr = require('../dist/cjs/lang/fr.js');
+  assert.equal(fr.default.code, 'fr');
+  const es = defineLanguage({ code: 'es', numbers: { units: ['cero', 'uno', 'dos'] } });
+  assert.equal(normalize('dos', { languages: [es] }), '2');
+  assert.equal(definePreset({ name: 'x', extends: 'music', options: {} }).options.strip.length, 4);
+});
