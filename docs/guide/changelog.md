@@ -11,6 +11,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.4.0
+
 ### Added
 - Spanish, German and Italian language packs: `fuzzy-toolkit/lang/es`, `/de` and `/it`. Numbers in words (`treinta y dos`, `einundzwanzig`, `ventitré`), ordinals, articles, stop words and phonetic rules. Import one and pass it in `languages`; bundles only carry the packs they import. See [Languages and presets](/guide/extensions).
 - `fuzzy-toolkit/testing`, a kit for people who write language packs and presets: `assertLanguage(pack, { numbers, articles, stopwords, sounds, distinct })` and `assertPreset(preset, { matches, differs, normalized })` check the cases you expect and list every one that fails, with any test runner. See [Testing your pack](/guide/extensions#testing-your-pack).
