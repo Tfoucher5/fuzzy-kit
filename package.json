@@ -1,6 +1,6 @@
 {
   "name": "fuzzy-toolkit",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Fuzzy string matching toolkit and drop-in replacement for string-similarity (compareTwoStrings, findBestMatch), 3x faster. Typo-tolerant similarity, search-as-you-type, did-you-mean, highlight, dedupe, join, Levenshtein, Dice, Jaro-Winkler. Zero dependencies, TypeScript, ESM + CommonJS.",
   "keywords": [
     "mcp",

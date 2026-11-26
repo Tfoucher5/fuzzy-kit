@@ -11,6 +11,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.5.0
+
 ### Added
 - Dutch language pack: `fuzzy-toolkit/lang/nl`. Numbers in words with units first (`eenentwintig`, `een en twintig`), ordinals, articles, stop words and phonetic rules (ij/ei, au/ou, v/f, z/s, ch/g). Also in the CLI (`--lang nl`) and the MCP server. Thanks to @techkayacodes, the first outside contribution!
 
