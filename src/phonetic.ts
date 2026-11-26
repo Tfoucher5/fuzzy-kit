@@ -5,8 +5,11 @@
 // word at a time. It is deliberately simple: a few rewrite rules that merge
 // letters that sound the same, then double letters collapse.
 
+import type { Language, PhoneticRule } from './types.js';
+
 // `X` marks the "sh" sound. Rules run in order.
-const RULES: readonly (readonly [RegExp, string])[] = [
+/** The rules shared by the built-in English and French packs. */
+export const LATIN_SOUNDS: readonly PhoneticRule[] = [
   [/^kn/, 'n'],
   [/^wr/, 'r'],
   [/^ps/, 's'],
@@ -38,22 +41,52 @@ const RULES: readonly (readonly [RegExp, string])[] = [
   [/(?<=[^aeiou])e$/, ''],
 ];
 
-const cache = new Map<string, string>();
+/** Turns one normalized word into its "sounds like" key. */
+export type SoundOf = (word: string) => string;
 
-/** The "sounds like" key of one normalized word. Digits are kept as they are. */
-export function soundOf(word: string): string {
-  let out = cache.get(word);
-  if (out !== undefined) return out;
-  out = word.toLowerCase();
-  if (!/^\d+$/.test(out)) {
-    for (const [re, to] of RULES) out = out.replace(re, to);
-    // Never reduce a word to nothing ("h", "eh").
-    if (out === '') out = word.toLowerCase();
-  }
-  if (cache.size > 50_000) cache.clear();
-  cache.set(word, out);
-  return out;
+const DIGITS_RE = /^\d+$/;
+
+/** Builds the phonetic key function for a list of rules, with its own cache. */
+export function compileSounds(rules: readonly PhoneticRule[]): SoundOf {
+  const cache = new Map<string, string>();
+  return (word) => {
+    let out = cache.get(word);
+    if (out !== undefined) return out;
+    out = word.toLowerCase();
+    if (!DIGITS_RE.test(out)) {
+      for (const [re, to] of rules) {
+        re.lastIndex = 0;
+        out = out.replace(re, to);
+      }
+      // Never reduce a word to nothing ("h", "eh").
+      if (out === '') out = word.toLowerCase();
+    }
+    if (cache.size > 50_000) cache.clear();
+    cache.set(word, out);
+    return out;
+  };
 }
+
+const compiled = new WeakMap<readonly PhoneticRule[], SoundOf>();
+
+/**
+ * The phonetic key of a set of languages: their rule lists run one after the
+ * other, each list once (English and French share theirs).
+ */
+export function soundsFor(languages: readonly Language[]): SoundOf {
+  const lists = [...new Set(languages.map((l) => l.phonetic).filter((r): r is readonly PhoneticRule[] => !!r))];
+  if (lists.length === 1) {
+    const only = lists[0]!;
+    let fn = compiled.get(only);
+    if (!fn) compiled.set(only, (fn = compileSounds(only)));
+    return fn;
+  }
+  return compileSounds(lists.flat());
+}
+
+/** The "sounds like" key of one normalized word, English and French rules. Digits are kept as they are. */
+export const soundOf: SoundOf = compileSounds(LATIN_SOUNDS);
+compiled.set(LATIN_SOUNDS, soundOf);
 
 /**
  * How much a match on sound alone is worth: identical sounds score 95, so a

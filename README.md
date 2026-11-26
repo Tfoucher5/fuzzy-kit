@@ -230,7 +230,10 @@ All options are optional and can be passed to any function, `createMatcher()` or
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `preset` | | `'music'`, `'search'` or `'strict'`. Your own options win over the preset. |
+| `preset` | | `'music'`, `'search'`, `'strict'` or your own from `definePreset()`. Your own options win over the preset. |
+| `languages` | `['en', 'fr']` | Languages to read numbers, articles, stop words and sounds in: built-in codes or packs from `defineLanguage()`. |
+| `stopwords` | `false` | Ignore the stop words of the active languages. |
+| `stripPatterns` | `[]` | Your own regular expressions of noise to remove. |
 | `threshold` | `80` | Minimum score to match. |
 | `closeThreshold` | `threshold - 15` | `check()` only: minimum score for `close`. |
 | `ignoreWordOrder` | `true` | `john smith` matches `smith john`. |
@@ -247,6 +250,30 @@ All options are optional and can be passed to any function, `createMatcher()` or
 | `algorithm` | `'smart'` | `'levenshtein'`, `'damerau'`, `'jaroWinkler'`, `'tokenSort'` or `'tokenSet'` if you need one in particular. |
 | `limit` | `Infinity` | List functions: maximum number of results. |
 | `keys` | | List functions: `'title'`, `['title', { name: 'artist', weight: 0.8 }]` or `(item) => text`. |
+
+### Languages and presets
+
+Add a language or a preset for your kind of data, and share it on npm:
+
+```js
+import { defineLanguage, definePreset, compare } from 'fuzzy-toolkit'
+
+const es = defineLanguage({
+  code: 'es',
+  numbers: { units: ['cero', 'uno', 'dos', 'tres'], tens: ['', '', 'veinte', 'treinta'], joiner: 'y' },
+  articles: ['el', 'la', 'los', 'las'],
+  phonetic: [[/v/g, 'b'], [/ll/g, 'y']],
+})
+
+const companies = definePreset({
+  name: 'company-names',
+  options: { ignoreWords: ['inc', 'ltd', 'sa', 'sarl', 'gmbh'], replace: { '&': 'and' }, languages: ['en', es] },
+})
+
+compare('ACME Inc.', 'acme', { preset: companies }) // 100
+```
+
+See [Languages and presets](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions) for the full guide and how to publish.
 
 ### How `smart` scores
 

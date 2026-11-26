@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Command line interface: fuzzy dedupe, join, search and compare on CSV, TSV,
 // JSON or plain text files. Run `npx fuzzy-toolkit --help`.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { createMatcher, dedupe, group, join, search } from '../dist/esm/index.js';
 
@@ -25,7 +27,10 @@ Options
       --right-key <column>  join: column of the right file
       --unique              join: use each right row at most once
   -t, --threshold <0-100>   Minimum score to match (default 80)
-  -p, --preset <name>       music, search or strict
+  -p, --preset <name>       music, search or strict, or a preset package or
+                            file made with definePreset()
+      --lang <code>         Language (repeatable): en, fr, or a language pack
+                            package or file made with defineLanguage()
       --phonetic            Also match texts that sound the same
   -i, --ignore <word>       Word to ignore (repeatable), e.g. -i inc -i ltd
   -l, --limit <n>           search: maximum number of results (default 10)
@@ -37,6 +42,7 @@ Examples
   npx fuzzy-toolkit join orders.csv clients.csv --left-key client --right-key name --unique
   npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist
   npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
+  npx fuzzy-toolkit dedupe companies.csv -p ./company-names.js --lang fr
 `;
 
 function fail(message) {
@@ -168,6 +174,7 @@ const { values, positionals } = (() => {
         unique: { type: 'boolean' },
         threshold: { type: 'string', short: 't' },
         preset: { type: 'string', short: 'p' },
+        lang: { type: 'string', multiple: true },
         phonetic: { type: 'boolean' },
         ignore: { type: 'string', short: 'i', multiple: true },
         limit: { type: 'string', short: 'l' },
@@ -187,7 +194,32 @@ if (values.help || !command) {
 }
 
 const options = {};
-if (values.preset) options.preset = values.preset;
+const BUILTIN_PRESETS = ['music', 'search', 'strict'];
+const BUILTIN_LANGUAGES = ['en', 'fr'];
+
+/** Loads an extension from a package name or a file: its default export, else its first export. */
+async function loadExtension(spec, kind) {
+  const path = resolve(spec);
+  const url = existsSync(path) ? pathToFileURL(path).href : spec;
+  let module;
+  try {
+    module = await import(url);
+  } catch (error) {
+    return fail(`cannot load ${kind} "${spec}": ${error.message}`);
+  }
+  const found = [module.default, ...Object.values(module)].find((v) => v && v.kind === kind);
+  return found ?? fail(`"${spec}" does not export a ${kind} (made with define${kind[0].toUpperCase()}${kind.slice(1)}())`);
+}
+
+if (values.preset) {
+  options.preset = BUILTIN_PRESETS.includes(values.preset) ? values.preset : await loadExtension(values.preset, 'preset');
+}
+if (values.lang) {
+  options.languages = [];
+  for (const spec of values.lang.flatMap((v) => v.split(','))) {
+    options.languages.push(BUILTIN_LANGUAGES.includes(spec) ? spec : await loadExtension(spec, 'language'));
+  }
+}
 if (values.phonetic) options.phonetic = true;
 if (values.ignore) options.ignoreWords = values.ignore;
 if (values.threshold !== undefined) {

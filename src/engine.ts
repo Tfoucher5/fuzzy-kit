@@ -9,18 +9,11 @@ import {
   searchDistance,
 } from './distance.js';
 import { compileNormalizer, type Normalizer } from './normalize.js';
-import { PHONETIC_WEIGHT, soundOf } from './phonetic.js';
-import type { Algorithm, Comparison, MatchOptions, Preset } from './types.js';
-
-const PRESETS: Readonly<Record<Preset, MatchOptions>> = {
-  music: {
-    strip: ['featuring', 'version', 'brackets', 'articles'],
-    replace: { '&': 'and', '+': 'and', n: 'and' },
-  },
-  // Digits would break prefixes while typing: "sev" must still find "Seven".
-  search: { partial: true, acronyms: true, threshold: 70, numbers: false },
-  strict: { ignoreWordOrder: false, ignoreSpaces: false, threshold: 90 },
-};
+import { DEFAULT_LANGUAGES, resolveLanguages } from './lang/index.js';
+import { PHONETIC_WEIGHT, soundsFor, type SoundOf } from './phonetic.js';
+import { mergeOptions } from './core.js';
+import { presetOf } from './presets.js';
+import type { Algorithm, Comparison, Language, MatchOptions } from './types.js';
 
 const ALGORITHMS: readonly Algorithm[] = [
   'smart',
@@ -32,8 +25,11 @@ const ALGORITHMS: readonly Algorithm[] = [
 ];
 
 /** Options with every default filled in. */
-export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset'>> {
-  preset: Preset | undefined;
+export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset' | 'languages'>> {
+  /** Name of the preset used, built-in or not. */
+  preset: string | undefined;
+  /** Language packs in use; `undefined` means the default (English and French). */
+  languages: readonly Language[] | undefined;
 }
 
 /** Options compiled once, reused for every comparison. */
@@ -64,18 +60,9 @@ export interface Prepared {
 }
 
 export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
-  const preset = options.preset;
-  if (preset !== undefined && !(preset in PRESETS)) {
-    throw new TypeError(
-      `[fuzzy-toolkit] Unknown preset "${String(preset)}". Use one of: ${Object.keys(PRESETS).join(', ')}.`,
-    );
-  }
-  const base = preset ? PRESETS[preset] : {};
-  const merged: MatchOptions = {
-    ...base,
-    ...stripUndefined(options),
-    replace: { ...base.replace, ...options.replace },
-  };
+  const pack = options.preset === undefined ? undefined : presetOf(options.preset);
+  const { preset: _preset, ...own } = options;
+  const merged: MatchOptions = mergeOptions(pack ? pack.options : {}, own);
 
   const algorithm = merged.algorithm ?? 'smart';
   if (!ALGORITHMS.includes(algorithm)) {
@@ -89,7 +76,8 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
   }
 
   return Object.freeze({
-    preset,
+    preset: pack?.name,
+    languages: resolveLanguages(merged.languages) ?? undefined,
     threshold,
     algorithm,
     ignoreWordOrder: merged.ignoreWordOrder ?? true,
@@ -104,15 +92,9 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     strip: Object.freeze([...(merged.strip ?? [])]),
     ignoreWords: Object.freeze([...(merged.ignoreWords ?? [])]),
     replace: Object.freeze({ ...merged.replace }),
+    stopwords: merged.stopwords ?? false,
+    stripPatterns: Object.freeze([...(merged.stripPatterns ?? [])]),
   });
-}
-
-function stripUndefined<T extends object>(value: T): Partial<T> {
-  const out: Partial<T> = {};
-  for (const key of Object.keys(value) as (keyof T)[]) {
-    if (value[key] !== undefined) out[key] = value[key];
-  }
-  return out;
 }
 
 const DIGIT_RE = /\d/;
@@ -123,7 +105,9 @@ export function compileEngine(options: MatchOptions = {}): Engine {
   const resolved = resolveOptions(options);
   const normalize = compileNormalizer(resolved);
   const asWritten = resolved.numbers ? compileNormalizer({ ...resolved, numbers: false }) : null;
-  const sounds = resolved.phonetic ? (resolved.ignoreSpaces ? '' : ' ') : null;
+  const sounds: Sounds | null = resolved.phonetic
+    ? { join: resolved.ignoreSpaces ? '' : ' ', of: soundsFor(resolved.languages ?? DEFAULT_LANGUAGES) }
+    : null;
   const read = (raw: string): Prepared => {
     const text = normalize(raw);
     const prepared = prepare(text, sounds);
@@ -157,7 +141,14 @@ export function getEngine(options?: MatchOptions): Engine {
  * Splits a normalized text into the variants `smart` uses. With a `sounds`
  * separator (phonetic matching on), also computes how the text sounds.
  */
-export function prepare(text: string, sounds: string | null = null): Prepared {
+export interface Sounds {
+  /** Separator between the sounds of words. */
+  readonly join: string;
+  /** Phonetic key of one word. */
+  readonly of: SoundOf;
+}
+
+export function prepare(text: string, sounds: Sounds | null = null): Prepared {
   const words = text === '' ? [] : text.split(' ');
   const multi = words.length > 1;
   const prepared: Prepared = {
@@ -167,11 +158,11 @@ export function prepare(text: string, sounds: string | null = null): Prepared {
     compact: multi ? words.join('') : text,
   };
   if (sounds === null || text === '') return prepared;
-  const keys = words.map(soundOf);
+  const keys = words.map(sounds.of);
   return {
     ...prepared,
-    sound: keys.join(sounds),
-    soundSorted: multi ? [...keys].sort().join(sounds) : keys[0]!,
+    sound: keys.join(sounds.join),
+    soundSorted: multi ? [...keys].sort().join(sounds.join) : keys[0]!,
   };
 }
 

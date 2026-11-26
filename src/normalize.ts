@@ -1,4 +1,5 @@
-import { wordsToDigits } from './numbers.js';
+import { DEFAULT_ARTICLES, DEFAULT_LANGUAGES, resolveLanguages } from './lang/index.js';
+import { compileNumbers } from './numbers.js';
 import type { NormalizeOptions, StripRule } from './types.js';
 
 export type Normalizer = (text: string) => string;
@@ -27,11 +28,16 @@ const STRIP_PATTERNS: Readonly<Record<StripRule, readonly RegExp[]>> = {
     new RegExp(`\\s[-–—/|]\\s.*\\b(?:${VERSION_WORDS})\\b.*$`, 'iu'),
   ],
   brackets: [/\([^)]*\)|\[[^\]]*\]|\{[^}]*\}/g],
-  articles: [
-    /^\s*(?:the|an?|le|la|les|un|une|des|el|los|las|il|lo|gli|die|der|das|l)\s+/iu,
-    /^\s*l['’]\s*/iu,
-  ],
+  // Built from the active languages, see articlePatterns().
+  articles: [],
 };
+
+function articlePatterns(articles: readonly string[], elisions: readonly string[]): RegExp[] {
+  const out: RegExp[] = [];
+  if (articles.length > 0) out.push(new RegExp(`^\\s*(?:${articles.map(escapeRegExp).join('|')})\\s+`, 'iu'));
+  if (elisions.length > 0) out.push(new RegExp(`^\\s*(?:${elisions.map(escapeRegExp).join('|')})['’]\\s*`, 'iu'));
+  return out;
+}
 const STRIP_ORDER: readonly StripRule[] = ['featuring', 'version', 'brackets', 'articles'];
 
 function foldAccents(text: string): string {
@@ -56,19 +62,35 @@ export function compileNormalizer(options: NormalizeOptions = {}): Normalizer {
     ignoreWords = [],
     replace = {},
     numbers = true,
+    stopwords = false,
+    stripPatterns = [],
   } = options;
+  const explicit = resolveLanguages(options.languages);
+  const languages = explicit ?? DEFAULT_LANGUAGES;
 
   const prepare = (text: string): string => {
     let out = caseSensitive ? text : text.toLowerCase();
     return accentSensitive ? out : foldAccents(out);
   };
 
-  const stripRules = STRIP_ORDER.filter((rule) => strip.includes(rule)).flatMap(
-    (rule) => STRIP_PATTERNS[rule],
+  const stripRules = STRIP_ORDER.filter((rule) => strip.includes(rule)).flatMap((rule) =>
+    rule === 'articles'
+      ? articlePatterns(
+          explicit ? [...new Set(explicit.flatMap((l) => l.articles ?? []))] : DEFAULT_ARTICLES,
+          [...new Set(languages.flatMap((l) => l.elisions ?? []))],
+        )
+      : STRIP_PATTERNS[rule],
   );
+  for (const re of stripPatterns) {
+    if (!(re instanceof RegExp)) throw new TypeError('[fuzzy-toolkit] "stripPatterns" must be an array of regular expressions.');
+    stripRules.push(re);
+  }
 
   const replacements = new Map<string, string>();
-  for (const [from, to] of Object.entries(replace)) {
+  const table: Record<string, string> = {};
+  for (const language of languages) Object.assign(table, language.replace);
+  Object.assign(table, replace);
+  for (const [from, to] of Object.entries(table)) {
     const key = prepare(from).trim();
     if (key) replacements.set(key, ` ${prepare(String(to))} `);
   }
@@ -85,6 +107,7 @@ export function compileNormalizer(options: NormalizeOptions = {}): Normalizer {
 
   // Ignored words go through the same pipeline, so `L'` or `Café` still match.
   let ignored: Set<string> | null = null;
+  const toDigits = numbers ? compileNumbers(languages) : null;
   const normalizer: Normalizer = (input) => {
     if (input == null) return '';
     let text = prepare(String(input));
@@ -107,7 +130,7 @@ export function compileNormalizer(options: NormalizeOptions = {}): Normalizer {
     }
 
     text = text.replace(SPACES_RE, ' ').trim();
-    if (numbers) text = wordsToDigits(text);
+    if (toDigits) text = toDigits(text);
 
     if (ignored && ignored.size > 0) {
       text = text
@@ -118,9 +141,10 @@ export function compileNormalizer(options: NormalizeOptions = {}): Normalizer {
     return text;
   };
 
-  if (ignoreWords.length > 0) {
-    const base = compileNormalizer({ caseSensitive, accentSensitive, punctuation, numbers });
-    ignored = new Set(ignoreWords.flatMap((word) => base(word).split(' ')).filter(Boolean));
+  const dropped = stopwords ? [...ignoreWords, ...languages.flatMap((l) => l.stopwords ?? [])] : ignoreWords;
+  if (dropped.length > 0) {
+    const base = compileNormalizer({ caseSensitive, accentSensitive, punctuation, numbers, languages });
+    ignored = new Set(dropped.flatMap((word) => base(word).split(' ')).filter(Boolean));
   }
 
   return normalizer;

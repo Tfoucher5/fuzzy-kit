@@ -21,6 +21,7 @@ import type {
   JoinOptions,
   JoinRow,
   KeysOption,
+  Language,
   ListOptions,
   Match,
   MatchOptions,
@@ -665,7 +666,15 @@ function compareWith(a: string, b: string, engine: Engine): Comparison {
 }
 
 function optionsKey(engine: Engine): string {
-  return JSON.stringify(engine.options);
+  // Packs are identified by code/name and version, patterns by their source.
+  return JSON.stringify(engine.options, (_key, value: unknown) => {
+    if (value instanceof RegExp) return String(value);
+    if (value && typeof value === 'object' && (value as Language).kind === 'language') {
+      const pack = value as Language;
+      return `${pack.code}@${pack.version ?? ''}`;
+    }
+    return value;
+  });
 }
 
 function makeIndex<T>(

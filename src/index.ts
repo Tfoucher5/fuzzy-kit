@@ -18,6 +18,8 @@ export {
 } from './matcher.js';
 export type { Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';
+export { API_VERSION } from './core.js';
+export { defineLanguage, definePreset } from './define.js';
 export { diff } from './diff.js';
 export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';
@@ -28,6 +30,7 @@ export type { TverskyOptions } from './metrics.js';
 export type { ResolvedOptions } from './engine.js';
 export type {
   Algorithm,
+  BuiltinLanguage,
   CheckOptions,
   CheckResult,
   Comparison,
@@ -37,7 +40,13 @@ export type {
   KeysOption,
   ListOptions,
   Match,
+  Language,
+  LanguageDefinition,
   MatchOptions,
+  NumberWords,
+  PhoneticRule,
+  PresetDefinition,
+  PresetPack,
   MultiCheckResult,
   NormalizeOptions,
   Preset,

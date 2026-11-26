@@ -29,13 +29,114 @@ export type Algorithm =
  */
 export type Preset = 'music' | 'search' | 'strict';
 
+/** Languages built into the package, usable by their code. */
+export type BuiltinLanguage = 'en' | 'fr';
+
+/**
+ * One rewrite of the phonetic ("sounds like") key: a regular expression and
+ * its replacement, applied in order to a normalized word (lower case, no
+ * accents). Use a `g` flag to rewrite every occurrence.
+ * @example
+ * [/ph/g, 'f']
+ */
+export type PhoneticRule = readonly [RegExp, string];
+
+/**
+ * How a language writes numbers in words, so `veintiuno`, `dos` or `II` read
+ * as digits. Words are matched on normalized text (lower case, no accents).
+ */
+export interface NumberWords {
+  /** Words for 0 to 19, the index is the value: `['cero', 'uno', 'dos', ...]`. Empty strings are skipped. */
+  readonly units?: readonly string[];
+  /** Words for tens, the index times 10 is the value: `['', '', 'veinte', 'treinta', ...]`. */
+  readonly tens?: readonly string[];
+  /** Ordinal words, the index is the value: `['', 'primero', 'segundo', ...]`. */
+  readonly ordinals?: readonly string[];
+  /** More cardinal words, such as compounds written as one word: `{ una: 1, veintiuno: 21 }`. */
+  readonly words?: Readonly<Record<string, number>>;
+  /** More ordinal words: `{ primera: 1 }`. */
+  readonly ordinalWords?: Readonly<Record<string, number>>;
+  /**
+   * A word between tens and units: `'y'` reads `treinta y uno` as 31. Without
+   * it, tens followed by a unit are added up (`twenty one` = 21).
+   */
+  readonly joiner?: string;
+  /**
+   * Suffixes that turn digits into an ordinal, such as `['eme', 'e', 'er']`
+   * in French (`2eme` → `2e`). The result goes through {@link formatOrdinal}.
+   */
+  readonly ordinalSuffixes?: readonly string[];
+  /**
+   * How an ordinal is written once read: `(n) => n + 'th'`.
+   * @default String(n)
+   */
+  readonly formatOrdinal?: (n: number) => string;
+  /**
+   * A custom reader, for grammars the tables can't express (`quatre vingt
+   * dix` = 90). Gets the normalized words and a position, returns the value
+   * read there and how many words it used, or `undefined`.
+   */
+  readonly read?: (words: readonly string[], index: number) => readonly [value: number, used: number] | undefined;
+}
+
+/** What a language pack contains. Every field is optional except `code`. */
+export interface LanguageDefinition {
+  /** Language code, ideally ISO 639-1 (`es`, `de`, `pt-br`...). */
+  readonly code: string;
+  /** Human-readable name, in English: `Spanish`. */
+  readonly name?: string;
+  /** Version of the pack, for saved indexes and the registry. */
+  readonly version?: string;
+  /** Numbers written in words. */
+  readonly numbers?: NumberWords;
+  /** Leading articles removed by `strip: ['articles']`: `['el', 'la', 'los', 'las']`. */
+  readonly articles?: readonly string[];
+  /** Articles glued with an apostrophe, removed by `strip: ['articles']`: `['l']` for `l'amour`. */
+  readonly elisions?: readonly string[];
+  /** Words that carry little meaning, ignored with `stopwords: true`: `['de', 'y']`. */
+  readonly stopwords?: readonly string[];
+  /** Rules of the phonetic key, used with `phonetic: true`. */
+  readonly phonetic?: readonly PhoneticRule[];
+  /** Whole-word replacements always applied: abbreviations, common spellings. */
+  readonly replace?: Readonly<Record<string, string>>;
+}
+
+/** A language pack, made with `defineLanguage()`. */
+export interface Language extends LanguageDefinition {
+  readonly kind: 'language';
+  /** Version of the extension API the pack was written for. */
+  readonly apiVersion: 1;
+}
+
+/** What a preset contains. */
+export interface PresetDefinition {
+  /** Short unique name, in kebab case: `addresses`, `company-names`. */
+  readonly name: string;
+  /** One sentence on what it is for. */
+  readonly description?: string;
+  /** Version of the preset, for saved indexes and the registry. */
+  readonly version?: string;
+  /** A preset to start from: its options apply first. */
+  readonly extends?: Preset | PresetPack;
+  /** The options the preset sets. Users' own options always win. */
+  readonly options: Omit<MatchOptions, 'preset'>;
+}
+
+/** A preset, made with `definePreset()`. `options` already include `extends`. */
+export interface PresetPack extends Omit<PresetDefinition, 'extends'> {
+  readonly kind: 'preset';
+  /** Version of the extension API the preset was written for. */
+  readonly apiVersion: 1;
+}
+
 /**
  * Noise that can be removed before comparing.
  *
  * - `brackets`: anything in `( )`, `[ ]` or `{ }`.
  * - `featuring`: `feat. X`, `ft. X`, `featuring X` until the end, and `(with X)`.
  * - `version`: `- Remastered 2011`, `(Live)`, `- Radio Edit`, `(Acoustic)`...
- * - `articles`: a leading article (`the`, `a`, `le`, `la`, `les`, `l'`, `el`, `die`...).
+ * - `articles`: a leading article of the active `languages` (`the`, `a`,
+ *   `le`, `la`, `les`, `l'`; without `languages`, also `el`, `il`, `die`...).
  */
 export type StripRule = 'brackets' | 'featuring' | 'version' | 'articles';
 
@@ -93,15 +194,42 @@ export interface NormalizeOptions {
    * @default true (false with the `search` preset, so prefixes keep working)
    */
   numbers?: boolean;
+
+  /**
+   * Languages to read the text in: numbers in words, articles, stop words and
+   * phonetic rules. Built-in codes (`'en'`, `'fr'`) or packs made with
+   * `defineLanguage()`. Order matters when two languages read a word.
+   * @default ['en', 'fr']
+   * @example
+   * import es from './my-spanish-pack.js'
+   * languages: ['en', es]
+   */
+  languages?: readonly (BuiltinLanguage | Language)[];
+
+  /**
+   * Ignore the stop words of the active `languages` (`the`, `of`, `de`, `et`...).
+   * @default false
+   */
+  stopwords?: boolean;
+
+  /**
+   * More noise to remove, as regular expressions run on the lower-cased,
+   * accent-free text before punctuation is removed. Matches become a space.
+   * Presets use it for their own rules.
+   * @example
+   * stripPatterns: [/\bcedex\b.*$/]
+   */
+  stripPatterns?: readonly RegExp[];
 }
 
 /** Everything that controls a comparison. All fields are optional. */
 export interface MatchOptions extends NormalizeOptions {
   /**
-   * Start from a ready-made configuration.
+   * Start from a ready-made configuration: a built-in name or a preset made
+   * with `definePreset()`.
    * @see Preset
    */
-  preset?: Preset;
+  preset?: Preset | PresetPack;
 
   /**
    * Minimum score (0 to 100) for two texts to match.
