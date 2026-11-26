@@ -4,7 +4,7 @@ export default defineConfig({
   title: 'fuzzy-toolkit',
   description: 'Fuzzy string matching that just works',
 
-  base: '/fuzzy-kit/',
+  base: '/fuzzy-toolkit/',
 
   themeConfig: {
     nav: [
@@ -41,7 +41,7 @@ export default defineConfig({
       }
     ],
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/Tfoucher5/fuzzy-kit' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/Tfoucher5/fuzzy-toolkit' }],
 
     search: {
       provider: 'local'

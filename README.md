@@ -3,7 +3,7 @@
 > Formerly **guess-rater**. Same code, same API: replace `guess-rater` with `fuzzy-toolkit` in your imports and `package.json`.
 
 [![npm version](https://img.shields.io/npm/v/fuzzy-toolkit?logo=npm)](https://www.npmjs.com/package/fuzzy-toolkit)
-[![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/fuzzy-kit/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/fuzzy-kit/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/fuzzy-toolkit/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/fuzzy-toolkit/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 **Fuzzy string matching that just works.** Check quiz answers, build a search-as-you-type box, suggest "did you mean…?", spot a name inside a message, clean up duplicates, match two lists, show what was misspelled. Typos, accents, word order, missing spaces, numbers written in words and (optionally) words spelled by ear are handled for you. Also a command line tool to dedupe and join CSV files.
@@ -271,7 +271,7 @@ Default scores changed: `smart` tolerates swapped letters, word order and missin
 
 ## Documentation
 
-**[tfoucher5.github.io/fuzzy-kit](https://tfoucher5.github.io/fuzzy-kit/)**
+**[tfoucher5.github.io/fuzzy-toolkit](https://tfoucher5.github.io/fuzzy-toolkit/)**
 
 ## License
 

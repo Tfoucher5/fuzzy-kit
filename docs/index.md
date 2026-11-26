@@ -14,7 +14,7 @@ hero:
       link: '#try-it'
     - theme: alt
       text: GitHub
-      link: https://github.com/Tfoucher5/fuzzy-kit
+      link: https://github.com/Tfoucher5/fuzzy-toolkit
 
 features:
   - icon: 🎯
