@@ -73,11 +73,33 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## Command line
 
-`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files.
+`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output).
+
+## MCP server for AI agents
+
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check` and `find`.
+
+```json
+{ "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
+```
+
+Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
+
+`npx fuzzy-toolkit ai-setup` adds usage notes for AI assistants to the project's AGENTS.md, CLAUDE.md, Cursor rules or Copilot instructions.
+
+## Common mistakes
+
+- Scores go from 0 to 100, not 0 to 1: write `similarity(a, b) >= 80` or `isMatch(a, b)`, never `> 0.8`. `threshold` is 0-100 too. Only `fuzzy-toolkit/string-similarity` returns 0-1 ratings.
+- `closest()` returns a `Match` (`{ item, score, index, text }`) or `undefined`: use `closest(q, list)?.item` to get the value.
+- Items that are objects need `keys`: `search(q, users, { keys: ['name', 'email'] })`. Without it, the call throws.
+- Options are the third argument and always an object: `search(q, items, { keys: 'name', limit: 5 })`, not `search(q, items, 'name')`.
+- Searching the same list many times (search-as-you-type): build `createIndex(items, options)` once and call `index.search(q)`.
+- Option names differ from Fuse.js: no `includeScore` (every match has a score), `caseSensitive` instead of `isCaseSensitive`, `threshold` 0-100 (higher = stricter) instead of Fuse's 0-1 (lower = stricter).
 
 ## Links
 
 - [README](https://github.com/Tfoucher5/fuzzy-toolkit#readme)
 - [Documentation](https://tfoucher5.github.io/fuzzy-toolkit/)
 - [API reference](https://tfoucher5.github.io/fuzzy-toolkit/api/)
+- [Full documentation in one file](https://tfoucher5.github.io/fuzzy-toolkit/llms-full.txt) (also `llms-full.txt` in the package)
 - [npm](https://www.npmjs.com/package/fuzzy-toolkit)

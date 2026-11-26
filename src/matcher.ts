@@ -13,6 +13,7 @@ import {
 import { canBlock, createBlocker } from './blocking.js';
 import { partialDistance } from './distance.js';
 import { findIn, highlightIn, type Found, type Segment } from './text.js';
+import { warnOnce, checkOptions } from './warn.js';
 import type {
   CheckOptions,
   CheckResult,
@@ -275,6 +276,26 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
   };
 }
 
+/**
+ * Warns when no item has any of the keys, a typo that would silently find
+ * nothing. Checks the first items only, so it costs nothing on big lists.
+ */
+function warnMissingKeys(items: readonly unknown[], keys: readonly (string | { name: string })[]): void {
+  const sample = items.slice(0, 20).filter((item): item is object => item !== null && typeof item === 'object');
+  if (sample.length === 0) return;
+  for (const key of keys) {
+    const name = typeof key === 'string' ? key : key?.name;
+    if (typeof name !== 'string') continue;
+    const root = name.split('.')[0]!;
+    if (sample.some((item) => name in item || root in item)) continue;
+    const available = Object.keys(sample[0]!).slice(0, 12);
+    warnOnce(
+      `No item has the key "${name}", so it never matches. ` +
+        (available.length ? `Keys of the first item: ${available.join(', ')}.` : 'The first item has no keys.'),
+    );
+  }
+}
+
 /** An index saved with `index.toJSON()`. */
 export interface SavedIndex {
   /** Format version. */
@@ -295,6 +316,7 @@ function buildEntries<T>(
     throw new TypeError('[fuzzy-toolkit] Expected an array of items.');
   }
   const getTexts = textGetter(keys);
+  if (items.length > 0 && (typeof keys === 'string' || Array.isArray(keys))) warnMissingKeys(items, (typeof keys === 'string' ? [keys] : keys) as readonly (string | { name: string })[]);
   // When matching parts, all texts of an item also count together, so
   // "zep stair" finds { title: 'Stairway to Heaven', artist: 'Led Zeppelin' }.
   const joinTexts = engine.options.partial;
@@ -822,6 +844,7 @@ function matcherFrom(engine: Engine): Matcher {
  * finder.search('zep', bands, { limit: 5 })
  */
 export function createMatcher(options: MatchOptions = {}): Matcher {
+  if (options !== null && typeof options === 'object') checkOptions(options);
   return matcherFrom(compileEngine(options));
 }
 
@@ -878,6 +901,7 @@ export function similarity(a: string, b: string, options?: MatchOptions): number
  * isMatch('color', 'colour', { threshold: 80 }) // true
  */
 export function isMatch(a: string, b: string, thresholdOrOptions?: number | MatchOptions): boolean {
+  if (typeof thresholdOrOptions === 'number') checkOptions({ threshold: thresholdOrOptions });
   const options = typeof thresholdOrOptions === 'number' ? undefined : thresholdOrOptions;
   const engine = getEngine(options);
   const threshold = typeof thresholdOrOptions === 'number' ? thresholdOrOptions : engine.options.threshold;
