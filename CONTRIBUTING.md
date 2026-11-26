@@ -51,6 +51,7 @@ npm test
 npm run typecheck   # types, including tests/types.ts
 npm test            # build + all tests, golden results included
 npm run size:check  # bundle size budgets
+npm run coverage    # Node 22.8+: at least 95% of lines, 90% of branches
 ```
 
 CI runs these on Node 18 to 24, plus `npm run bench:check` (accuracy on real
