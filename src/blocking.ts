@@ -13,7 +13,7 @@ import type { Engine, Prepared } from './engine.js';
 export function canBlock(engine: Engine, threshold: number): boolean {
   const { algorithm, partial, phonetic } = engine.options;
   if (!(threshold > 0.01)) return false;
-  if (algorithm === 'smart') return !partial && !phonetic;
+  if (algorithm === 'smart') return !partial && !phonetic && !engine.options.acronyms;
   return algorithm === 'levenshtein' || algorithm === 'damerau' || algorithm === 'tokenSort';
 }
 

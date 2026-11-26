@@ -293,16 +293,41 @@ function rank<T>(
 ): Match<T>[] {
   const results = rankEntries(query, entries, engine, threshold, limit, includeMatches);
   if (includeMatches) {
-    for (const match of results) {
-      let at = 0;
-      match.ranges = [];
-      for (const segment of highlightIn(match.text, toText(query), engine, engine.options.threshold)) {
-        if (segment.match) match.ranges.push([at, at + segment.text.length]);
-        at += segment.text.length;
-      }
-    }
+    for (const match of results) match.ranges = rangesOf(match.text, toText(query), engine);
   }
   return results;
+}
+
+const exactEngines = new WeakMap<Engine, Engine>();
+
+/**
+ * Parts of `text` to highlight for `query`: what was typed, to the character
+ * ("New Yo|rk"), or the initials of an acronym match.
+ */
+function rangesOf(text: string, query: string, engine: Engine): [number, number][] {
+  // Partial matching would light up whole words: highlight what was typed instead.
+  let exact = exactEngines.get(engine);
+  if (!exact) {
+    const { preset: _preset, ...options } = engine.options;
+    exact = engine.options.partial || engine.options.acronyms
+      ? compileEngine({ ...options, partial: false, acronyms: false })
+      : engine;
+    exactEngines.set(engine, exact);
+  }
+  const ranges: [number, number][] = [];
+  let at = 0;
+  for (const segment of highlightIn(text, query, exact, Math.max(80, engine.options.threshold))) {
+    if (segment.match) ranges.push([at, at + segment.text.length]);
+    at += segment.text.length;
+  }
+  if (ranges.length === 0 && engine.options.acronyms) {
+    const words = [...text.matchAll(/[\p{L}\p{N}]+/gu)];
+    const initials = words.map((w) => engine.normalize(w[0]).charAt(0)).join('');
+    if (words.length >= 2 && initials.length > 0 && engine.normalize(query).replace(/ /g, '').length <= words.length + 1) {
+      for (const w of words) ranges.push([w.index!, w.index! + 1]);
+    }
+  }
+  return ranges;
 }
 
 function rankEntries<T>(

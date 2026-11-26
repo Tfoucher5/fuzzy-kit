@@ -22,8 +22,9 @@ export type Algorithm =
  *
  * - `music`: song titles and artists. Drops `(feat. X)`, `- Remastered 2011`,
  *   bracketed info and leading articles (`The`, `Les`...), reads `&` and `n` as `and`.
- * - `search`: search-as-you-type. Matches prefixes and parts of the text
- *   (`partial: true`), threshold 70, numbers left as written.
+ * - `search`: search-as-you-type. Matches prefixes, parts of the text
+ *   (`partial: true`) and initials (`acronyms: true`), threshold 70, numbers
+ *   left as written.
  * - `strict`: word order and spaces matter, threshold 90.
  */
 export type Preset = 'music' | 'search' | 'strict';
@@ -142,6 +143,14 @@ export interface MatchOptions extends NormalizeOptions {
    * @default false
    */
   phonetic?: boolean;
+  /**
+   * `smart` only: a single word may be the initials of the other text:
+   * `nyc` = `New York City`, `gs` = `git status`, one typo allowed from 3
+   * letters on (`nyx`). An acronym match scores 90, or 80 with a typo, so
+   * real matches rank first.
+   * @default false (true with the `search` preset)
+   */
+  acronyms?: boolean;
 }
 
 /** Options of {@link check}. */
@@ -291,7 +300,7 @@ export interface Comparison {
    * Score of each strategy tried. With `smart`, the final score is the best
    * of them.
    */
-  scores: Partial<Record<'characters' | 'wordOrder' | 'spaces' | 'partial' | 'phonetic' | Algorithm, number>>;
+  scores: Partial<Record<'characters' | 'wordOrder' | 'spaces' | 'partial' | 'phonetic' | 'acronym' | Algorithm, number>>;
 }
 
 /** Result of {@link checkAll}: one verdict per part of the answer. */
