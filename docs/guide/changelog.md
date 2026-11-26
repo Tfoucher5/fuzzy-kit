@@ -15,6 +15,8 @@ The project follows **semantic versioning**:
 - Spanish, German and Italian language packs: `fuzzy-toolkit/lang/es`, `/de` and `/it`. Numbers in words (`treinta y dos`, `einundzwanzig`, `ventitré`), ordinals, articles, stop words and phonetic rules. Import one and pass it in `languages`; bundles only carry the packs they import. See [Languages and presets](/guide/extensions).
 - `fuzzy-toolkit/testing`, a kit for people who write language packs and presets: `assertLanguage(pack, { numbers, articles, stopwords, sounds, distinct })` and `assertPreset(preset, { matches, differs, normalized })` check the cases you expect and list every one that fails, with any test runner. See [Testing your pack](/guide/extensions#testing-your-pack).
 
+- [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
+
 ### Project
 - RELEASING.md: the npm trusted publisher needs **Allow npm publish** ticked.
 
