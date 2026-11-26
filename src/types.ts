@@ -239,6 +239,14 @@ export interface ListOptions<T> extends MatchOptions {
 export interface GroupOptions<T> extends MatchOptions {
   /** Where to read the text of each item. Required when items are objects. */
   keys?: KeysOption<T>;
+  /**
+   * - `fuzzy` *(default)*: near-duplicates, typos included.
+   * - `fingerprint`: same words once normalized, in any order, repeats
+   *   ignored (OpenRefine's key collision). No typo tolerance, but instant on
+   *   any size of list: a first pass before a fuzzy one on huge files.
+   * @default 'fuzzy'
+   */
+  method?: 'fuzzy' | 'fingerprint';
 }
 
 /** Same as `O`, but `keys` is required unless items are strings. */

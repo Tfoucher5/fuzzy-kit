@@ -24,6 +24,7 @@ import type {
   ListOptions,
   Match,
   MatchOptions,
+  NormalizeOptions,
   MultiCheckResult,
 } from './types.js';
 
@@ -561,11 +562,39 @@ function joinLists<L, R>(
   return rows;
 }
 
-function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: number): T[][] {
+function textKey(entry: Entry<unknown>): string {
+  let key = '';
+  for (const p of entry.prepared) key += `${p.text}\u0001${p.alt?.text ?? ''}\u0002`;
+  return key;
+}
+
+function cluster<T>(
+  entries: readonly Entry<T>[],
+  engine: Engine,
+  threshold: number,
+  method: 'fuzzy' | 'fingerprint' = 'fuzzy',
+): T[][] {
+  if (method === 'fingerprint') {
+    const byKey = new Map<string, T[]>();
+    for (const entry of entries) {
+      const key = entry.prepared.map((p) => fingerprintOf(p.text)).join('\u0001');
+      const members = byKey.get(key);
+      if (members) members.push(entry.item);
+      else byKey.set(key, [entry.item]);
+    }
+    return [...byKey.values()];
+  }
   const groups: { leader: Entry<T>; members: T[] }[] = [];
   const blocker = canBlock(engine, threshold) ? createBlocker(entries.map((e) => e.prepared), threshold) : null;
+  // Items that read the same land where the first of them did.
+  const seen = new Map<string, (typeof groups)[number]>();
   for (const entry of entries) {
-    let home: (typeof groups)[number] | undefined;
+    const key = textKey(entry);
+    let home: (typeof groups)[number] | undefined = seen.get(key);
+    if (home) {
+      home.members.push(entry.item);
+      continue;
+    }
     const ids = blocker ? blocker.candidates(entry.prepared) : null;
     const count = ids ? ids.length : groups.length;
     outer: for (let g = 0; g < count; g += 1) {
@@ -583,8 +612,9 @@ function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: num
     if (home) home.members.push(entry.item);
     else {
       blocker?.add(groups.length, entry.prepared);
-      groups.push({ leader: entry, members: [entry.item] });
+      groups.push((home = { leader: entry, members: [entry.item] }));
     }
+    seen.set(key, home);
   }
   return groups.map((g) => g.members);
 }
@@ -913,7 +943,26 @@ export function dedupe<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOption
 export function group<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOptions<T>>): T[][] {
   const options = args[0] as GroupOptions<T> | undefined;
   const engine = getEngine(options);
-  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold);
+  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold, options?.method);
+}
+
+/**
+ * A key that is the same for texts with the same words once normalized, in
+ * any order, repeats ignored: `"Doe, John"` and `"john DOE"` both give
+ * `"doe john"`. Group by it to dedupe huge lists instantly (no typos though),
+ * or use `group(items, { method: 'fingerprint' })`.
+ *
+ * @example
+ * fingerprint('The Beatles - Hey Jude (Remastered)', { preset: 'music' }) // 'beatles hey jude'
+ */
+export function fingerprint(text: string, options?: NormalizeOptions & Pick<MatchOptions, 'preset'>): string {
+  const engine = getEngine(options);
+  return fingerprintOf(engine.normalize(toText(text)));
+}
+
+function fingerprintOf(normalized: string): string {
+  if (normalized === '') return '';
+  return [...new Set(normalized.split(' '))].sort().join(' ');
 }
 
 /**

@@ -7,6 +7,7 @@ export {
   createMatcher,
   dedupe,
   find,
+  fingerprint,
   group,
   highlight,
   isMatch,
