@@ -35,10 +35,25 @@ export default defineConfig({
         text: 'Community',
         activeMatch: '/contributors',
         items: [
-          { text: 'Contributors', link: '/contributors' },
-          { text: 'Contributing guide', link: `${repo}/blob/master/CONTRIBUTING.md` },
-          { text: 'Discussions', link: `${repo}/discussions` },
-          { text: 'Support on Ko-fi', link: 'https://ko-fi.com/theofoucher' }
+          {
+            text: 'Community',
+            items: [
+              { text: 'Contributors', link: '/contributors' },
+              { text: 'Contributing guide', link: `${repo}/blob/master/CONTRIBUTING.md` },
+              { text: 'Discussions', link: `${repo}/discussions` },
+              { text: 'Support on Ko-fi', link: 'https://ko-fi.com/theofoucher' }
+            ]
+          },
+          {
+            text: 'Project',
+            items: [
+              { text: 'Changelog', link: '/guide/changelog' },
+              { text: 'Releases', link: `${repo}/releases` },
+              { text: 'npm package', link: 'https://www.npmjs.com/package/fuzzy-toolkit' },
+              { text: 'License (MIT)', link: `${repo}/blob/master/LICENSE` },
+              { text: 'Security policy', link: `${repo}/blob/master/SECURITY.md` }
+            ]
+          }
         ]
       },
       // The current version, linking to what changed in it.
@@ -88,7 +103,10 @@ export default defineConfig({
       }
     ],
 
-    socialLinks: [{ icon: 'github', link: repo }],
+    socialLinks: [
+      { icon: 'github', link: repo, ariaLabel: 'GitHub repository' },
+      { icon: 'npm', link: 'https://www.npmjs.com/package/fuzzy-toolkit', ariaLabel: 'npm package' }
+    ],
 
     editLink: {
       pattern: `${repo}/edit/master/docs/:path`,
@@ -96,7 +114,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: 'Released under the MIT License. <a href="https://ko-fi.com/theofoucher">Support the project on Ko-fi</a>.',
+      message: `Released under the <a href="${repo}/blob/master/LICENSE">MIT License</a> · <a href="${repo}">GitHub</a> · <a href="https://www.npmjs.com/package/fuzzy-toolkit">npm</a> · <a href="${repo}/releases">Releases</a> · <a href="${repo}/blob/master/SECURITY.md">Security</a> · <a href="https://ko-fi.com/theofoucher">Ko-fi</a>`,
       copyright: 'Made by Théo Foucher'
     },
 
