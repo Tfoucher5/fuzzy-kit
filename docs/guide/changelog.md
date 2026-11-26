@@ -9,23 +9,6 @@ The project follows **semantic versioning**:
 
 ---
 
-## v2.3.0
-
-### Added
-- Extension API: `defineLanguage()` and `definePreset()`. Anyone can write a language pack (numbers in words, articles, stop words, phonetic rules) or a preset for one kind of data, and publish it on npm. See [Languages and presets](/guide/extensions).
-- `languages` option: `['en', 'fr']` by default, built-in codes or packs.
-- `stopwords` option: ignore the stop words of the active languages.
-- `stripPatterns` option: your own regular expressions of noise to remove.
-- `preset` accepts a preset made with `definePreset()`, which can `extends` a built-in one.
-- `fuzzy-toolkit/lang/en` and `fuzzy-toolkit/lang/fr`: the built-in packs, to extend or read as examples.
-- CLI: `--preset` takes a package or a file, `--lang` picks languages.
-
-### Changed
-- English, French and the `music`, `search` and `strict` presets now run on the extension API. Results are identical: checked on 320,000 comparisons of real data against v2.2.0. The bundle grows by about 1.4 kB (min+gzip) for `similarity`.
-- `ResolvedOptions.preset` is now the preset's name as a `string`, built-in or not.
-
----
-
 ## v2.2.0
 
 ### Added
@@ -42,6 +25,17 @@ The project follows **semantic versioning**:
 - Minified browser builds for CDNs: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit">` gives `fuzzyToolkit`. `npm run size` reports what each import weighs.
 - `npm run bench:versus`: speed and accuracy against string-similarity, Fuse.js, fuzzysort and fastest-levenshtein on public data. See [Compared with other libraries](/guide/benchmarks).
 - `llms.txt` in the package and the repository, so AI coding assistants know the API.
+- Extension API: `defineLanguage()` and `definePreset()`. Anyone can write a language pack (numbers in words, articles, stop words, phonetic rules) or a preset for one kind of data, and publish it on npm. See [Languages and presets](/guide/extensions).
+- `languages` option: `['en', 'fr']` by default, built-in codes or packs.
+- `stopwords` option: ignore the stop words of the active languages.
+- `stripPatterns` option: your own regular expressions of noise to remove.
+- `preset` accepts a preset made with `definePreset()`, which can `extends` a built-in one.
+- `fuzzy-toolkit/lang/en` and `fuzzy-toolkit/lang/fr`: the built-in packs, to extend or read as examples.
+- CLI: `--preset` takes a package or a file, `--lang` picks languages.
+
+### Changed
+- English, French and the `music`, `search` and `strict` presets now run on the extension API. Results are identical: checked on 320,000 comparisons of real data against the previous code. The bundle grows by about 1.4 kB (min+gzip) for `similarity`.
+- `ResolvedOptions.preset` is now the preset's name as a `string`, built-in or not.
 
 ### Faster
 - `levenshtein()` and `damerau()` on texts over 32 characters: blocked bit-parallel algorithms, 15 to 25 times faster, on par with fastest-levenshtein.
