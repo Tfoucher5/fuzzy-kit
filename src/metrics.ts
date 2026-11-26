@@ -218,3 +218,105 @@ export function lcs(a: string, b: string): number {
   }
   return row[b.length]!;
 }
+
+/**
+ * Overlap coefficient on the sets of `n`-letter chunks: shared chunks divided
+ * by the chunks of the smaller text. 1 when one text's chunks are all in the
+ * other ("york" in "new york").
+ *
+ * @example
+ * overlap('york', 'new york') // 1
+ */
+export function overlap(a: string, b: string, n = 2): number {
+  return tversky(a, b, { n, overlap: true });
+}
+
+/** Options of {@link tversky}. */
+export interface TverskyOptions {
+  /** Weight of the chunks only `a` has. @default 1 */
+  alpha?: number;
+  /** Weight of the chunks only `b` has. @default 1 */
+  beta?: number;
+  /** Chunk size. @default 2 */
+  n?: number;
+}
+
+/**
+ * Tversky index on the sets of `n`-letter chunks: like {@link jaccard}, but
+ * what only `a` has and what only `b` has can weigh differently. With
+ * `alpha: 1, beta: 0`, it measures how much of `a` is found in `b`.
+ * `alpha = beta = 1` is Jaccard, `alpha = beta = 0.5` is Dice on sets.
+ *
+ * @example
+ * tversky('york', 'new york', { alpha: 1, beta: 0 }) // 1: all of "york" is in "new york"
+ */
+export function tversky(a: string, b: string, options: TverskyOptions & { overlap?: boolean } = {}): number {
+  a = String(a);
+  b = String(b);
+  if (a === b) return 1;
+  const n = checkSize(options.n ?? 2);
+  const x = grams(a, n);
+  const y = grams(b, n);
+  let shared = 0;
+  for (const gram of x.keys()) if (y.has(gram)) shared += 1;
+  if (options.overlap) {
+    const smaller = Math.min(x.size, y.size);
+    return smaller === 0 ? 0 : shared / smaller;
+  }
+  const alpha = options.alpha ?? 1;
+  const beta = options.beta ?? 1;
+  const total = shared + alpha * (x.size - shared) + beta * (y.size - shared);
+  return total === 0 ? 1 : shared / total;
+}
+
+/**
+ * Ratcliff-Obershelp similarity (the "gestalt" ratio of Python's
+ * `difflib.SequenceMatcher`, without its junk heuristic): twice the
+ * characters found in common blocks, divided by both lengths.
+ *
+ * @example
+ * ratcliffObershelp('WIKIMEDIA', 'WIKIMANIA') // 0.778
+ */
+export function ratcliffObershelp(a: string, b: string): number {
+  a = String(a);
+  b = String(b);
+  if (a === b) return 1;
+  const total = a.length + b.length;
+  return total === 0 ? 1 : (2 * matchingCharacters(a, 0, a.length, b, 0, b.length)) / total;
+}
+
+function matchingCharacters(a: string, a0: number, a1: number, b: string, b0: number, b1: number): number {
+  let count = 0;
+  // Iterative on the right part, recursive on the left one.
+  for (;;) {
+    if (a0 >= a1 || b0 >= b1) return count;
+    // Longest common block, leftmost in `a` then in `b`.
+    let bestLength = 0;
+    let bestA = 0;
+    let bestB = 0;
+    let row = new Uint32Array(b1 - b0 + 1);
+    let next = new Uint32Array(b1 - b0 + 1);
+    for (let i = a0; i < a1; i += 1) {
+      const ca = a.charCodeAt(i);
+      for (let j = b0; j < b1; j += 1) {
+        const k = j - b0 + 1;
+        if (b.charCodeAt(j) === ca) {
+          const length = row[k - 1]! + 1;
+          next[k] = length;
+          if (length > bestLength) {
+            bestLength = length;
+            bestA = i - length + 1;
+            bestB = j - length + 1;
+          }
+        } else next[k] = 0;
+      }
+      const t = row;
+      row = next;
+      next = t;
+    }
+    if (bestLength === 0) return count;
+    count += bestLength + matchingCharacters(a, a0, bestA, b, b0, bestB);
+    a0 = bestA + bestLength;
+    b0 = bestB + bestLength;
+  }
+}
