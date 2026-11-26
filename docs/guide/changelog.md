@@ -15,6 +15,25 @@ Nothing yet.
 
 ---
 
+## v2.3.0
+
+### Added
+- **MCP server for AI agents**: `npx fuzzy-toolkit mcp` gives Claude, Cursor, VS Code and other agents the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check` and `find`. Local, no dependency, no file access. See [AI agents and assistants](/recipes/ai-agents).
+- `npx fuzzy-toolkit ai-setup`: adds a short usage block to your project's `AGENTS.md`, `CLAUDE.md`, Cursor rules or Copilot instructions, and updates it in place next time.
+- `llms-full.txt` in the package: the whole documentation in one file for coding assistants. Context7 configuration.
+- Warnings for common mistakes, printed once each: an unknown option (with "did you mean"), a `0.8` threshold when scores go to 100, a `keys` name no item has. Results are unchanged.
+- Clearer error when options are not an object.
+
+### Project
+- Contributing guide, code of conduct, security policy and issue forms for bug reports, wrong results, language requests and preset proposals.
+- CI on every pull request: tests on Node 18 to 24, golden results so scores never change by accident, accuracy on real data, bundle size budgets, zero runtime dependencies and `npm audit`.
+- Releases are published from GitHub with npm provenance.
+
+### Size
+- About 0.9 kB (min+gzip) more per import for the warnings.
+
+---
+
 ## v2.2.0
 
 ### Added
