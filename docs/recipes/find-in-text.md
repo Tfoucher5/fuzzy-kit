@@ -3,7 +3,7 @@
 `find()` looks for fuzzy occurrences of a query inside a longer text and tells you where they are.
 
 ```ts
-import { find } from 'fuzzy-kit'
+import { find } from 'fuzzy-toolkit'
 
 find("je crois que c'est bohemian rapsody de queen", 'Bohemian Rhapsody')
 // [{ text: 'bohemian rapsody', start: 19, end: 35, score: 94.12 }]
@@ -28,7 +28,7 @@ const mentioned = brands.filter((brand) => find(review, brand).length > 0)
 `highlight()` uses the same matching and returns pieces ready to render:
 
 ```ts
-import { highlight } from 'fuzzy-kit'
+import { highlight } from 'fuzzy-toolkit'
 
 highlight("c'est bohemian rapsody", 'Bohemian Rhapsody')
 // [{ text: "c'est ", match: false }, { text: 'bohemian rapsody', match: true }]

@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 // Command line interface: fuzzy dedupe, join, search and compare on CSV, TSV,
-// JSON or plain text files. Run `npx fuzzy-kit --help`.
+// JSON or plain text files. Run `npx fuzzy-toolkit --help`.
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { createMatcher, dedupe, group, join, search } from '../dist/esm/index.js';
 
-const HELP = `fuzzy-kit: fuzzy matching from the command line
+const HELP = `fuzzy-toolkit: fuzzy matching from the command line
 
 Usage
-  fuzzy-kit dedupe  <file>                 Remove near-duplicate rows
-  fuzzy-kit group   <file>                 Add a "group" column numbering near-duplicates
-  fuzzy-kit join    <left> <right>         Add to each left row its best match on the right
-  fuzzy-kit search  <query> <file>         Rows matching a query, best first
-  fuzzy-kit compare <a> <b>                Score two texts and show how they were read
+  fuzzy-toolkit dedupe  <file>                 Remove near-duplicate rows
+  fuzzy-toolkit group   <file>                 Add a "group" column numbering near-duplicates
+  fuzzy-toolkit join    <left> <right>         Add to each left row its best match on the right
+  fuzzy-toolkit search  <query> <file>         Rows matching a query, best first
+  fuzzy-toolkit compare <a> <b>                Score two texts and show how they were read
 
 Files can be CSV (comma, semicolon or tab, detected), .json (an array) or
 plain text (one item per line). Use - to read from standard input.
@@ -33,14 +33,14 @@ Options
   -h, --help                Show this help
 
 Examples
-  npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv
-  npx fuzzy-kit join orders.csv clients.csv --left-key client --right-key name --unique
-  npx fuzzy-kit search "bohemian rapsody" songs.csv -k title -k artist
-  npx fuzzy-kit compare "The Beatles" "beatles" -p music
+  npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
+  npx fuzzy-toolkit join orders.csv clients.csv --left-key client --right-key name --unique
+  npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist
+  npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
 `;
 
 function fail(message) {
-  process.stderr.write(`fuzzy-kit: ${message}\nRun "fuzzy-kit --help" for usage.\n`);
+  process.stderr.write(`fuzzy-toolkit: ${message}\nRun "fuzzy-toolkit --help" for usage.\n`);
   process.exit(1);
 }
 
@@ -262,5 +262,5 @@ try {
       fail(`unknown command "${command}"`);
   }
 } catch (error) {
-  fail(error instanceof Error ? error.message.replace(/^\[fuzzy-kit\] /, '') : String(error));
+  fail(error instanceof Error ? error.message.replace(/^\[fuzzy-toolkit\] /, '') : String(error));
 }

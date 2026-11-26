@@ -1,4 +1,4 @@
-# Contribuer à fuzzy-kit
+# Contribuer à fuzzy-toolkit
 
 Merci de l'intérêt que vous portez au projet !
 

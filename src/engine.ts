@@ -65,7 +65,7 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
   const preset = options.preset;
   if (preset !== undefined && !(preset in PRESETS)) {
     throw new TypeError(
-      `[fuzzy-kit] Unknown preset "${String(preset)}". Use one of: ${Object.keys(PRESETS).join(', ')}.`,
+      `[fuzzy-toolkit] Unknown preset "${String(preset)}". Use one of: ${Object.keys(PRESETS).join(', ')}.`,
     );
   }
   const base = preset ? PRESETS[preset] : {};
@@ -78,12 +78,12 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
   const algorithm = merged.algorithm ?? 'smart';
   if (!ALGORITHMS.includes(algorithm)) {
     throw new TypeError(
-      `[fuzzy-kit] Unknown algorithm "${String(algorithm)}". Use one of: ${ALGORITHMS.join(', ')}.`,
+      `[fuzzy-toolkit] Unknown algorithm "${String(algorithm)}". Use one of: ${ALGORITHMS.join(', ')}.`,
     );
   }
   const threshold = merged.threshold ?? 80;
   if (typeof threshold !== 'number' || Number.isNaN(threshold)) {
-    throw new TypeError('[fuzzy-kit] "threshold" must be a number between 0 and 100.');
+    throw new TypeError('[fuzzy-toolkit] "threshold" must be a number between 0 and 100.');
   }
 
   return Object.freeze({

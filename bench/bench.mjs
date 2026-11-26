@@ -21,7 +21,7 @@ function bench(name, fn, iterations = 5) {
   console.log(`${name.padEnd(48)} ${ms.toFixed(2).padStart(9)} ms`);
 }
 
-console.log('fuzzy-kit (this build)');
+console.log('fuzzy-toolkit (this build)');
 bench('similarity x2000 pairs', () => { for (const [a, b] of pairs) current.similarity(a, b); });
 const quiz = current.createMatcher({ preset: 'music' });
 bench('matcher.check x2000', () => { for (const [a, b] of pairs) quiz.check(b, a); });

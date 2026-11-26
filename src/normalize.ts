@@ -129,7 +129,7 @@ export function compileNormalizer(options: NormalizeOptions = {}): Normalizer {
 const defaultNormalizer = compileNormalizer();
 
 /**
- * Cleans up a text the way fuzzy-kit does before comparing: lower case,
+ * Cleans up a text the way fuzzy-toolkit does before comparing: lower case,
  * no accents, no punctuation, single spaces, numbers as digits.
  *
  * @example

@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: fuzzy-kit
+  name: fuzzy-toolkit
   text: Fuzzy matching that just works
   tagline: Check answers, search as you type, spot names in a message, clean up duplicates, match two lists. Typos, accents, word order, numbers in words and noise like "(feat. X)" are handled for you.
   actions:
@@ -14,7 +14,7 @@ hero:
       link: '#try-it'
     - theme: alt
       text: GitHub
-      link: https://github.com/Tfoucher5/guess-rater
+      link: https://github.com/Tfoucher5/fuzzy-toolkit
 
 features:
   - icon: 🎯
@@ -214,11 +214,11 @@ const { correct } = check(guess, answers, {
 ## Install
 
 ```sh
-npm install fuzzy-kit
+npm install fuzzy-toolkit
 ```
 
 ```ts
-import { check, checkAll, search, closest, find, highlight, dedupe, join } from 'fuzzy-kit'
+import { check, checkAll, search, closest, find, highlight, dedupe, join } from 'fuzzy-toolkit'
 ```
 
 </div>

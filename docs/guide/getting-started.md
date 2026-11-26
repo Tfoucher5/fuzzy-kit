@@ -3,7 +3,7 @@
 ## Install
 
 ```sh
-npm install fuzzy-kit
+npm install fuzzy-toolkit
 ```
 
 Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.
@@ -11,7 +11,7 @@ Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every
 ## Compare two texts
 
 ```ts
-import { similarity, isMatch } from 'fuzzy-kit'
+import { similarity, isMatch } from 'fuzzy-toolkit'
 
 similarity('Molière', 'moliere')                      // 100
 similarity('stairway to heven', 'Stairway to Heaven') // 94.44
@@ -42,7 +42,7 @@ Scores go from **0** (nothing in common) to **100** (identical once normalized).
 When the same options are used many times, create a matcher. Options are validated and compiled once.
 
 ```ts
-import { createMatcher } from 'fuzzy-kit'
+import { createMatcher } from 'fuzzy-toolkit'
 
 const quiz = createMatcher({ preset: 'music', threshold: 85 })
 
