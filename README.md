@@ -1,6 +1,8 @@
-# guess-rater
+# fuzzy-kit
 
-[![npm version](https://img.shields.io/npm/v/guess-rater?logo=npm)](https://www.npmjs.com/package/guess-rater)
+> Formerly **guess-rater**. Same code, same API: replace `guess-rater` with `fuzzy-kit` in your imports and `package.json`.
+
+[![npm version](https://img.shields.io/npm/v/fuzzy-kit?logo=npm)](https://www.npmjs.com/package/fuzzy-kit)
 [![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/guess-rater/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/guess-rater/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
@@ -13,13 +15,13 @@
 - **Tiny**: about 6 kB minified and gzipped, no dependencies, ESM and CommonJS.
 
 ```sh
-npm install guess-rater
+npm install fuzzy-kit
 ```
 
 ## In 30 seconds
 
 ```ts
-import { similarity, check, checkAll, search, closest, find, highlight, dedupe, join } from 'guess-rater'
+import { similarity, check, checkAll, search, closest, find, highlight, dedupe, join } from 'fuzzy-kit'
 
 similarity('Molière', 'moliere')                // 100
 similarity('stairway to heven', 'Stairway to Heaven') // 94.44
@@ -57,7 +59,7 @@ diff('bohemian rapsody', 'Bohemian Rhapsody')
 ```
 
 ```sh
-npx guess-rater dedupe customers.csv -k name -i sarl > clean.csv
+npx fuzzy-kit dedupe customers.csv -k name -i sarl > clean.csv
 ```
 
 Scores go from **0** (nothing in common) to **100** (identical once normalized). The default threshold is **80**.
@@ -69,7 +71,7 @@ Scores go from **0** (nothing in common) to **100** (identical once normalized).
 `check()` grades a guess as `correct`, `close` ("almost!") or `wrong`, against one or several accepted answers.
 
 ```ts
-import { createMatcher } from 'guess-rater'
+import { createMatcher } from 'fuzzy-kit'
 
 const quiz = createMatcher({ preset: 'music' })
 
@@ -108,7 +110,7 @@ The `music` preset ignores `(feat. X)`, `- Remastered 2011`, `(Live)`, bracketed
 ### Search as you type
 
 ```ts
-import { createIndex } from 'guess-rater'
+import { createIndex } from 'fuzzy-kit'
 
 const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
 
@@ -164,14 +166,14 @@ join(orders, customers, { left: 'customerName', right: 'name', unique: true })
 No code needed to clean or match spreadsheets. CSV (comma, semicolon or tab), JSON and plain text files work, and `-` reads standard input.
 
 ```sh
-npx guess-rater dedupe customers.csv -k name -i sarl -i sas > clean.csv     # drop near-duplicates
-npx guess-rater group customers.csv -k name                                   # number each group of duplicates
-npx guess-rater join orders.csv customers.csv --left-key client --right-key name --unique
-npx guess-rater search "bohemian rapsody" songs.csv -k title -k artist
-npx guess-rater compare "The Beatles" "beatles" -p music
+npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv     # drop near-duplicates
+npx fuzzy-kit group customers.csv -k name                                   # number each group of duplicates
+npx fuzzy-kit join orders.csv customers.csv --left-key client --right-key name --unique
+npx fuzzy-kit search "bohemian rapsody" songs.csv -k title -k artist
+npx fuzzy-kit compare "The Beatles" "beatles" -p music
 ```
 
-Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx guess-rater --help`.
+Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx fuzzy-kit --help`.
 
 ## API
 

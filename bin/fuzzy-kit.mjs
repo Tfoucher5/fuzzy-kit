@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 // Command line interface: fuzzy dedupe, join, search and compare on CSV, TSV,
-// JSON or plain text files. Run `npx guess-rater --help`.
+// JSON or plain text files. Run `npx fuzzy-kit --help`.
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { createMatcher, dedupe, group, join, search } from '../dist/esm/index.js';
 
-const HELP = `guess-rater: fuzzy matching from the command line
+const HELP = `fuzzy-kit: fuzzy matching from the command line
 
 Usage
-  guess-rater dedupe  <file>                 Remove near-duplicate rows
-  guess-rater group   <file>                 Add a "group" column numbering near-duplicates
-  guess-rater join    <left> <right>         Add to each left row its best match on the right
-  guess-rater search  <query> <file>         Rows matching a query, best first
-  guess-rater compare <a> <b>                Score two texts and show how they were read
+  fuzzy-kit dedupe  <file>                 Remove near-duplicate rows
+  fuzzy-kit group   <file>                 Add a "group" column numbering near-duplicates
+  fuzzy-kit join    <left> <right>         Add to each left row its best match on the right
+  fuzzy-kit search  <query> <file>         Rows matching a query, best first
+  fuzzy-kit compare <a> <b>                Score two texts and show how they were read
 
 Files can be CSV (comma, semicolon or tab, detected), .json (an array) or
 plain text (one item per line). Use - to read from standard input.
@@ -33,14 +33,14 @@ Options
   -h, --help                Show this help
 
 Examples
-  npx guess-rater dedupe customers.csv -k name -i sarl -i sas > clean.csv
-  npx guess-rater join orders.csv clients.csv --left-key client --right-key name --unique
-  npx guess-rater search "bohemian rapsody" songs.csv -k title -k artist
-  npx guess-rater compare "The Beatles" "beatles" -p music
+  npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv
+  npx fuzzy-kit join orders.csv clients.csv --left-key client --right-key name --unique
+  npx fuzzy-kit search "bohemian rapsody" songs.csv -k title -k artist
+  npx fuzzy-kit compare "The Beatles" "beatles" -p music
 `;
 
 function fail(message) {
-  process.stderr.write(`guess-rater: ${message}\nRun "guess-rater --help" for usage.\n`);
+  process.stderr.write(`fuzzy-kit: ${message}\nRun "fuzzy-kit --help" for usage.\n`);
   process.exit(1);
 }
 
@@ -262,5 +262,5 @@ try {
       fail(`unknown command "${command}"`);
   }
 } catch (error) {
-  fail(error instanceof Error ? error.message.replace(/^\[guess-rater\] /, '') : String(error));
+  fail(error instanceof Error ? error.message.replace(/^\[fuzzy-kit\] /, '') : String(error));
 }

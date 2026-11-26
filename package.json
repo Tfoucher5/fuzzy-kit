@@ -1,5 +1,5 @@
 {
-  "name": "guess-rater",
+  "name": "fuzzy-kit",
   "version": "2.1.0",
   "description": "Fuzzy string matching that just works: answer checking for quizzes, search-as-you-type, did-you-mean, fuzzy find and highlight, dedupe. Fast, zero dependencies, fully typed.",
   "keywords": [
@@ -39,7 +39,8 @@
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
   "bin": {
-    "guess-rater": "./bin/guess-rater.mjs"
+    "fuzzy-kit": "./bin/fuzzy-kit.mjs",
+    "guess-rater": "./bin/fuzzy-kit.mjs"
   },
   "exports": {
     ".": {

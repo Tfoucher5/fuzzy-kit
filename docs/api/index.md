@@ -1,6 +1,6 @@
 # API reference
 
-All functions are named exports of `guess-rater`. Options are described in [Options](/guide/options).
+All functions are named exports of `fuzzy-kit`. Options are described in [Options](/guide/options).
 
 ## similarity
 

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'guess-rater',
+  title: 'fuzzy-kit',
   description: 'Fuzzy string matching that just works',
 
   base: '/guess-rater/',

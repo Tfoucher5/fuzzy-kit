@@ -3,7 +3,7 @@
 `check()` grades a guess against one or several accepted answers.
 
 ```ts
-import { check } from 'guess-rater'
+import { check } from 'fuzzy-kit'
 
 check('bohemian rapsody', 'Bohemian Rhapsody')
 // { verdict: 'correct', correct: true, close: false, score: 94.12, answer: 'Bohemian Rhapsody' }
@@ -27,7 +27,7 @@ check('we will rock you', 'Bohemian Rhapsody').verdict // 'wrong'
 The `music` preset removes what players never type: featurings, versions, bracketed info and leading articles.
 
 ```ts
-import { createMatcher } from 'guess-rater'
+import { createMatcher } from 'fuzzy-kit'
 
 const blindTest = createMatcher({ preset: 'music' })
 
@@ -52,7 +52,7 @@ blindTest.check('zeppelin', ['Led Zeppelin', 'Zeppelin']).answer // 'Zeppelin'
 `checkAll()` looks for each part anywhere in the guess, so players can give the title, the artist or both, in any order. Score each part separately:
 
 ```ts
-import { checkAll } from 'guess-rater'
+import { checkAll } from 'fuzzy-kit'
 
 const song = { title: 'Bohemian Rhapsody - Remastered 2011', artist: 'Queen' }
 
@@ -100,7 +100,7 @@ Numbers in words, in digits and in roman numerals are the same answer: `2 Become
 When players type whole sentences, look for the answer inside the message with `find()`:
 
 ```ts
-import { find } from 'guess-rater'
+import { find } from 'fuzzy-kit'
 
 const message = "je crois que c'est bohemian rapsody de queen"
 const hit = find(message, 'Bohemian Rhapsody')[0]
