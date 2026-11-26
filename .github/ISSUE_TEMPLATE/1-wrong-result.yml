@@ -1,0 +1,32 @@
+name: Wrong result
+description: Two texts match and shouldn't, or don't match and should.
+labels: [wrong result]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks! A wrong score is the most useful report there is. A short, runnable example is all we need.
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: The call and what it returns. `JSON.stringify(compare(a, b, options))` shows how the texts were read.
+      render: js
+      placeholder: |
+        compare('Hey Jude - Remastered', 'hey jude', { preset: 'music' })
+        // { score: 62, match: false, ... }
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and why
+      placeholder: These are the same song, it should match.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: fuzzy-toolkit version
+      placeholder: '2.2.0'
+    validations:
+      required: true

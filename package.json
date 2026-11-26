@@ -128,14 +128,18 @@
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs tests/*.test.cjs",
+    "golden:update": "npm run build && node scripts/golden.mjs --update",
     "bench": "npm run build && node bench/bench.mjs",
     "prepublishOnly": "npm test",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "bench:real": "npm run build && node bench/real-data.mjs",
+    "bench:check": "npm run build && node bench/real-data.mjs --check",
+    "bench:baseline": "npm run build && node bench/real-data.mjs --update-baseline",
     "bench:versus": "npm run build && node bench/versus.mjs",
-    "size": "npm run build && node scripts/size.mjs"
+    "size": "npm run build && node scripts/size.mjs",
+    "size:check": "npm run build && node scripts/size.mjs --check"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

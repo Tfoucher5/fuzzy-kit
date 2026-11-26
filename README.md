@@ -355,6 +355,11 @@ Default scores changed: `smart` tolerates swapped letters, word order and missin
 
 **[tfoucher5.github.io/fuzzy-toolkit](https://tfoucher5.github.io/fuzzy-toolkit/)**
 
+## Contributing
+
+Bug reports with a wrong score, new languages and presets are very welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+
 ## License
 
 MIT

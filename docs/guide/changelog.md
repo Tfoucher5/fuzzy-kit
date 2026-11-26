@@ -9,6 +9,12 @@ The project follows **semantic versioning**:
 
 ---
 
+## Unreleased
+
+Nothing yet.
+
+---
+
 ## v2.2.0
 
 ### Added

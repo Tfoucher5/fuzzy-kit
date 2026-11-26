@@ -1,0 +1,38 @@
+name: Language request
+description: Ask for a language, or say you want to write its pack.
+title: 'Language: '
+labels: [language]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A language pack teaches fuzzy-toolkit numbers in words, articles, stop words and how words sound in a language.
+        See [Languages and presets](https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions) for what a pack contains.
+  - type: input
+    id: language
+    attributes:
+      label: Language and code
+      placeholder: Spanish (es)
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples that should match
+      description: A few pairs that fail today. They become the pack's tests.
+      placeholder: |
+        'treinta y dos' = '32'
+        'Los Beatles' = 'beatles' (with strip: ['articles'])
+        'bamos' = 'vamos' (with phonetic: true)
+    validations:
+      required: true
+  - type: dropdown
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - I'd like to write the pack myself
+        - I can review it as a native speaker
+        - I can't help, just asking
+    validations:
+      required: true

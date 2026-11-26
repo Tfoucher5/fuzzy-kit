@@ -4,44 +4,74 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    name: Tests (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: ['18', '20', '22', '24']
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
+          cache: npm
+      - run: npm ci
       - name: Type check
         run: npm run typecheck
-
-      - name: Build and test
+      - name: Build and test (golden results included)
         run: npm test
-
-      - name: Check published package contents
+      - name: Package contents
         run: npm pack --dry-run
 
-  docs:
+  size:
+    name: Bundle size budget
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: npm
+      - run: npm ci
+      - run: npm run size:check
+
+  accuracy:
+    name: Accuracy on real data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Cache datasets
+        uses: actions/cache@v4
+        with:
+          path: bench/.data
+          key: bench-data-${{ hashFiles('bench/real-data.mjs') }}
+      - run: npm run bench:check
+
+  docs:
+    name: Docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
       - run: npm ci
       - run: npm run docs:build
