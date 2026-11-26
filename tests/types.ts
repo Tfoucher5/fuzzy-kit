@@ -7,6 +7,8 @@ import {
   dedupe,
   search,
   similarity,
+  diff,
+  type Change,
   type CheckResult,
   type Match,
 } from '../src/index.js';
@@ -79,3 +81,16 @@ join(['a'], songs, {});
 // @ts-expect-error not a text property
 join(songs, ['b'], { left: 'year' });
 void [missingTitle, j1, j2];
+
+// Indexes can change after creation, keeping the item type.
+const songIndex = createIndex(songs, { keys: ['title', 'artist'] });
+songIndex.add({ id: 9, title: 'Flowers', artist: 'Miley Cyrus', year: 2023 });
+// @ts-expect-error the new item must be a Song
+songIndex.add({ title: 'Flowers' });
+const removed: number = songIndex.remove((song) => song.year < 1970);
+songIndex.refresh((song) => song.id === 9);
+
+// diff returns typed pieces; phonetic is an option.
+const pieces: Change[] = diff('bohemian rapsody', 'Bohemian Rhapsody', { caseSensitive: false });
+const kind: 'same' | 'added' | 'removed' = pieces[0]!.type;
+similarity('fone', 'phone', { phonetic: true });

@@ -1,11 +1,23 @@
 # Changelog
 
-All notable changes to Guess‑Rater are documented in this file.
+All notable changes to fuzzy-kit are documented in this file.
 
 The project follows **semantic versioning**:
 - MAJOR — breaking changes
 - MINOR — new features, backward‑compatible
 - PATCH — bug fixes, documentation, DX improvements
+
+---
+
+## v2.1.0
+
+**The package is renamed `fuzzy-kit`** (formerly `guess-rater`) so it is easier to find. Nothing else changes: replace `guess-rater` with `fuzzy-kit` in your imports.
+
+### Added
+- `phonetic` option: texts that sound the same match too (English and French), for answers spelled by ear. `beyonsay` = `Beyoncé`, `kwin` = `Queen`. Off by default; scores at most 95.
+- `diff()`: character-by-character changes between a guess and the answer, to show what was misspelled.
+- `index.add()`, `index.remove()` and `index.refresh()`: update an index when the data changes, without rebuilding it.
+- Command line tool: `npx fuzzy-kit dedupe | group | join | search | compare` on CSV, JSON or text files.
 
 ---
 
@@ -251,7 +263,7 @@ A rewrite focused on doing the right thing by default. See [Upgrading from v1](/
 
 ## Contributing
 
-Guess‑Rater is an **open‑source project** and contributions are welcome.
+fuzzy-kit is an **open‑source project** and contributions are welcome.
 
 Anyone can:
 - use the library freely

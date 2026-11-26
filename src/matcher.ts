@@ -68,7 +68,7 @@ export interface MatcherCheckOptions {
 export interface Index<T> {
   /** Number of items in the index. */
   readonly size: number;
-  /** The indexed items, in their original order. */
+  /** The indexed items, in order. `Match.index` is a position in this list. */
   readonly items: readonly T[];
   /**
    * Items matching `query`, best first.
@@ -79,6 +79,28 @@ export interface Index<T> {
   search(query: string, options?: Omit<MatcherListOptions<T>, 'keys'>): Match<T>[];
   /** The best item for `query`, or `undefined` if none reaches the threshold. */
   closest(query: string, options?: Pick<MatcherListOptions<T>, 'threshold'>): Match<T> | undefined;
+  /**
+   * Adds items at the end of the index. Only the new items are processed.
+   * @example
+   * index.add({ title: 'Flowers', artist: 'Miley Cyrus' })
+   * index.add(...newSongs)
+   */
+  add(...items: T[]): void;
+  /**
+   * Removes the items for which `predicate` returns `true`, or the given item
+   * (compared with `===`). Returns how many were removed.
+   * @example
+   * index.remove((song) => song.id === 42)
+   */
+  remove(itemOrPredicate: T | ((item: T, index: number) => boolean)): number;
+  /**
+   * Re-reads the text of the items for which `predicate` returns `true`, after
+   * you changed them in place. Returns how many were refreshed.
+   * @example
+   * song.title = 'Bohemian Rhapsody (Live)'
+   * index.refresh((s) => s === song)
+   */
+  refresh(predicate: (item: T, index: number) => boolean): number;
 }
 
 /**
@@ -128,6 +150,7 @@ export interface Matcher {
 
 interface Entry<T> {
   item: T;
+  /** Position in the list; renumbered when an index removes items. */
   index: number;
   texts: readonly string[];
   weights: readonly number[];
@@ -158,7 +181,7 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
     return (item) => {
       if (item !== null && typeof item === 'object') {
         throw new TypeError(
-          '[guess-rater] Items are objects: pass `keys` to say where their text is, e.g. { keys: ["title"] }.',
+          '[fuzzy-kit] Items are objects: pass `keys` to say where their text is, e.g. { keys: ["title"] }.',
         );
       }
       return { texts: [toText(item)], weights: [1] };
@@ -186,7 +209,7 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
 
 function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Entry<T>[] {
   if (!Array.isArray(items)) {
-    throw new TypeError('[guess-rater] Expected an array of items.');
+    throw new TypeError('[fuzzy-kit] Expected an array of items.');
   }
   const getTexts = textGetter(keys);
   // When matching parts, all texts of an item also count together, so
@@ -354,7 +377,7 @@ function joinLists<L, R>(
   engine: Engine,
   threshold: number,
 ): JoinRow<L, R>[] {
-  if (!Array.isArray(left)) throw new TypeError('[guess-rater] Expected an array of left items.');
+  if (!Array.isArray(left)) throw new TypeError('[fuzzy-kit] Expected an array of left items.');
   const getTexts = textGetter(options.left);
   const entries = buildEntries(right, options.right, engine);
   const candidates = (item: L, limit: number): Match<R>[] => {
@@ -423,15 +446,53 @@ function compareWith(a: string, b: string, engine: Engine): Comparison {
 }
 
 function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Index<T> {
-  const entries = buildEntries(items, keys, engine);
-  const frozen = Object.freeze([...items]);
+  let entries = buildEntries(items, keys, engine);
+  let snapshot: readonly T[] | null = null;
+  const renumber = (): void => {
+    entries.forEach((entry, i) => (entry.index = i));
+    snapshot = null;
+  };
   return {
-    size: frozen.length,
-    items: frozen,
+    get size() {
+      return entries.length;
+    },
+    get items() {
+      return (snapshot ??= Object.freeze(entries.map((entry) => entry.item)));
+    },
     search: (query, options = {}) =>
       rank(query, entries, engine, options.threshold ?? engine.options.threshold, options.limit ?? Infinity),
     closest: (query, options = {}) =>
       rank(query, entries, engine, options.threshold ?? engine.options.threshold, 1)[0],
+    add: (...added) => {
+      const start = entries.length;
+      for (const entry of buildEntries(added, keys, engine)) {
+        entry.index += start;
+        entries.push(entry);
+      }
+      snapshot = null;
+    },
+    remove: (target) => {
+      const matches =
+        typeof target === 'function'
+          ? (target as (item: T, index: number) => boolean)
+          : (item: T) => item === target;
+      const before = entries.length;
+      entries = entries.filter((entry) => !matches(entry.item, entry.index));
+      if (entries.length !== before) renumber();
+      return before - entries.length;
+    },
+    refresh: (predicate) => {
+      let count = 0;
+      entries = entries.map((entry) => {
+        if (!predicate(entry.item, entry.index)) return entry;
+        count += 1;
+        const [fresh] = buildEntries([entry.item], keys, engine);
+        fresh!.index = entry.index;
+        return fresh!;
+      });
+      if (count > 0) snapshot = null;
+      return count;
+    },
   };
 }
 

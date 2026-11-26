@@ -9,6 +9,7 @@ import {
   searchDistance,
 } from './distance.js';
 import { compileNormalizer, type Normalizer } from './normalize.js';
+import { PHONETIC_WEIGHT, soundOf } from './phonetic.js';
 import type { Algorithm, Comparison, MatchOptions, Preset } from './types.js';
 
 const PRESETS: Readonly<Record<Preset, MatchOptions>> = {
@@ -54,13 +55,17 @@ export interface Prepared {
    * changed it. A typo in a number word ("twp") still scores against "two".
    */
   readonly alt?: Prepared;
+  /** With `phonetic`: how the text sounds, words in their order. */
+  readonly sound?: string;
+  /** With `phonetic`: how the text sounds, words sorted. */
+  readonly soundSorted?: string;
 }
 
 export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
   const preset = options.preset;
   if (preset !== undefined && !(preset in PRESETS)) {
     throw new TypeError(
-      `[guess-rater] Unknown preset "${String(preset)}". Use one of: ${Object.keys(PRESETS).join(', ')}.`,
+      `[fuzzy-kit] Unknown preset "${String(preset)}". Use one of: ${Object.keys(PRESETS).join(', ')}.`,
     );
   }
   const base = preset ? PRESETS[preset] : {};
@@ -73,12 +78,12 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
   const algorithm = merged.algorithm ?? 'smart';
   if (!ALGORITHMS.includes(algorithm)) {
     throw new TypeError(
-      `[guess-rater] Unknown algorithm "${String(algorithm)}". Use one of: ${ALGORITHMS.join(', ')}.`,
+      `[fuzzy-kit] Unknown algorithm "${String(algorithm)}". Use one of: ${ALGORITHMS.join(', ')}.`,
     );
   }
   const threshold = merged.threshold ?? 80;
   if (typeof threshold !== 'number' || Number.isNaN(threshold)) {
-    throw new TypeError('[guess-rater] "threshold" must be a number between 0 and 100.');
+    throw new TypeError('[fuzzy-kit] "threshold" must be a number between 0 and 100.');
   }
 
   return Object.freeze({
@@ -92,6 +97,7 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     accentSensitive: merged.accentSensitive ?? false,
     punctuation: merged.punctuation ?? 'space',
     numbers: merged.numbers ?? true,
+    phonetic: merged.phonetic ?? false,
     strip: Object.freeze([...(merged.strip ?? [])]),
     ignoreWords: Object.freeze([...(merged.ignoreWords ?? [])]),
     replace: Object.freeze({ ...merged.replace }),
@@ -114,13 +120,14 @@ export function compileEngine(options: MatchOptions = {}): Engine {
   const resolved = resolveOptions(options);
   const normalize = compileNormalizer(resolved);
   const asWritten = resolved.numbers ? compileNormalizer({ ...resolved, numbers: false }) : null;
+  const sounds = resolved.phonetic ? (resolved.ignoreSpaces ? '' : ' ') : null;
   const read = (raw: string): Prepared => {
     const text = normalize(raw);
-    const prepared = prepare(text);
+    const prepared = prepare(text, sounds);
     // Numbers only ever turn into digits: without one, nothing was rewritten.
     if (!asWritten || !DIGIT_RE.test(text)) return prepared;
     const written = asWritten(raw);
-    return written === text ? prepared : { ...prepared, alt: prepare(written) };
+    return written === text ? prepared : { ...prepared, alt: prepare(written, sounds) };
   };
   return { options: resolved, normalize, read };
 }
@@ -139,14 +146,25 @@ export function getEngine(options?: MatchOptions): Engine {
   return engine;
 }
 
-export function prepare(text: string): Prepared {
+/**
+ * Splits a normalized text into the variants `smart` uses. With a `sounds`
+ * separator (phonetic matching on), also computes how the text sounds.
+ */
+export function prepare(text: string, sounds: string | null = null): Prepared {
   const words = text === '' ? [] : text.split(' ');
   const multi = words.length > 1;
-  return {
+  const prepared: Prepared = {
     text,
     words,
     sorted: multi ? [...words].sort().join(' ') : text,
     compact: multi ? words.join('') : text,
+  };
+  if (sounds === null || text === '') return prepared;
+  const keys = words.map(soundOf);
+  return {
+    ...prepared,
+    sound: keys.join(sounds),
+    soundSorted: multi ? [...keys].sort().join(sounds) : keys[0]!,
   };
 }
 
@@ -297,8 +315,9 @@ function smart(
   // In a search, only the query may be the partial side: "i don" finds
   // "I Don't Care", but "I Do" is not a match for "i don".
   const partial = options.partial && (queryFirst ? a.text.length < b.text.length : a.text.length !== b.text.length);
+  const sound = options.phonetic ? soundScore(a, b, options, floor) : 0;
   // In lists, most candidates are far off: rule them out with cheap bounds.
-  if (floor > 0 && !scores && !canReach(a, b, options, partial, floor - 0.01)) return 0;
+  if (floor > 0 && !scores && !canReach(a, b, options, partial, floor - 0.01)) return sound;
 
   let best = record(scores, 'characters', ratio(damerau(a.text, b.text), a.text, b.text));
   const multiWord = a.words.length > 1 || b.words.length > 1;
@@ -323,7 +342,31 @@ function smart(
       if (round(value) > best) best = round(value);
     }
   }
+  if (options.phonetic) {
+    record(scores, 'phonetic', sound);
+    if (sound > best) best = sound;
+  }
   return best;
+}
+
+/**
+ * Score of two texts compared by how they sound, worth at most 95. 0 when the
+ * texts have no sound key or provably cannot reach `floor`.
+ */
+function soundScore(a: Prepared, b: Prepared, options: ResolvedOptions, floor: number): number {
+  const x = a.sound;
+  const y = b.sound;
+  // Too short to tell anything by ear: "air" and "her" must not match.
+  if (x === undefined || y === undefined || x.length < 3 || y.length < 3) return 0;
+  if (x === y) return round(100 * PHONETIC_WEIGHT);
+  if (lengthBound(x.length, y.length) * PHONETIC_WEIGHT < floor - 0.01) return 0;
+  let value = ratio(damerau(x, y), x, y);
+  if (options.ignoreWordOrder && value < 100 && (a.soundSorted !== x || b.soundSorted !== y)) {
+    const xs = a.soundSorted!;
+    const ys = b.soundSorted!;
+    value = Math.max(value, ratio(damerau(xs, ys), xs, ys));
+  }
+  return round(value * PHONETIC_WEIGHT);
 }
 
 /**
@@ -413,6 +456,9 @@ function maxOne(a: Prepared, b: Prepared, options: ResolvedOptions): number {
   let best = lengthBound(a.text.length, b.text.length);
   if (algorithm === 'smart' && options.ignoreSpaces) {
     best = Math.max(best, lengthBound(a.compact.length, b.compact.length));
+  }
+  if (algorithm === 'smart' && options.phonetic && a.sound !== undefined && b.sound !== undefined) {
+    best = Math.max(best, lengthBound(a.sound.length, b.sound.length) * PHONETIC_WEIGHT);
   }
   return best;
 }

@@ -1,4 +1,4 @@
-# Contribuer à guess-rater
+# Contribuer à fuzzy-kit
 
 Merci de l'intérêt que vous portez au projet !
 
