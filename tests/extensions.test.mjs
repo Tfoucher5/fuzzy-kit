@@ -92,7 +92,7 @@ test('languages: phonetic rules come from the packs', () => {
 });
 
 test('languages: unknown codes and fake packs are refused', () => {
-  assert.throws(() => normalize('a', { languages: ['es'] }), /Unknown language "es".*defineLanguage/);
+  assert.throws(() => normalize('a', { languages: ['pt'] }), /Unknown language "pt".*defineLanguage/);
   assert.throws(() => normalize('a', { languages: [{ code: 'es' }] }), /Invalid language/);
   assert.throws(() => normalize('a', { languages: [{ ...es, apiVersion: 99 }] }), /extension API 99/);
 });

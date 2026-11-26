@@ -18,6 +18,7 @@ const cases = {
   'levenshtein / damerau': `export { levenshtein, damerau } from './dist/esm/index.js'`,
   'fuzzy-toolkit/string-similarity': `export * from './dist/esm/compat/string-similarity.js'`,
   'fuzzy-toolkit/react': `export * from './dist/esm/react.js'`,
+  'one extra language (lang/es)': `export { default } from './dist/esm/lang/es.js'`,
 };
 console.log('import'.padEnd(36), 'min+gzip', check ? '  budget' : '');
 for (const [name, contents] of Object.entries(cases)) {

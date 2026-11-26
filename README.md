@@ -247,7 +247,7 @@ All options are optional and can be passed to any function, `createMatcher()` or
 | Option | Default | What it does |
 | --- | --- | --- |
 | `preset` | | `'music'`, `'search'`, `'strict'` or your own from `definePreset()`. Your own options win over the preset. |
-| `languages` | `['en', 'fr']` | Languages to read numbers, articles, stop words and sounds in: built-in codes or packs from `defineLanguage()`. |
+| `languages` | `['en', 'fr']` | Languages to read numbers, articles, stop words and sounds in: `'en'`, `'fr'`, packs from `fuzzy-toolkit/lang/es`, `/de`, `/it`, or your own from `defineLanguage()`. |
 | `stopwords` | `false` | Ignore the stop words of the active languages. |
 | `stripPatterns` | `[]` | Your own regular expressions of noise to remove. |
 | `threshold` | `80` | Minimum score to match. |

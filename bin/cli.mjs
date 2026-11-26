@@ -32,7 +32,7 @@ Options
   -t, --threshold <0-100>   Minimum score to match (default 80)
   -p, --preset <name>       music, search or strict, or a preset package or
                             file made with definePreset()
-      --lang <code>         Language (repeatable): en, fr, or a language pack
+      --lang <code>         Language (repeatable): en, fr, es, de, it, or a language pack
                             package or file made with defineLanguage()
       --phonetic            Also match texts that sound the same
   -i, --ignore <word>       Word to ignore (repeatable), e.g. -i inc -i ltd
@@ -199,6 +199,7 @@ if (values.help || !command) {
 const options = {};
 const BUILTIN_PRESETS = ['music', 'search', 'strict'];
 const BUILTIN_LANGUAGES = ['en', 'fr'];
+const PACKED_LANGUAGES = ['es', 'de', 'it'];
 
 /** Loads an extension from a package name or a file: its default export, else its first export. */
 async function loadExtension(spec, kind) {
@@ -220,7 +221,9 @@ if (values.preset) {
 if (values.lang) {
   options.languages = [];
   for (const spec of values.lang.flatMap((v) => v.split(','))) {
-    options.languages.push(BUILTIN_LANGUAGES.includes(spec) ? spec : await loadExtension(spec, 'language'));
+    if (BUILTIN_LANGUAGES.includes(spec)) options.languages.push(spec);
+    else if (PACKED_LANGUAGES.includes(spec)) options.languages.push((await import(`../dist/esm/lang/${spec}.js`)).default);
+    else options.languages.push(await loadExtension(spec, 'language'));
   }
 }
 if (values.phonetic) options.phonetic = true;

@@ -114,6 +114,36 @@
         "default": "./dist/cjs/lang/fr.js"
       }
     },
+    "./lang/es": {
+      "import": {
+        "types": "./dist/esm/lang/es.d.ts",
+        "default": "./dist/esm/lang/es.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lang/es.d.ts",
+        "default": "./dist/cjs/lang/es.js"
+      }
+    },
+    "./lang/de": {
+      "import": {
+        "types": "./dist/esm/lang/de.d.ts",
+        "default": "./dist/esm/lang/de.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lang/de.d.ts",
+        "default": "./dist/cjs/lang/de.js"
+      }
+    },
+    "./lang/it": {
+      "import": {
+        "types": "./dist/esm/lang/it.d.ts",
+        "default": "./dist/esm/lang/it.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lang/it.d.ts",
+        "default": "./dist/cjs/lang/it.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "files": [
