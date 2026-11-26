@@ -14,12 +14,18 @@ The project follows **semantic versioning**:
 ### Added
 - [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
 
+### Docs
+- New design for the documentation site. The home page has a live demo scored by the real library, benchmarks and examples for each function.
+- New [Playground](/playground) page.
+- Getting started shows pnpm, yarn, bun and CDN installs; the search recipe covers React.
+- A shorter README that points to the documentation.
+
 ---
 
 ## v2.5.0
 
 ### Added
-- Dutch language pack: `fuzzy-toolkit/lang/nl`. Numbers in words with units first (`eenentwintig`, `een en twintig`), ordinals, articles, stop words and phonetic rules (ij/ei, au/ou, v/f, z/s, ch/g). Also in the CLI (`--lang nl`) and the MCP server. Thanks to @techkayacodes, the first outside contribution!
+- Dutch language pack: `fuzzy-toolkit/lang/nl`. Numbers in words with units first (`eenentwintig`, `een en twintig`), ordinals, articles, stop words and phonetic rules (ij/ei, au/ou, v/f, z/s, ch/g). Also in the CLI (`--lang nl`) and the MCP server. Thanks to [@techkayacodes](https://github.com/techkayacodes), the first outside contribution!
 
 ### Project
 - Property-based tests (fast-check): random Unicode input against the laws of distances, scores and `normalize`.

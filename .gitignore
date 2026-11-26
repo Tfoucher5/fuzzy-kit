@@ -22,3 +22,6 @@ docs/public/llms-full.txt
 
 # Written by scripts/release-assets.mjs
 release-assets/
+
+# Personal Claude Code settings
+.claude/settings.local.json

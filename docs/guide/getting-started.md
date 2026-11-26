@@ -2,11 +2,38 @@
 
 ## Install
 
-```sh
+::: code-group
+
+```sh [npm]
 npm install fuzzy-toolkit
 ```
 
+```sh [pnpm]
+pnpm add fuzzy-toolkit
+```
+
+```sh [yarn]
+yarn add fuzzy-toolkit
+```
+
+```sh [bun]
+bun add fuzzy-toolkit
+```
+
+:::
+
 Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.
+
+Without a bundler, load it from a CDN: the script gives a global `fuzzyToolkit`.
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>
+<script>
+  fuzzyToolkit.similarity('Molière', 'moliere') // 100
+</script>
+```
+
+Or as a module: `import { search } from 'https://cdn.jsdelivr.net/npm/fuzzy-toolkit/dist/browser/fuzzy-toolkit.min.js'`.
 
 ## Compare two texts
 

@@ -124,5 +124,5 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--vp-c-brand-
 .pg-score { font-variant-numeric: tabular-nums; color: var(--vp-c-text-2); }
 .pg-empty { color: var(--vp-c-text-2); }
 .pg-text { margin: 0; padding: 12px; border-radius: 8px; background: var(--vp-c-bg); }
-mark { background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); border-radius: 3px; padding: 0 1px; font-weight: 600; }
+mark { background: var(--ft-marker); color: var(--ft-marker-text); border-radius: 3px; padding: 0 1px; font-weight: 600; }
 </style>
