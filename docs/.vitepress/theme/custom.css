@@ -1,78 +1,123 @@
+/* fuzzy-toolkit docs theme: one indigo accent, a yellow marker kept for what matches. */
+
 :root {
-  --vp-c-brand-1: #6d4aff;
-  --vp-c-brand-2: #5a35f0;
-  --vp-c-brand-3: #4a26d9;
-  --vp-c-brand-soft: rgba(109, 74, 255, 0.14);
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(120deg, #6d4aff 20%, #19b6d9);
-  --vp-home-hero-image-background-image: linear-gradient(-45deg, #6d4aff55 50%, #19b6d955 50%);
-  --vp-home-hero-image-filter: blur(56px);
-  --gr-ok: #16a34a;
-  --gr-close: #d97706;
-  --gr-wrong: #dc2626;
+  --vp-font-family-base: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --ft-font-display: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
+
+  --vp-c-brand-1: #4338ca;
+  --vp-c-brand-2: #3730a3;
+  --vp-c-brand-3: #312e81;
+  --vp-c-brand-soft: rgba(67, 56, 202, 0.12);
+
+  --ft-marker: #fde68a;
+  --ft-marker-text: #0e1116;
+  --ft-ink: #0e1116;
+  --ft-ink-2: #161a22;
+  --ft-ink-3: #1f2430;
+  --ft-ink-line: #2a303c;
+  --ft-ink-text: #e6e8ee;
+  --ft-ink-muted: #8b93a3;
+
+  /* Verdict colors of the playground. */
+  --gr-ok: #15803d;
+  --gr-close: #b45309;
+  --gr-wrong: #b91c1c;
+
+  /* Code blocks stay dark in both themes. */
+  --vp-code-block-bg: var(--ft-ink);
+  --vp-code-block-color: var(--ft-ink-text);
+  --vp-code-block-divider-color: var(--ft-ink-line);
+  --vp-code-lang-color: var(--ft-ink-muted);
+  --vp-code-line-number-color: var(--ft-ink-muted);
+  --vp-code-copy-code-bg: var(--ft-ink-3);
+  --vp-code-copy-code-hover-bg: var(--ft-ink-line);
+  --vp-code-copy-code-active-text: var(--ft-ink-text);
+  --vp-code-tab-bg: var(--ft-ink-2);
+  --vp-code-tab-divider: var(--ft-ink-line);
+  --vp-code-tab-text-color: var(--ft-ink-muted);
+  --vp-code-tab-hover-text-color: var(--ft-ink-text);
+  --vp-code-tab-active-text-color: var(--ft-ink-text);
+  --vp-code-tab-active-bar-color: var(--ft-marker);
+
+  --vp-custom-block-info-bg: rgba(67, 56, 202, 0.07);
+  --vp-custom-block-info-border: rgba(67, 56, 202, 0.2);
+  --vp-custom-block-tip-bg: rgba(21, 128, 61, 0.07);
+  --vp-custom-block-tip-border: rgba(21, 128, 61, 0.22);
+  --vp-custom-block-warning-bg: rgba(253, 230, 138, 0.35);
+  --vp-custom-block-warning-border: rgba(180, 83, 9, 0.25);
+
+  --vp-button-brand-bg: var(--vp-c-brand-1);
+  --vp-button-brand-hover-bg: var(--vp-c-brand-2);
+  --vp-button-brand-active-bg: var(--vp-c-brand-3);
 }
 
 .dark {
-  --vp-c-brand-1: #9b85ff;
-  --vp-c-brand-2: #8670ff;
-  --vp-c-brand-3: #6d4aff;
+  --vp-c-brand-1: #a5b4fc;
+  --vp-c-brand-2: #818cf8;
+  --vp-c-brand-3: #6366f1;
+  --vp-c-brand-soft: rgba(129, 140, 248, 0.16);
+  --ft-ink: #0b0d12;
   --gr-ok: #4ade80;
   --gr-close: #fbbf24;
   --gr-wrong: #f87171;
+  --vp-custom-block-info-bg: rgba(129, 140, 248, 0.1);
+  --vp-custom-block-tip-bg: rgba(74, 222, 128, 0.08);
+  --vp-custom-block-warning-bg: rgba(251, 191, 36, 0.1);
+  --vp-button-brand-text: #0e1116;
+  --vp-button-brand-hover-text: #0e1116;
+  --vp-button-brand-active-text: #0e1116;
 }
 
-.home-section {
-  max-width: 1152px;
-  margin: 0 auto;
-  padding: 48px 24px 0;
+/* Headings in the display face. */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.VPNavBarTitle .title {
+  font-family: var(--ft-font-display);
+  letter-spacing: -0.02em;
 }
 
-.home-section h2 {
-  font-size: 28px;
+.vp-doc h1 {
+  font-size: 44px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.vp-doc h2 {
+  border-top: none;
+  padding-top: 8px;
+}
+
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.75;
+}
+
+/* The logo: the dash of fuzzy-toolkit is highlighted, like a match. */
+.VPNavBarTitle .title {
   font-weight: 700;
-  margin-bottom: 8px;
-  border: none;
+  font-size: 19px;
 }
 
-.home-section > p.lead {
-  color: var(--vp-c-text-2);
-  margin: 0 0 24px;
+/* Code blocks: rounded, with room to breathe. */
+.vp-doc div[class*='language-'] {
+  border-radius: 14px;
+  border: 1px solid var(--ft-ink-line);
 }
 
-.home-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
-  gap: 16px;
+.vp-doc :not(pre) > code {
+  border-radius: 6px;
 }
 
-.home-card {
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  padding: 16px 20px;
-  background: var(--vp-c-bg-soft);
+.vp-doc .custom-block {
+  border-radius: 14px;
 }
 
-.home-card h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
-}
-
-.home-card div[class*='language-'] code {
-  font-size: 13px;
-}
-
-.home-card div[class*='language-'] {
-  margin: 8px -20px -16px !important;
-  border-radius: 0 0 12px 12px !important;
-}
-
-.home-table table {
-  display: table;
-  width: 100%;
-}
-
-.home-table td:last-child,
-.home-table th:last-child {
-  text-align: right;
-  white-space: nowrap;
+/* Matches highlighted by the library look the same everywhere. */
+mark {
+  background: var(--ft-marker);
+  color: var(--ft-marker-text);
+  border-radius: 3px;
+  padding: 0 1px;
 }

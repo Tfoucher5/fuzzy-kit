@@ -14,6 +14,12 @@ The project follows **semantic versioning**:
 ### Added
 - [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
 
+### Docs
+- New design for the documentation site. The home page has a live demo scored by the real library, benchmarks and examples for each function.
+- New [Playground](/playground) page.
+- Getting started shows pnpm, yarn, bun and CDN installs; the search recipe covers React.
+- A shorter README that points to the documentation.
+
 ---
 
 ## v2.5.0

@@ -4,9 +4,8 @@ name: Publish
 # the `release` job creates the tag vX.Y.Z and the GitHub release (notes taken
 # from docs/guide/changelog.md), then `publish` puts it on npm after approval
 # of the `npm` environment. A release made by hand on GitHub also publishes.
-# Authentication: npm trusted publishing (no token to leak). Configure it once
-# on npmjs.com > fuzzy-toolkit > Settings > Trusted publishing, with this
-# repository, the workflow file name `publish.yml` and the environment `npm`.
+# Authentication: npm trusted publishing (OIDC), no token stored. It is tied
+# to this file name and the `npm` environment: keep both.
 
 on:
   push:
