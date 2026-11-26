@@ -27,6 +27,9 @@ jobs:
 
       - run: npm ci
       - run: npm run docs:build
+        env:
+          # Read-only use: the Contributors page lists contributors and issues.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:

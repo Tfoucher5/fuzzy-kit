@@ -1,0 +1,136 @@
+/* Building blocks shared by the sections of the home page. */
+
+.ft-home {
+  color: var(--vp-c-text-1);
+  overflow-x: clip;
+}
+
+.ft-home h1,
+.ft-home h2,
+.ft-home h3,
+.ft-home p {
+  margin: 0;
+}
+
+.ft-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.ft-section {
+  padding: 104px 0;
+}
+
+.ft-head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 760px;
+  margin-bottom: 40px;
+}
+
+.ft-eyebrow {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vp-c-brand-1);
+}
+
+.ft-h2 {
+  font-family: var(--ft-font-display);
+  font-size: clamp(34px, 4.4vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.ft-h2 .ft-hl {
+  padding: 0 6px;
+}
+
+.ft-lead {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+
+.ft-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.ft-btn-primary {
+  background: var(--vp-c-brand-1);
+  color: #fff;
+}
+
+.dark .ft-btn-primary {
+  color: var(--ft-marker-text);
+}
+
+.ft-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px var(--vp-c-brand-1);
+}
+
+.ft-btn-ghost {
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.ft-btn-ghost:hover {
+  border-color: var(--vp-c-brand-1);
+}
+
+.ft-code {
+  font-family: var(--vp-font-family-mono);
+  background: var(--ft-ink);
+  color: var(--ft-ink-text);
+  border-radius: 14px;
+}
+
+.ft-dark {
+  background: var(--ft-ink);
+  color: var(--ft-ink-text);
+}
+
+.ft-dark .ft-h2 {
+  color: #fff;
+}
+
+.ft-dark .ft-lead {
+  color: #b8bfcc;
+}
+
+.ft-dark .ft-eyebrow {
+  color: var(--ft-marker);
+}
+
+.ft-dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--vp-c-divider) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.ft-link {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Dark blocks keep an edge on the dark theme. */
+.dark .ft-dark {
+  border: 1px solid var(--ft-ink-line);
+}

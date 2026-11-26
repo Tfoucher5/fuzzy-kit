@@ -112,11 +112,36 @@ Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 
 ## Install
 
-```sh
+**-group**
+
+```sh [npm]
 npm install fuzzy-toolkit
 ```
 
-Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.
+```sh [pnpm]
+pnpm add fuzzy-toolkit
+```
+
+```sh [yarn]
+yarn add fuzzy-toolkit
+```
+
+```sh [bun]
+bun add fuzzy-toolkit
+```
+
+**with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.**
+
+Without a bundler, load it from a CDN: the script gives a global `fuzzyToolkit`.
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>
+<script>
+  fuzzyToolkit.similarity('Molière', 'moliere') // 100
+</script>
+```
+
+Or as a module: `import { search } from 'https://cdn.jsdelivr.net/npm/fuzzy-toolkit/dist/browser/fuzzy-toolkit.min.js'`.
 
 ## Compare two texts
 
@@ -700,6 +725,19 @@ Each result also has `text`, the value that matched, useful when you search seve
 const [best] = index.search('queen')
 best.text // 'Queen' (the artist, not the title)
 ```
+
+## With React
+
+`fuzzy-toolkit/react` does the indexing, the memoization and the highlighting:
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} /></li>)
+```
+
+See [`useFuzzySearch`](https://tfoucher5.github.io/fuzzy-toolkit/api/#react) for every option.
 
 ## Some fields count less
 

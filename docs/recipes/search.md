@@ -69,6 +69,19 @@ const [best] = index.search('queen')
 best.text // 'Queen' (the artist, not the title)
 ```
 
+## With React
+
+`fuzzy-toolkit/react` does the indexing, the memoization and the highlighting:
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} /></li>)
+```
+
+See [`useFuzzySearch`](/api/#react) for every option.
+
 ## Some fields count less
 
 Give a key a weight to rank its matches lower:
