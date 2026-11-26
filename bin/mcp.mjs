@@ -10,8 +10,9 @@ import { check, checkAll, closest, compare, find, group, join, search } from '..
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
+import nl from '../dist/esm/lang/nl.js';
 
-const PACKS = { es, de, it };
+const PACKS = { es, de, it, nl };
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
@@ -49,7 +50,7 @@ const OPTIONS = {
   ignoreWords: { type: 'array', items: { type: 'string' }, description: 'Whole words to ignore, e.g. ["inc", "ltd", "sarl"].' },
   languages: {
     type: 'array',
-    items: { type: 'string', enum: ['en', 'fr', 'es', 'de', 'it'] },
+    items: { type: 'string', enum: ['en', 'fr', 'es', 'de', 'it', 'nl'] },
     description: 'Languages for numbers written in words, articles and sounds. Default ["en", "fr"].',
   },
 };
