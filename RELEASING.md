@@ -8,10 +8,13 @@ Maintainers only. Releases go out from `master`.
 3. In `docs/guide/changelog.md`, rename **Unreleased** to the version and
    add a fresh empty **Unreleased** section above it.
 4. Open a pull request "Release vX.Y.Z", merge it once CI passes.
-5. On GitHub, create a release with the tag `vX.Y.Z` on `master`, and paste
-   the changelog entry as notes. Publishing the release runs
-   `.github/workflows/publish.yml`: it checks that the tag matches
-   `package.json`, runs every check, and publishes to npm with provenance.
+5. That's all. The merge changes `package.json` on `master`, which runs
+   `.github/workflows/publish.yml`: it creates the tag `vX.Y.Z` and the
+   GitHub release (notes from the `## vX.Y.Z` changelog section), then waits
+   for the approval of the `npm` environment, runs every check and publishes
+   to npm with provenance.
+
+A release created by hand on GitHub (tag `vX.Y.Z` on `master`) also publishes.
 
 ## One-time setup
 

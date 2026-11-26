@@ -1,24 +1,75 @@
 name: Publish
 
-# Publishing a GitHub release (tag vX.Y.Z) publishes that version to npm.
+# Merging a version bump of package.json into master releases it:
+# the `release` job creates the tag vX.Y.Z and the GitHub release (notes taken
+# from docs/guide/changelog.md), then `publish` puts it on npm after approval
+# of the `npm` environment. A release made by hand on GitHub also publishes.
 # Authentication: npm trusted publishing (no token to leak). Configure it once
 # on npmjs.com > fuzzy-toolkit > Settings > Trusted publishing, with this
-# repository and the workflow file name `publish.yml`.
+# repository, the workflow file name `publish.yml` and the environment `npm`.
 
 on:
+  push:
+    branches: [master]
+    paths: [package.json]
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
+    name: Tag and GitHub release
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
-    environment: npm
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
+      - id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists, nothing to release."
+            exit 0
+          fi
+          # Notes: the "## vX.Y.Z" section of the changelog, up to the next "---".
+          # Site-relative links (/guide/...) point to the docs site.
+          awk -v h="## $tag" '$0==h{on=1;next} on&&/^---$/{exit} on' docs/guide/changelog.md \
+            | sed 's#](/#](https://tfoucher5.github.io/fuzzy-toolkit/#g' > notes.md
+          if [ ! -s notes.md ]; then
+            echo "docs/guide/changelog.md has no \"## $tag\" section. Rename Unreleased to $tag in the release PR."
+            exit 1
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file notes.md
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish to npm
+    needs: release
+    # always(): run after a hand-made release too, where `release` is skipped.
+    if: always() && (github.event_name == 'release' || needs.release.outputs.tag != '')
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TAG: ${{ github.event.release.tag_name || needs.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -28,8 +79,8 @@ jobs:
       - name: Tag matches package.json
         run: |
           version="v$(node -p "require('./package.json').version")"
-          if [ "$version" != "${{ github.event.release.tag_name }}" ]; then
-            echo "Release tag ${{ github.event.release.tag_name }} does not match package.json ($version)"
+          if [ "$version" != "$TAG" ]; then
+            echo "Release tag $TAG does not match package.json ($version)"
             exit 1
           fi
 
