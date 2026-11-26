@@ -6,6 +6,7 @@ import { compare, normalize } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
+import nl from '../dist/esm/lang/nl.js';
 import { assertLanguage } from '../dist/esm/testing.js';
 
 /** [input, normalized] with the pack, pairs that must sound alike and pairs that must not. */
@@ -44,6 +45,17 @@ const PACKS = {
     sounds: [['kiesa', 'chiesa'], ['pitsa', 'pizza'], ['familia', 'famiglia'], ['latsio', 'Lazio']],
     distinct: [['pane', 'cane'], ['sole', 'sale']],
   },
+  nl: {
+    pack: nl,
+    numbers: [
+      ['eenentwintig', '21'], ['een en twintig', '21'], ['tweeëntwintig', '22'], ['drieëndertig', '33'],
+      ['negenennegentig', '99'], ['honderd', '100'], ['de tweede keer', 'de 2 keer'], ['vijf', '5'],
+    ],
+    articles: [['De Dijk', 'dijk'], ['Het Goede Doel', 'goede doel'], ['Een Nieuwe Dag', 'nieuwe dag']],
+    stopwords: [['Koning van de Nacht', 'koning nacht']],
+    sounds: [['reis', 'rijs'], ['hout', 'haut'], ['fogel', 'vogel'], ['son', 'zon'], ['hond', 'hont']],
+    distinct: [['huis', 'muis'], ['kat', 'rat']],
+  },
 };
 
 for (const [code, { pack, ...cases }] of Object.entries(PACKS)) {
@@ -69,11 +81,12 @@ test('default languages are unchanged: Spanish words stay words', () => {
   assert.equal(normalize('einundzwanzig'), 'einundzwanzig');
 });
 
-test('cli: --lang es, de and it load the packs', async () => {
+test('cli: --lang es, de, it and nl load the packs', async () => {
   const { execFileSync } = await import('node:child_process');
   const cli = fileURLToPath(new URL('../bin/fuzzy-toolkit.mjs', import.meta.url));
   const score = (args) => JSON.parse(execFileSync(process.execPath, [cli, 'compare', ...args, '--json'], { encoding: 'utf8' })).score;
   assert.equal(score(['treinta y dos', '32', '--lang', 'es']), 100);
   assert.equal(score(['einundzwanzig', '21', '--lang', 'de']), 100);
   assert.equal(score(['ventitre', '23', '--lang', 'it,en']), 100);
+  assert.equal(score(['eenentwintig', '21', '--lang', 'nl']), 100);
 });
