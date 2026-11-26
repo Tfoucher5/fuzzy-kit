@@ -7,6 +7,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/fuzzy-toolkit)](https://www.npmjs.com/package/fuzzy-toolkit)
 [![min+gzip](https://img.shields.io/bundlejs/size/fuzzy-toolkit)](https://bundlejs.com/?q=fuzzy-toolkit)
 [![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](./package.json)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17145/badge)](https://www.bestpractices.dev/projects/17145)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Tfoucher5/fuzzy-toolkit/badge)](https://scorecard.dev/viewer/?uri=github.com/Tfoucher5/fuzzy-toolkit)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
