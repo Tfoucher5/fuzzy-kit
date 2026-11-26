@@ -67,6 +67,30 @@ const points = result.found.length // 1 point per part
 
 Each entry of `result.parts` is a regular `check()` result, so `result.parts.title.close` tells you to say "almost!". A part can list several accepted answers: `{ artist: ['The Beatles', 'Fab Four'] }`.
 
+## Answers spelled by ear
+
+Players type what they hear: `beyonsay`, `ed shiran`, `kwin`. Turn on `phonetic` and texts that sound the same (English and French) score 95, so they count as correct but never rank above the real spelling.
+
+```ts
+const blindTest = createMatcher({ preset: 'music', phonetic: true })
+blindTest.check('beyonsay', 'Beyoncé').correct  // true
+blindTest.check('ed shiran', 'Ed Sheeran').correct // true
+```
+
+On the Spotify benchmark (`npm run bench:real`), it accepts no more wrong songs than without it.
+
+## Show what was misspelled
+
+`diff()` lists, letter by letter, what turns the guess into the answer:
+
+```tsx
+diff('bohemian rapsody', 'Bohemian Rhapsody').map((piece, i) =>
+  piece.type === 'same' ? piece.text
+  : piece.type === 'added' ? <ins key={i}>{piece.text}</ins>   // missing letters
+  : <del key={i}>{piece.text}</del>)                           // wrong letters
+// Bohemian R<ins>h</ins>apsody
+```
+
 ## Numbers
 
 Numbers in words, in digits and in roman numerals are the same answer: `2 Become 1` matches `Two Become One`, `rocky 2` matches `Rocky II`, `vingt et un` matches `21`. Turn it off with `numbers: false`.

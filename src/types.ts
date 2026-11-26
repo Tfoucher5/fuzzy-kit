@@ -133,6 +133,15 @@ export interface MatchOptions extends NormalizeOptions {
    * @default false (true with the `search` preset)
    */
   partial?: boolean;
+
+  /**
+   * `smart` only: also accept texts that sound the same (English and French),
+   * for answers spelled by ear: `beyonsay` = `Beyoncé`, `nite` = `night`,
+   * `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores at most 95,
+   * so the right spelling always ranks first.
+   * @default false
+   */
+  phonetic?: boolean;
 }
 
 /** Options of {@link check}. */
@@ -251,7 +260,7 @@ export interface Comparison {
    * Score of each strategy tried. With `smart`, the final score is the best
    * of them.
    */
-  scores: Partial<Record<'characters' | 'wordOrder' | 'spaces' | 'partial' | Algorithm, number>>;
+  scores: Partial<Record<'characters' | 'wordOrder' | 'spaces' | 'partial' | 'phonetic' | Algorithm, number>>;
 }
 
 /** Result of {@link checkAll}: one verdict per part of the answer. */

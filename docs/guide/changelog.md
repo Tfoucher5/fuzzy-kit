@@ -9,6 +9,16 @@ The project follows **semantic versioning**:
 
 ---
 
+## v2.1.0
+
+### Added
+- `phonetic` option: texts that sound the same match too (English and French), for answers spelled by ear. `beyonsay` = `Beyoncé`, `kwin` = `Queen`. Off by default; scores at most 95.
+- `diff()`: character-by-character changes between a guess and the answer, to show what was misspelled.
+- `index.add()`, `index.remove()` and `index.refresh()`: update an index when the data changes, without rebuilding it.
+- Command line tool: `npx guess-rater dedupe | group | join | search | compare` on CSV, JSON or text files.
+
+---
+
 ## v2.0.0
 
 A rewrite focused on doing the right thing by default. See [Upgrading from v1](/guide/migration).

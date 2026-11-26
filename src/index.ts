@@ -16,6 +16,8 @@ export {
 } from './matcher.js';
 export type { Index, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';
+export { diff } from './diff.js';
+export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';
 export { damerau, jaroWinkler, levenshtein } from './distance.js';
 export type { ResolvedOptions } from './engine.js';

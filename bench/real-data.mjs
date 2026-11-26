@@ -142,6 +142,12 @@ async function blindTest() {
   report('Spotify', 'wrong songs accepted (random other title)', pct(falsePositives, wrong.length));
   report('Spotify', 'check() per guess', us(right.ms, games.length));
 
+  const byEar = createMatcher({ preset: 'music', phonetic: true });
+  const heard = time(() => games.filter((g) => byEar.check(g.guess, g.song.title).correct).length);
+  report('Spotify', 'with phonetic: guesses accepted', pct(heard.result, games.length));
+  report('Spotify', 'with phonetic: wrong songs accepted', pct(wrong.filter((g) => byEar.check(g.guess, g.other.title).correct).length, wrong.length));
+  report('Spotify', 'with phonetic: check() per guess', us(heard.ms, games.length));
+
   const v1 = process.env.GUESS_RATER_V1 ? await import(process.env.GUESS_RATER_V1) : null;
   if (v1) {
     const accepted = games.filter((g) => v1.isMatch(g.guess, g.song.title)).length;

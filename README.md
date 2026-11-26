@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/guess-rater/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/guess-rater/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
-**Fuzzy string matching that just works.** Check quiz answers, build a search-as-you-type box, suggest "did you mean…?", spot a name inside a message, clean up duplicates, match two lists. Typos, accents, word order, missing spaces and numbers written in words are handled for you.
+**Fuzzy string matching that just works.** Check quiz answers, build a search-as-you-type box, suggest "did you mean…?", spot a name inside a message, clean up duplicates, match two lists, show what was misspelled. Typos, accents, word order, missing spaces, numbers written in words and (optionally) words spelled by ear are handled for you. Also a command line tool to dedupe and join CSV files.
 
 - **Zero config**: one sensible default, plus presets for music, search and strict matching.
 - **Accurate**: on 3,000 simulated blind-test guesses over 26k Spotify tracks, 97.6 % of right answers accepted and 0 % of wrong ones (v1: 70 %).
@@ -49,6 +49,15 @@ dedupe(['Hey Jude', 'hey jude - Remastered 2015', 'Let It Be'], { preset: 'music
 
 join(['Apple Inc.', 'Microsoft Corp'], ['MICROSOFT CORPORATION', 'Apple'], { ignoreWords: ['inc', 'corp', 'corporation'] })
 // each left item with its best match on the right
+
+similarity('beyonsay', 'Beyoncé', { phonetic: true }) // 95 (sounds the same)
+
+diff('bohemian rapsody', 'Bohemian Rhapsody')
+// [{ text: 'Bohemian R', type: 'same' }, { text: 'h', type: 'added' }, { text: 'apsody', type: 'same' }]
+```
+
+```sh
+npx guess-rater dedupe customers.csv -k name -i sarl > clean.csv
 ```
 
 Scores go from **0** (nothing in common) to **100** (identical once normalized). The default threshold is **80**.
@@ -79,6 +88,21 @@ const { found, parts } = quiz.checkAll('bohemian rapsody de queen', { title: 'Bo
 // found: ['title', 'artist'], parts.title: { verdict: 'correct', score: 94.12, ... }
 ```
 
+Players who spell by ear (`beyonsay`, `ed shiran`, `kwin`)? Add `phonetic: true`: texts that sound the same (English and French) score 95, so they are accepted but never rank above the right spelling. On the Spotify benchmark it accepts no extra wrong songs.
+
+```ts
+const quiz = createMatcher({ preset: 'music', phonetic: true })
+quiz.check('beyonsay', 'Beyoncé').correct // true
+```
+
+Show the player what they got wrong with `diff()`:
+
+```tsx
+diff('bohemian rapsody', 'Bohemian Rhapsody').map((piece, i) =>
+  piece.type === 'same' ? piece.text : piece.type === 'added' ? <ins key={i}>{piece.text}</ins> : <del key={i}>{piece.text}</del>)
+// Bohemian R<ins>h</ins>apsody
+```
+
 The `music` preset ignores `(feat. X)`, `- Remastered 2011`, `(Live)`, bracketed info and leading articles (`The`, `Les`, `L'`…), and reads `&` and `n` as `and`. An empty guess is always `wrong`. Numbers in words, digits and roman numerals are the same answer: `rocky 2` is right for `Rocky II`.
 
 ### Search as you type
@@ -93,7 +117,7 @@ index.search('zep stair')            // words in any order, each one a prefix
 index.closest('queen')?.item         // best hit
 ```
 
-`createIndex()` normalizes your list once, so every keystroke only scores the query. With the `search` preset, a full match always ranks above a partial one, and a match at the start of a title above one in the middle.
+`createIndex()` normalizes your list once, so every keystroke only scores the query. When the list changes, update the index instead of rebuilding it: `index.add(song)`, `index.remove((s) => s.id === 42)`, `index.refresh((s) => s === edited)`. With the `search` preset, a full match always ranks above a partial one, and a match at the start of a title above one in the middle.
 
 Show what matched with `highlight()`, and make a field count less with a weight:
 
@@ -135,6 +159,20 @@ join(orders, customers, { left: 'customerName', right: 'name', unique: true })
 // [{ item: order, index: 0, match: { item: customer, score, ... } }, ...]
 ```
 
+### From the command line
+
+No code needed to clean or match spreadsheets. CSV (comma, semicolon or tab), JSON and plain text files work, and `-` reads standard input.
+
+```sh
+npx guess-rater dedupe customers.csv -k name -i sarl -i sas > clean.csv     # drop near-duplicates
+npx guess-rater group customers.csv -k name                                   # number each group of duplicates
+npx guess-rater join orders.csv customers.csv --left-key client --right-key name --unique
+npx guess-rater search "bohemian rapsody" songs.csv -k title -k artist
+npx guess-rater compare "The Beatles" "beatles" -p music
+```
+
+Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx guess-rater --help`.
+
 ## API
 
 | Function | Returns |
@@ -150,9 +188,10 @@ join(orders, customers, { left: 'customerName', right: 'name', unique: true })
 | `dedupe(items, options?)` / `group(items, options?)` | `T[]` / `T[][]` |
 | `join(left, right, options?)` | `{ item, index, match }[]`, the best right item for each left one |
 | `compare(a, b, options?)` | normalized texts and the score of each strategy |
+| `diff(from, to, options?)` | `{ text, type: 'same' \| 'added' \| 'removed' }[]`, what turns `from` into `to` |
 | `normalize(text, options?)` | the cleaned-up text |
 | `createMatcher(options)` | all of the above with options compiled once |
-| `createIndex(items, options)` | `{ search, closest }` over a pre-processed list |
+| `createIndex(items, options)` | `{ search, closest, add, remove, refresh }` over a pre-processed list |
 | `levenshtein(a, b)`, `damerau(a, b)`, `jaroWinkler(a, b)` | raw algorithms, no normalization |
 
 A `Match<T>` is `{ item, score, index, text }`. Items can be strings or objects; with objects, `keys` is required and only accepts properties that hold text (TypeScript checks it). Keys can be weighted: `['title', { name: 'artist', weight: 0.8 }]`.
@@ -172,6 +211,7 @@ All options are optional and can be passed to any function, `createMatcher()` or
 | `strip` | `[]` | Noise to drop: `'brackets'`, `'featuring'`, `'version'`, `'articles'`. |
 | `replace` | `{}` | Whole-word replacements: `{ st: 'saint', nyc: 'new york city' }`. |
 | `ignoreWords` | `[]` | Whole words to ignore: `['inc', 'ltd']`. |
+| `phonetic` | `false` | Texts that sound the same match too (English and French): `beyonsay` = `Beyoncé`, `nite` = `night`. Scores at most 95. |
 | `numbers` | `true` | `two`, `deux`, `II` and `2` are equal; `twenty one` and `vingt et un` are `21`. Off with `search`. |
 | `caseSensitive` | `false` | `A` ≠ `a`. |
 | `accentSensitive` | `false` | `é` ≠ `e`. Ligatures (`œ`, `æ`, `ß`) are expanded otherwise. |
@@ -202,6 +242,7 @@ compare('Smith Jon', 'John Smith')
 | --- | --- |
 | Blind test, 26,230 Spotify tracks: right guesses accepted (typos, no accents, no "feat.") | **97.6 %** (v1: 70.1 %, string-similarity: 57.0 %) |
 | Same guesses checked against a wrong song: accepted | **0 %** |
+| Same test with `phonetic: true` | 97.7 % accepted, **0 %** wrong songs accepted |
 | `check()` | ~25 µs per guess |
 | Search 26,230 songs by title and artist (partial query, wanted song in top 10) | 82.3 % in ~40 ms per keystroke (Fuse.js: 85.7 % in ~240 ms) |
 | 150,653 city names, one typo and no accents: right city in top 5 | **100 %** in ~70 ms |

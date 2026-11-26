@@ -146,6 +146,23 @@ dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 ```
 
+## diff
+
+```ts
+diff(from: string, to: string, options?: { caseSensitive?: boolean; accentSensitive?: boolean }): Change[]
+// Change: { text: string; type: 'same' | 'added' | 'removed' }
+```
+
+Character by character, what turns `from` into `to`. Case and accents are ignored by default, and `same` pieces are written as in `to`. Ideal to show a player what they misspelled.
+
+```ts
+diff('bohemian rapsody', 'Bohemian Rhapsody')
+// [{ text: 'Bohemian R', type: 'same' }, { text: 'h', type: 'added' }, { text: 'apsody', type: 'same' }]
+
+diff('beyonsay', 'Beyoncé')
+// [{ text: 'Beyon', type: 'same' }, { text: 'say', type: 'removed' }, { text: 'cé', type: 'added' }]
+```
+
 ## normalize
 
 ```ts
@@ -177,10 +194,24 @@ interface Index<T> {
   readonly items: readonly T[]
   search(query: string, options?: { limit?: number; threshold?: number }): Match<T>[]
   closest(query: string, options?: { threshold?: number }): Match<T> | undefined
+  add(...items: T[]): void
+  remove(itemOrPredicate: T | ((item: T, index: number) => boolean)): number
+  refresh(predicate: (item: T, index: number) => boolean): number
 }
 ```
 
-The index keeps a copy of the list: to add items, create a new index.
+The index keeps its own list: your array is never modified. When your data changes, update the index instead of rebuilding it; only the changed items are processed.
+
+```ts
+const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
+
+index.add({ id: 99, title: 'Flowers', artist: 'Miley Cyrus' }) // one or several items
+index.remove((song) => song.id === 42)                         // returns how many were removed
+song.title = 'Bohemian Rhapsody (Live)'
+index.refresh((s) => s === song)                               // re-read items changed in place
+```
+
+`Match.index` is the position in `index.items`, which follows these changes.
 
 ## Raw algorithms
 

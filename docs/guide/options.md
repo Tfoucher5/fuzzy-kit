@@ -24,6 +24,7 @@ A preset is a ready-made set of options. Anything you pass yourself wins over it
 | `ignoreWordOrder` | `true` | `john smith` matches `smith john`. |
 | `ignoreSpaces` | `true` | `stairwaytoheaven` matches `stairway to heaven`. |
 | `partial` | `false` | The shorter text may match a part of the longer one, starting at a word. A full match always scores higher. |
+| `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
 | `algorithm` | `'smart'` | See [How it works](/guide/how-it-works#algorithms). |
 
 ## Normalization
