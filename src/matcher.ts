@@ -10,6 +10,7 @@ import {
   type Prepared,
   type ResolvedOptions,
 } from './engine.js';
+import { canBlock, createBlocker } from './blocking.js';
 import { partialDistance } from './distance.js';
 import { findIn, highlightIn, type Found, type Segment } from './text.js';
 import type {
@@ -54,6 +55,8 @@ export interface MatcherListOptions<T> {
   threshold?: number;
   /** Where to read the text of each item. Required when items are objects. */
   keys?: KeysOption<T>;
+  /** Add `ranges` (the parts of `text` to highlight) to each result. @default false */
+  includeMatches?: boolean;
 }
 
 /** Per-call options of {@link Matcher.check}. */
@@ -78,7 +81,7 @@ export interface Index<T> {
    */
   search(query: string, options?: Omit<MatcherListOptions<T>, 'keys'>): Match<T>[];
   /** The best item for `query`, or `undefined` if none reaches the threshold. */
-  closest(query: string, options?: Pick<MatcherListOptions<T>, 'threshold'>): Match<T> | undefined;
+  closest(query: string, options?: Pick<MatcherListOptions<T>, 'threshold' | 'includeMatches'>): Match<T> | undefined;
   /**
    * Adds items at the end of the index. Only the new items are processed.
    * @example
@@ -154,6 +157,7 @@ interface Entry<T> {
   index: number;
   texts: readonly string[];
   weights: readonly number[];
+  keys: readonly (string | undefined)[];
   prepared: readonly Prepared[];
   /** Whether the last prepared text joins all the others. */
   joined: boolean;
@@ -162,18 +166,39 @@ interface Entry<T> {
 interface ItemTexts {
   texts: string[];
   weights: number[];
+  /** The property each text comes from, when known. */
+  keys: (string | undefined)[];
 }
 
 function toText(value: unknown): string {
   return value == null ? '' : String(value);
 }
 
-function pushTexts(out: ItemTexts, value: unknown, weight: number): void {
-  if (Array.isArray(value)) for (const v of value) pushTexts(out, v, weight);
+function pushTexts(out: ItemTexts, value: unknown, weight: number, key?: string): void {
+  if (Array.isArray(value)) for (const v of value) pushTexts(out, v, weight, key);
   else if (value != null && value !== '') {
     out.texts.push(toText(value));
     out.weights.push(weight);
+    out.keys.push(key);
   }
+}
+
+/**
+ * Reads a property, or a nested one with a dotted path (`artist.name`). Arrays
+ * along the path are read item by item (`tags.label` on `{ tags: [{ label }] }`).
+ */
+function reader(name: string): (item: unknown) => unknown {
+  const path = name.includes('.') ? name.split('.') : null;
+  const walk = (value: unknown, i: number): unknown => {
+    if (i === path!.length || value == null) return value;
+    if (Array.isArray(value)) return value.flatMap((v) => walk(v, i) ?? []);
+    return walk((value as Record<string, unknown>)[path![i]!], i + 1);
+  };
+  return (item) => {
+    if (item == null) return undefined;
+    const own = (item as Record<string, unknown>)[name];
+    return own !== undefined || !path ? own : walk(item, 0);
+  };
 }
 
 function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts {
@@ -184,12 +209,12 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
           '[fuzzy-toolkit] Items are objects: pass `keys` to say where their text is, e.g. { keys: ["title"] }.',
         );
       }
-      return { texts: [toText(item)], weights: [1] };
+      return { texts: [toText(item)], weights: [1], keys: [undefined] };
     };
   }
   if (typeof keys === 'function') {
     return (item) => {
-      const out: ItemTexts = { texts: [], weights: [] };
+      const out: ItemTexts = { texts: [], weights: [], keys: [] };
       pushTexts(out, keys(item), 1);
       return out;
     };
@@ -197,11 +222,11 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
   const list = (typeof keys === 'string' ? [keys] : keys) as readonly (string | { name: string; weight?: number })[];
   const fields = list.map((key) =>
     typeof key === 'string' ? { name: key, weight: 1 } : { name: key.name, weight: key.weight ?? 1 },
-  );
+  ).map((field) => ({ ...field, read: reader(field.name) }));
   return (item) => {
-    const out: ItemTexts = { texts: [], weights: [] };
+    const out: ItemTexts = { texts: [], weights: [], keys: [] };
     for (const field of fields) {
-      pushTexts(out, (item as Record<string, unknown> | null)?.[field.name], field.weight);
+      pushTexts(out, field.read(item), field.weight, field.name);
     }
     return out;
   };
@@ -216,17 +241,24 @@ function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, e
   // "zep stair" finds { title: 'Stairway to Heaven', artist: 'Led Zeppelin' }.
   const joinTexts = engine.options.partial;
   return items.map((item, index) => {
-    const { texts, weights } = getTexts(item);
+    const { texts, weights, keys: names } = getTexts(item);
     if (joinTexts && texts.length > 1) {
       texts.push(texts.join(' '));
       weights.push(Math.max(...weights));
+      names.push(undefined);
     }
     const joined = joinTexts && texts.length > 2;
-    return { item, index, texts, weights, joined, prepared: texts.map((t) => engine.read(t)) };
+    return { item, index, texts, weights, keys: names, joined, prepared: texts.map((t) => engine.read(t)) };
   });
 }
 
-function bestOf<T>(query: Prepared, entry: Entry<T>, engine: Engine, threshold: number): Match<T> | null {
+function bestOf<T>(
+  query: Prepared,
+  entry: Entry<T>,
+  engine: Engine,
+  threshold: number,
+  withKey = false,
+): Match<T> | null {
   let best: Match<T> | null = null;
   // One scan of the joined text bounds the scans of every part of it.
   const container = entry.joined ? entry.prepared[entry.prepared.length - 1]! : null;
@@ -242,6 +274,7 @@ function bestOf<T>(query: Prepared, entry: Entry<T>, engine: Engine, threshold: 
       const score = weight === 1 ? raw : roundScore(raw * weight);
       if (!best || score > best.score) {
         best = { item: entry.item, score, index: entry.index, text: entry.texts[i]! };
+        if (withKey && entry.keys[i] !== undefined) best.key = entry.keys[i];
       }
     }
   } finally {
@@ -256,6 +289,29 @@ function rank<T>(
   engine: Engine,
   threshold: number,
   limit: number,
+  includeMatches = false,
+): Match<T>[] {
+  const results = rankEntries(query, entries, engine, threshold, limit, includeMatches);
+  if (includeMatches) {
+    for (const match of results) {
+      let at = 0;
+      match.ranges = [];
+      for (const segment of highlightIn(match.text, toText(query), engine, engine.options.threshold)) {
+        if (segment.match) match.ranges.push([at, at + segment.text.length]);
+        at += segment.text.length;
+      }
+    }
+  }
+  return results;
+}
+
+function rankEntries<T>(
+  query: string,
+  entries: readonly Entry<T>[],
+  engine: Engine,
+  threshold: number,
+  limit: number,
+  withKey: boolean,
 ): Match<T>[] {
   const prepared = engine.read(toText(query));
   const max = Math.max(0, Math.floor(limit));
@@ -264,7 +320,7 @@ function rank<T>(
   if (!Number.isFinite(limit) || max >= entries.length) {
     const results: Match<T>[] = [];
     for (const entry of entries) {
-      const match = bestOf(prepared, entry, engine, threshold);
+      const match = bestOf(prepared, entry, engine, threshold, withKey);
       if (match) results.push(match);
     }
     return results.sort((x, y) => y.score - x.score || x.index - y.index).slice(0, max || undefined);
@@ -275,7 +331,7 @@ function rank<T>(
   const top: Match<T>[] = [];
   let floor = threshold;
   for (const entry of entries) {
-    const match = bestOf(prepared, entry, engine, floor);
+    const match = bestOf(prepared, entry, engine, floor, withKey);
     if (!match) continue;
     if (top.length === max && match.score <= top[max - 1]!.score) continue;
     let i = top.length;
@@ -380,10 +436,17 @@ function joinLists<L, R>(
   if (!Array.isArray(left)) throw new TypeError('[fuzzy-toolkit] Expected an array of left items.');
   const getTexts = textGetter(options.left);
   const entries = buildEntries(right, options.right, engine);
+  // Weights above 1 let lower scores through: filter with the lowest score that can still count.
+  const maxWeight = Math.max(1, ...entries.flatMap((e) => e.weights));
+  const blocker = canBlock(engine, threshold / maxWeight)
+    ? createBlocker(entries.map((e) => e.prepared), threshold / maxWeight)
+    : null;
+  entries.forEach((entry, i) => blocker?.add(i, entry.prepared));
   const candidates = (item: L, limit: number): Match<R>[] => {
     const byIndex = new Map<number, Match<R>>();
     for (const text of getTexts(item).texts) {
-      for (const match of rank(text, entries, engine, threshold, limit)) {
+      const pool = blocker ? blocker.candidates([engine.read(text)]).map((i) => entries[i]!) : entries;
+      for (const match of rank(text, pool, engine, threshold, limit)) {
         const seen = byIndex.get(match.index);
         if (!seen || match.score > seen.score) byIndex.set(match.index, match);
       }
@@ -410,13 +473,17 @@ function joinLists<L, R>(
 
 function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: number): T[][] {
   const groups: { leader: Entry<T>; members: T[] }[] = [];
+  const blocker = canBlock(engine, threshold) ? createBlocker(entries.map((e) => e.prepared), threshold) : null;
   for (const entry of entries) {
     let home: (typeof groups)[number] | undefined;
-    outer: for (const group of groups) {
+    const ids = blocker ? blocker.candidates(entry.prepared) : null;
+    const count = ids ? ids.length : groups.length;
+    outer: for (let g = 0; g < count; g += 1) {
+      const group = groups[ids ? ids[g]! : g]!;
       for (const a of entry.prepared) {
         for (const b of group.leader.prepared) {
           if (maxPossibleScore(a, b, engine.options) + 0.01 < threshold) continue;
-          if (scorePrepared(a, b, engine) >= threshold) {
+          if (scorePrepared(a, b, engine, undefined, threshold) >= threshold) {
             home = group;
             break outer;
           }
@@ -424,7 +491,10 @@ function cluster<T>(entries: readonly Entry<T>[], engine: Engine, threshold: num
       }
     }
     if (home) home.members.push(entry.item);
-    else groups.push({ leader: entry, members: [entry.item] });
+    else {
+      blocker?.add(groups.length, entry.prepared);
+      groups.push({ leader: entry, members: [entry.item] });
+    }
   }
   return groups.map((g) => g.members);
 }
@@ -460,9 +530,16 @@ function makeIndex<T>(items: readonly T[], keys: KeysOption<T> | undefined, engi
       return (snapshot ??= Object.freeze(entries.map((entry) => entry.item)));
     },
     search: (query, options = {}) =>
-      rank(query, entries, engine, options.threshold ?? engine.options.threshold, options.limit ?? Infinity),
+      rank(
+        query,
+        entries,
+        engine,
+        options.threshold ?? engine.options.threshold,
+        options.limit ?? Infinity,
+        options.includeMatches,
+      ),
     closest: (query, options = {}) =>
-      rank(query, entries, engine, options.threshold ?? engine.options.threshold, 1)[0],
+      rank(query, entries, engine, options.threshold ?? engine.options.threshold, 1, options.includeMatches)[0],
     add: (...added) => {
       const start = entries.length;
       for (const entry of buildEntries(added, keys, engine)) {
@@ -517,7 +594,14 @@ function matcherFrom(engine: Engine): Matcher {
     join: <L, R>(left: readonly L[], right: readonly R[], options: JoinOptions<L, R> = {}) =>
       joinLists(left, right, options, engine, options.threshold ?? threshold),
     closest: <T>(query: string, items: readonly T[], options?: MatcherListOptions<T>) =>
-      rank(query, buildEntries(items, options?.keys, engine), engine, options?.threshold ?? threshold, 1)[0],
+      rank(
+        query,
+        buildEntries(items, options?.keys, engine),
+        engine,
+        options?.threshold ?? threshold,
+        1,
+        options?.includeMatches,
+      )[0],
     search: <T>(query: string, items: readonly T[], options?: MatcherListOptions<T>) =>
       rank(
         query,
@@ -525,6 +609,7 @@ function matcherFrom(engine: Engine): Matcher {
         engine,
         options?.threshold ?? threshold,
         options?.limit ?? Infinity,
+        options?.includeMatches,
       ),
     dedupe: <T>(items: readonly T[], options?: MatcherListOptions<T>) =>
       cluster(buildEntries(items, options?.keys, engine), engine, options?.threshold ?? threshold).map(
@@ -685,7 +770,14 @@ export function closest<T>(
 ): Match<T> | undefined {
   const options = args[0] as ListOptions<T> | undefined;
   const engine = getEngine(options);
-  return rank(query, buildEntries(items, options?.keys, engine), engine, engine.options.threshold, 1)[0];
+  return rank(
+    query,
+    buildEntries(items, options?.keys, engine),
+    engine,
+    engine.options.threshold,
+    1,
+    options?.includeMatches,
+  )[0];
 }
 
 /**
@@ -706,6 +798,7 @@ export function search<T>(query: string, items: readonly T[], ...args: ItemsArgs
     engine,
     engine.options.threshold,
     options?.limit ?? Infinity,
+    options?.includeMatches,
   );
 }
 

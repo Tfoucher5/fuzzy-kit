@@ -6,6 +6,8 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/fuzzy-toolkit/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/fuzzy-toolkit/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
+**Drop-in replacement for `string-similarity`**: `require('fuzzy-toolkit/string-similarity')` gives the same `compareTwoStrings` and `findBestMatch`, same results, faster ([details](#coming-from-string-similarity)).
+
 **Fuzzy string matching that just works.** Check quiz answers, build a search-as-you-type box, suggest "did you mean…?", spot a name inside a message, clean up duplicates, match two lists, show what was misspelled. Typos, accents, word order, missing spaces, numbers written in words and (optionally) words spelled by ear are handled for you. Also a command line tool to dedupe and join CSV files.
 
 - **Zero config**: one sensible default, plus presets for music, search and strict matching.
@@ -119,6 +121,8 @@ index.search('zep stair')            // words in any order, each one a prefix
 index.closest('queen')?.item         // best hit
 ```
 
+Nested properties are dotted paths, arrays included: `keys: ['title', 'artist.name', 'tags.label']`. Add `includeMatches: true` to get, on each result, the property that matched (`key`) and the parts of `text` to highlight (`ranges`, as `[start, end]` positions).
+
 `createIndex()` normalizes your list once, so every keystroke only scores the query. When the list changes, update the index instead of rebuilding it: `index.add(song)`, `index.remove((s) => s.id === 42)`, `index.refresh((s) => s === edited)`. With the `search` preset, a full match always ranks above a partial one, and a match at the start of a title above one in the middle.
 
 Show what matched with `highlight()`, and make a field count less with a weight:
@@ -194,9 +198,10 @@ Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` li
 | `normalize(text, options?)` | the cleaned-up text |
 | `createMatcher(options)` | all of the above with options compiled once |
 | `createIndex(items, options)` | `{ search, closest, add, remove, refresh }` over a pre-processed list |
-| `levenshtein(a, b)`, `damerau(a, b)`, `jaroWinkler(a, b)` | raw algorithms, no normalization |
+| `levenshtein(a, b)`, `damerau(a, b)`, `hamming(a, b)`, `lcs(a, b)` | raw distances, no normalization |
+| `jaroWinkler(a, b)`, `dice(a, b)`, `jaccard(a, b, n?)`, `cosine(a, b, n?)` | raw similarities from 0 to 1, no normalization |
 
-A `Match<T>` is `{ item, score, index, text }`. Items can be strings or objects; with objects, `keys` is required and only accepts properties that hold text (TypeScript checks it). Keys can be weighted: `['title', { name: 'artist', weight: 0.8 }]`.
+A `Match<T>` is `{ item, score, index, text }`, plus `key` and `ranges` with `includeMatches: true`. Items can be strings or objects; with objects, `keys` is required and only accepts properties that hold text (TypeScript checks it). Keys can be weighted: `['title', { name: 'artist', weight: 0.8 }]`.
 
 ## Options
 
@@ -249,6 +254,34 @@ compare('Smith Jon', 'John Smith')
 | Search 26,230 songs by title and artist (partial query, wanted song in top 10) | 82.3 % in ~40 ms per keystroke (Fuse.js: 85.7 % in ~240 ms) |
 | 150,653 city names, one typo and no accents: right city in top 5 | **100 %** in ~70 ms |
 | 20,000 English words, one typo: right word in top 3 | **98.9 %** in ~6 ms |
+
+## Coming from `string-similarity`
+
+[`string-similarity`](https://www.npmjs.com/package/string-similarity) is no longer maintained. Change the import, nothing else: same functions, same results.
+
+```js
+// before
+const stringSimilarity = require('string-similarity')
+// after
+const stringSimilarity = require('fuzzy-toolkit/string-similarity')
+
+stringSimilarity.compareTwoStrings('healed', 'sealed')                    // 0.8
+stringSimilarity.findBestMatch('healed', ['edward', 'sealed']).bestMatch  // { target: 'sealed', rating: 0.8 }
+```
+
+When you have time, `similarity()` and `closest()` do better on real input: typos, accents, word order and missing spaces are handled, and scores go from 0 to 100.
+
+## Compared with other libraries
+
+Same inputs for everyone, public data, `npm run bench:versus` ([details](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)):
+
+| Task | Others | fuzzy-toolkit |
+| --- | --- | --- |
+| `compareTwoStrings`, 20k pairs (same results) | string-similarity: 47 ms | **22 ms** |
+| `findBestMatch`, 1k queries × 2k titles (same results) | string-similarity: 4.0 s | **1.1 s** |
+| "Did you mean", 500 typos vs 20k words | string-similarity: 35.6 % right, 6.7 s | **94.8 % right, 0.96 s** |
+| Search 23k song titles, typo in the query, top 10 | Fuse.js: 75.3 % found, 72 ms/query | **89.0 % found, 13 ms/query** |
+| Levenshtein, 40k pairs | fastest-levenshtein: 17.1 ms | **12.6 ms** |
 
 ## Upgrading from v1
 

@@ -282,6 +282,13 @@ function scoreOne(
     return 0;
   }
 
+  // In lists, most candidates are far off: a character count rules them out.
+  if (floor > 0 && !scores && (algorithm === 'levenshtein' || algorithm === 'damerau' || algorithm === 'tokenSort')) {
+    const max = Math.max(a.text.length, b.text.length);
+    const missing = Math.max(bagDistance(a.text, b.text), Math.abs(a.text.length - b.text.length));
+    if ((1 - missing / max) * 100 < floor - 0.01) return 0;
+  }
+
   switch (algorithm) {
     case 'levenshtein':
       return record(scores, algorithm, ratio(levenshtein(a.text, b.text), a.text, b.text));
