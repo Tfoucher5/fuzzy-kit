@@ -14,6 +14,11 @@ The project follows **semantic versioning**:
 ### Added
 - [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
 
+### Project
+- Property-based tests (fast-check): random Unicode input against the laws of distances, scores and `normalize`.
+- Each GitHub release carries the npm tarball with its SLSA provenance. See "Verifying a release" in SECURITY.md.
+- Ko-fi link for those who want to support the project (`npm fund`).
+
 ---
 
 ## v2.4.0

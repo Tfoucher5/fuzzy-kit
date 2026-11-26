@@ -54,6 +54,7 @@
   "bugs": {
     "url": "https://github.com/Tfoucher5/fuzzy-toolkit/issues"
   },
+  "funding": "https://ko-fi.com/theofoucher",
   "homepage": "https://tfoucher5.github.io/fuzzy-toolkit/",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -171,8 +172,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
-    "test": "npm run build && node --test tests/*.test.mjs tests/*.test.cjs",
-    "coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=dist/esm/** --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=95 tests/*.test.mjs tests/*.test.cjs",
+    "test": "npm run build && node --test tests/*.test.mjs tests/*.test.js tests/*.test.cjs",
+    "coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=dist/esm/** --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=95 tests/*.test.mjs tests/*.test.js tests/*.test.cjs",
     "golden:update": "npm run build && node scripts/golden.mjs --update",
     "bench": "npm run build && node bench/bench.mjs",
     "prepublishOnly": "npm test",
@@ -189,6 +190,7 @@
   "devDependencies": {
     "@types/react": "^18.3.12",
     "esbuild": "^0.25.12",
+    "fast-check": "^4.11.0",
     "fastest-levenshtein": "^1.0.16",
     "fuse.js": "^7.5.0",
     "fuzzysort": "^4.0.2",

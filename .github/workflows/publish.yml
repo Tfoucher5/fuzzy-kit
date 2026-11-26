@@ -84,8 +84,9 @@ jobs:
             exit 1
           fi
 
-      # Trusted publishing needs npm 11.5.1 or later.
-      - run: npm install -g npm@^11.5.1
+      # Trusted publishing needs npm 11.5.1 or later, bundled with Node 24.
+      - name: npm supports trusted publishing
+        run: node -e "const [a,b,c]=process.argv[1].split('.').map(Number); if (a*1e6+b*1e3+c < 11005001) { console.error('npm ' + process.argv[1] + ' is older than 11.5.1'); process.exit(1) }" "$(npm -v)"
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -93,3 +94,22 @@ jobs:
       - run: npm pack --dry-run
       - name: Publish to npm with provenance
         run: npm publish --provenance --access public
+
+  assets:
+    name: Attach signed package to the GitHub release
+    needs: [release, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name || needs.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+      # The npm tarball, its SLSA provenance (Sigstore bundle) and the signed in-toto statement.
+      - run: node scripts/release-assets.mjs "${TAG#v}" release-assets
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" release-assets/* --clobber
