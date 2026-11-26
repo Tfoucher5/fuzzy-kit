@@ -111,11 +111,11 @@ test('diff: pieces rebuild both texts', () => {
 
 /* CLI ---------------------------------------------------------------------------- */
 
-const cli = fileURLToPath(new URL('../bin/fuzzy-kit.mjs', import.meta.url));
+const cli = fileURLToPath(new URL('../bin/fuzzy-toolkit.mjs', import.meta.url));
 const run = (args, input) => execFileSync(process.execPath, [cli, ...args], { encoding: 'utf8', input });
 
 test('cli: dedupe, group, join and search CSV files', () => {
-  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-kit-'));
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
   const clients = joinPath(dir, 'clients.csv');
   writeFileSync(clients, 'name;city\nJean Dupont SARL;Paris\n"Dupont; Jean";Paris\nMarie Curie;Lyon\n');
   const orders = joinPath(dir, 'orders.csv');

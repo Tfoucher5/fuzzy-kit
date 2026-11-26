@@ -1,7 +1,7 @@
 # "Did you mean…?"
 
 ```ts
-import { closest } from 'fuzzy-kit'
+import { closest } from 'fuzzy-toolkit'
 
 const commands = ['install', 'uninstall', 'update', 'publish']
 const suggestion = closest('instal', commands)

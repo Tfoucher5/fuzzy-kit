@@ -1,9 +1,9 @@
-# fuzzy-kit
+# fuzzy-toolkit
 
-> Formerly **guess-rater**. Same code, same API: replace `guess-rater` with `fuzzy-kit` in your imports and `package.json`.
+> Formerly **guess-rater**. Same code, same API: replace `guess-rater` with `fuzzy-toolkit` in your imports and `package.json`.
 
-[![npm version](https://img.shields.io/npm/v/fuzzy-kit?logo=npm)](https://www.npmjs.com/package/fuzzy-kit)
-[![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/guess-rater/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/guess-rater/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/fuzzy-toolkit?logo=npm)](https://www.npmjs.com/package/fuzzy-toolkit)
+[![CI](https://img.shields.io/github/actions/workflow/status/Tfoucher5/fuzzy-kit/ci.yml?branch=master&label=CI)](https://github.com/Tfoucher5/fuzzy-kit/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 **Fuzzy string matching that just works.** Check quiz answers, build a search-as-you-type box, suggest "did you mean…?", spot a name inside a message, clean up duplicates, match two lists, show what was misspelled. Typos, accents, word order, missing spaces, numbers written in words and (optionally) words spelled by ear are handled for you. Also a command line tool to dedupe and join CSV files.
@@ -15,13 +15,13 @@
 - **Tiny**: about 6 kB minified and gzipped, no dependencies, ESM and CommonJS.
 
 ```sh
-npm install fuzzy-kit
+npm install fuzzy-toolkit
 ```
 
 ## In 30 seconds
 
 ```ts
-import { similarity, check, checkAll, search, closest, find, highlight, dedupe, join } from 'fuzzy-kit'
+import { similarity, check, checkAll, search, closest, find, highlight, dedupe, join } from 'fuzzy-toolkit'
 
 similarity('Molière', 'moliere')                // 100
 similarity('stairway to heven', 'Stairway to Heaven') // 94.44
@@ -59,7 +59,7 @@ diff('bohemian rapsody', 'Bohemian Rhapsody')
 ```
 
 ```sh
-npx fuzzy-kit dedupe customers.csv -k name -i sarl > clean.csv
+npx fuzzy-toolkit dedupe customers.csv -k name -i sarl > clean.csv
 ```
 
 Scores go from **0** (nothing in common) to **100** (identical once normalized). The default threshold is **80**.
@@ -71,7 +71,7 @@ Scores go from **0** (nothing in common) to **100** (identical once normalized).
 `check()` grades a guess as `correct`, `close` ("almost!") or `wrong`, against one or several accepted answers.
 
 ```ts
-import { createMatcher } from 'fuzzy-kit'
+import { createMatcher } from 'fuzzy-toolkit'
 
 const quiz = createMatcher({ preset: 'music' })
 
@@ -110,7 +110,7 @@ The `music` preset ignores `(feat. X)`, `- Remastered 2011`, `(Live)`, bracketed
 ### Search as you type
 
 ```ts
-import { createIndex } from 'fuzzy-kit'
+import { createIndex } from 'fuzzy-toolkit'
 
 const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
 
@@ -166,14 +166,14 @@ join(orders, customers, { left: 'customerName', right: 'name', unique: true })
 No code needed to clean or match spreadsheets. CSV (comma, semicolon or tab), JSON and plain text files work, and `-` reads standard input.
 
 ```sh
-npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv     # drop near-duplicates
-npx fuzzy-kit group customers.csv -k name                                   # number each group of duplicates
-npx fuzzy-kit join orders.csv customers.csv --left-key client --right-key name --unique
-npx fuzzy-kit search "bohemian rapsody" songs.csv -k title -k artist
-npx fuzzy-kit compare "The Beatles" "beatles" -p music
+npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv     # drop near-duplicates
+npx fuzzy-toolkit group customers.csv -k name                                   # number each group of duplicates
+npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key name --unique
+npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist
+npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
 ```
 
-Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx fuzzy-kit --help`.
+Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx fuzzy-toolkit --help`.
 
 ## API
 
@@ -271,7 +271,7 @@ Default scores changed: `smart` tolerates swapped letters, word order and missin
 
 ## Documentation
 
-**[tfoucher5.github.io/guess-rater](https://tfoucher5.github.io/guess-rater/)**
+**[tfoucher5.github.io/fuzzy-kit](https://tfoucher5.github.io/fuzzy-kit/)**
 
 ## License
 

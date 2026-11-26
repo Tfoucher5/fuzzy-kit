@@ -3,7 +3,7 @@
 Dedupe a customer export, match two spreadsheets, or try a score, without writing code. Works with `npx`, nothing to install.
 
 ```sh
-npx fuzzy-kit --help
+npx fuzzy-toolkit --help
 ```
 
 ## Input and output
@@ -18,7 +18,7 @@ Results are written to standard output in the same format, so you can redirect t
 ## Remove duplicates
 
 ```sh
-npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv
+npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
 ```
 
 `-k` names the column to compare (the first one by default; repeat it to use several). `-i` ignores a word, such as a legal form. The first row of each group of near-duplicates is kept.
@@ -26,13 +26,13 @@ npx fuzzy-kit dedupe customers.csv -k name -i sarl -i sas > clean.csv
 To review before deleting, `group` adds a `group` column instead: rows with the same number are duplicates of each other.
 
 ```sh
-npx fuzzy-kit group customers.csv -k name
+npx fuzzy-toolkit group customers.csv -k name
 ```
 
 ## Match two files
 
 ```sh
-npx fuzzy-kit join orders.csv customers.csv --left-key client --right-key name --unique
+npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key name --unique
 ```
 
 Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
@@ -40,8 +40,8 @@ Each row of `orders.csv` gets the columns of its best match in `customers.csv`, 
 ## Search and compare
 
 ```sh
-npx fuzzy-kit search "bohemian rapsody" songs.csv -k title -k artist -l 5
-npx fuzzy-kit compare "beyonsay" "Beyoncé" --phonetic
+npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist -l 5
+npx fuzzy-toolkit compare "beyonsay" "Beyoncé" --phonetic
 ```
 
 ## Options

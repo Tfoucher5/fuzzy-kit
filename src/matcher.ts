@@ -181,7 +181,7 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
     return (item) => {
       if (item !== null && typeof item === 'object') {
         throw new TypeError(
-          '[fuzzy-kit] Items are objects: pass `keys` to say where their text is, e.g. { keys: ["title"] }.',
+          '[fuzzy-toolkit] Items are objects: pass `keys` to say where their text is, e.g. { keys: ["title"] }.',
         );
       }
       return { texts: [toText(item)], weights: [1] };
@@ -209,7 +209,7 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
 
 function buildEntries<T>(items: readonly T[], keys: KeysOption<T> | undefined, engine: Engine): Entry<T>[] {
   if (!Array.isArray(items)) {
-    throw new TypeError('[fuzzy-kit] Expected an array of items.');
+    throw new TypeError('[fuzzy-toolkit] Expected an array of items.');
   }
   const getTexts = textGetter(keys);
   // When matching parts, all texts of an item also count together, so
@@ -377,7 +377,7 @@ function joinLists<L, R>(
   engine: Engine,
   threshold: number,
 ): JoinRow<L, R>[] {
-  if (!Array.isArray(left)) throw new TypeError('[fuzzy-kit] Expected an array of left items.');
+  if (!Array.isArray(left)) throw new TypeError('[fuzzy-toolkit] Expected an array of left items.');
   const getTexts = textGetter(options.left);
   const entries = buildEntries(right, options.right, engine);
   const candidates = (item: L, limit: number): Match<R>[] => {

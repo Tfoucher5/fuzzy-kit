@@ -1,7 +1,7 @@
 # Search as you type
 
 ```ts
-import { createIndex } from 'fuzzy-kit'
+import { createIndex } from 'fuzzy-toolkit'
 
 const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
 
@@ -42,7 +42,7 @@ search('iphone', products, { keys: 'name', preset: 'search', limit: 5 })
 `highlight()` splits a text into pieces and marks the ones matching the query, prefixes and typos included:
 
 ```ts
-import { highlight } from 'fuzzy-kit'
+import { highlight } from 'fuzzy-toolkit'
 
 highlight('Stairway to Heaven', 'stair heven')
 // [{ text: 'Stair', match: true }, { text: 'way to ', match: false }, { text: 'Heaven', match: true }]

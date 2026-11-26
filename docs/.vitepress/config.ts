@@ -1,10 +1,10 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'fuzzy-kit',
+  title: 'fuzzy-toolkit',
   description: 'Fuzzy string matching that just works',
 
-  base: '/guess-rater/',
+  base: '/fuzzy-kit/',
 
   themeConfig: {
     nav: [
@@ -41,7 +41,7 @@ export default defineConfig({
       }
     ],
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/Tfoucher5/guess-rater' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/Tfoucher5/fuzzy-kit' }],
 
     search: {
       provider: 'local'

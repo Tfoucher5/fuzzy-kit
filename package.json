@@ -1,5 +1,5 @@
 {
-  "name": "fuzzy-kit",
+  "name": "fuzzy-toolkit",
   "version": "2.1.0",
   "description": "Fuzzy string matching that just works: answer checking for quizzes, search-as-you-type, did-you-mean, fuzzy find and highlight, dedupe. Fast, zero dependencies, fully typed.",
   "keywords": [
@@ -28,19 +28,19 @@
   "author": "Theo Foucher",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tfoucher5/guess-rater.git"
+    "url": "git+https://github.com/Tfoucher5/fuzzy-kit.git"
   },
   "bugs": {
-    "url": "https://github.com/Tfoucher5/guess-rater/issues"
+    "url": "https://github.com/Tfoucher5/fuzzy-kit/issues"
   },
-  "homepage": "https://tfoucher5.github.io/guess-rater/",
+  "homepage": "https://tfoucher5.github.io/fuzzy-kit/",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
   "bin": {
-    "fuzzy-kit": "./bin/fuzzy-kit.mjs",
-    "guess-rater": "./bin/fuzzy-kit.mjs"
+    "fuzzy-toolkit": "./bin/fuzzy-toolkit.mjs",
+    "guess-rater": "./bin/fuzzy-toolkit.mjs"
   },
   "exports": {
     ".": {

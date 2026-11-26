@@ -5,7 +5,7 @@
 `dedupe()` keeps the first occurrence of each group of similar items.
 
 ```ts
-import { dedupe } from 'fuzzy-kit'
+import { dedupe } from 'fuzzy-toolkit'
 
 dedupe(['Hey Jude', 'hey jude - Remastered 2015', 'Let It Be'], { preset: 'music' })
 // ['Hey Jude', 'Let It Be']
@@ -18,7 +18,7 @@ dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'] })
 `group()` returns every group, in the original order, so you can review before merging.
 
 ```ts
-import { group } from 'fuzzy-kit'
+import { group } from 'fuzzy-toolkit'
 
 group(['Jean Dupont', 'Dupont Jean', 'J. Dupont', 'Marie Curie'], { threshold: 70 })
 ```
@@ -30,7 +30,7 @@ An item joins the first group whose first item it matches.
 `join()` pairs each row of one list with its best match in another: two exports of the same customers, free-text input against a reference list, two catalogs to merge.
 
 ```ts
-import { join } from 'fuzzy-kit'
+import { join } from 'fuzzy-toolkit'
 
 join(['Apple Inc.', 'Microsoft Corp', 'Nokia'], ['MICROSOFT CORPORATION', 'Apple', 'Google LLC'], {
   ignoreWords: ['inc', 'corp', 'corporation', 'llc'],
@@ -52,7 +52,7 @@ const unmatched = rows.filter((row) => !row.match)
 ## Map messy values to a clean list
 
 ```ts
-import { createMatcher } from 'fuzzy-kit'
+import { createMatcher } from 'fuzzy-toolkit'
 
 const country = createMatcher({ replace: { usa: 'united states', uk: 'united kingdom' } })
 const clean = rows.map((row) => country.closest(row.country, COUNTRIES)?.item ?? null)
