@@ -18,7 +18,7 @@ export const DEFAULT_ARTICLES: readonly string[] = Object.freeze([
 ]);
 
 /** Packs shipped as separate imports, so bundles only carry the ones used. */
-const OPTIONAL = ['es', 'de', 'it'];
+const OPTIONAL = ['es', 'de', 'it', 'nl'];
 
 /** Turns the `languages` option into packs; `null` when it was not given. */
 export function resolveLanguages(list: readonly (BuiltinLanguage | Language)[] | undefined): readonly Language[] | null {

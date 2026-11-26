@@ -7,6 +7,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/fuzzy-toolkit)](https://www.npmjs.com/package/fuzzy-toolkit)
 [![min+gzip](https://img.shields.io/bundlejs/size/fuzzy-toolkit)](https://bundlejs.com/?q=fuzzy-toolkit)
 [![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](./package.json)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17145/badge)](https://www.bestpractices.dev/projects/17145)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Tfoucher5/fuzzy-toolkit/badge)](https://scorecard.dev/viewer/?uri=github.com/Tfoucher5/fuzzy-toolkit)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
@@ -251,7 +252,7 @@ All options are optional and can be passed to any function, `createMatcher()` or
 | Option | Default | What it does |
 | --- | --- | --- |
 | `preset` | | `'music'`, `'search'`, `'strict'` or your own from `definePreset()`. Your own options win over the preset. |
-| `languages` | `['en', 'fr']` | Languages to read numbers, articles, stop words and sounds in: `'en'`, `'fr'`, packs from `fuzzy-toolkit/lang/es`, `/de`, `/it`, or your own from `defineLanguage()`. |
+| `languages` | `['en', 'fr']` | Languages to read numbers, articles, stop words and sounds in: `'en'`, `'fr'`, packs from `fuzzy-toolkit/lang/es`, `/de`, `/it`, `/nl`, or your own from `defineLanguage()`. |
 | `stopwords` | `false` | Ignore the stop words of the active languages. |
 | `stripPatterns` | `[]` | Your own regular expressions of noise to remove. |
 | `threshold` | `80` | Minimum score to match. |
@@ -397,7 +398,8 @@ Yes. `npx fuzzy-toolkit mcp` gives agents the tools directly, and `npx fuzzy-too
 
 ## Contributing
 
-Bug reports with a wrong score, new languages and presets are very welcome.
+Bug reports with a wrong score, new languages, presets and **feature ideas** are
+very welcome: open an issue or a [discussion](https://github.com/Tfoucher5/fuzzy-toolkit/discussions).
 See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ## License

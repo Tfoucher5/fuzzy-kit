@@ -44,7 +44,7 @@ check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' 
 diff('rapsody', 'Rhapsody')                              // what was misspelled
 ```
 
-Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
+Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
 
 ## Raw metrics (no normalization)
 
@@ -274,6 +274,7 @@ compare('bamos', 'Vamos', { languages: [es], phonetic: true })
 | Spanish | `fuzzy-toolkit/lang/es` | `treinta y dos`, `veintiuno`, `segunda` → `2º` | b/v, c/s/z, silent h, ll/y |
 | German | `fuzzy-toolkit/lang/de` | `einundzwanzig`, `dreißig`, `zweite` | ue/ü, v/f, w/v, z/ts, ei/ai/ey |
 | Italian | `fuzzy-toolkit/lang/it` | `ventitré`, `quarantotto`, `seconda` → `2º` | c/ch/k, gli/li, gn, z/ts |
+| Dutch | `fuzzy-toolkit/lang/nl` | `eenentwintig`, `een en twintig`, `tweede` | ij/ei, au/ou, v/f, z/s, ch/g, final d/t |
 
 Numbers are read from 0 to 99, plus 100. Community packs for other languages
 are published on npm as `fuzzy-toolkit-lang-<code>`.
@@ -372,7 +373,7 @@ punctuation turned into spaces. Write `dieciseis`, not `dieciséis`.
 | `phonetic` | `[RegExp, replacement]` rules, applied in order to each word with `phonetic: true`. |
 
 `defineLanguage()` checks the pack and explains what is wrong. The built-in
-packs are good examples: `fuzzy-toolkit/lang/en`, `/fr`, `/es`, `/de` and `/it`
+packs are good examples: `fuzzy-toolkit/lang/en`, `/fr`, `/es`, `/de`, `/it` and `/nl`
 ([source](https://github.com/Tfoucher5/fuzzy-toolkit/tree/master/src/lang)).
 
 ## Testing your pack

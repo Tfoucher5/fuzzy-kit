@@ -35,6 +35,7 @@ const BUILT_IN: Extension[] = [
   { package: 'fuzzy-toolkit/lang/es', kind: 'language', id: 'es', description: 'Spanish: treinta y dos, veintiuno, ordinals, articles, stop words, sounds-alike rules (b/v, ll/y, silent h).', source: 'built-in' },
   { package: 'fuzzy-toolkit/lang/de', kind: 'language', id: 'de', description: 'German: einundzwanzig, ordinals, articles, stop words, sounds-alike rules (Müller = Mueller, Meier = Mayer).', source: 'built-in' },
   { package: 'fuzzy-toolkit/lang/it', kind: 'language', id: 'it', description: 'Italian: ventitré, ventuno, ordinals, articles and elisions, stop words, sounds-alike rules.', source: 'built-in' },
+  { package: 'fuzzy-toolkit/lang/nl', kind: 'language', id: 'nl', description: 'Dutch: eenentwintig, een en twintig, ordinals, articles, stop words, sounds-alike rules (ij/ei, v/f, z/s).', source: 'built-in' },
   { package: 'fuzzy-toolkit', kind: 'preset', id: 'music', description: 'Song titles and artists: drops featurings, "Remastered", brackets and leading articles; & = and.', source: 'built-in' },
   { package: 'fuzzy-toolkit', kind: 'preset', id: 'search', description: 'Search as you type: prefixes, acronyms, lower threshold.', source: 'built-in' },
   { package: 'fuzzy-toolkit', kind: 'preset', id: 'strict', description: 'Word order and spaces matter, threshold 90.', source: 'built-in' },

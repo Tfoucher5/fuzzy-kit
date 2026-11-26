@@ -32,7 +32,7 @@ Options
   -t, --threshold <0-100>   Minimum score to match (default 80)
   -p, --preset <name>       music, search or strict, or a preset package or
                             file made with definePreset()
-      --lang <code>         Language (repeatable): en, fr, es, de, it, or a language pack
+      --lang <code>         Language (repeatable): en, fr, es, de, it, nl, or a language pack
                             package or file made with defineLanguage()
       --phonetic            Also match texts that sound the same
   -i, --ignore <word>       Word to ignore (repeatable), e.g. -i inc -i ltd
@@ -199,7 +199,7 @@ if (values.help || !command) {
 const options = {};
 const BUILTIN_PRESETS = ['music', 'search', 'strict'];
 const BUILTIN_LANGUAGES = ['en', 'fr'];
-const PACKED_LANGUAGES = ['es', 'de', 'it'];
+const PACKED_LANGUAGES = ['es', 'de', 'it', 'nl'];
 
 /** Loads an extension from a package name or a file: its default export, else its first export. */
 async function loadExtension(spec, kind) {
