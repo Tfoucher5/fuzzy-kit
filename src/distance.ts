@@ -86,32 +86,88 @@ function osa32(pattern: string, text: string): number {
   return score;
 }
 
-function dp(a: string, b: string, transpositions: boolean): number {
+/**
+ * Myers' bit-parallel Levenshtein for patterns longer than 32 characters,
+ * processed in blocks of 32 rows (Hyyrö 2003). O(⌈m/32⌉·n).
+ */
+let carryP = new Int32Array(8);
+let carryM = new Int32Array(8);
+
+function myersBlocks(pattern: string, text: string): number {
+  const m = pattern.length;
+  const n = text.length;
+  const hsize = Math.ceil(n / 32);
+  if (carryP.length < hsize) {
+    carryP = new Int32Array(hsize * 2);
+    carryM = new Int32Array(hsize * 2);
+  }
+  carryP.fill(-1, 0, hsize);
+  carryM.fill(0, 0, hsize);
+  const blocks = Math.ceil(m / 32);
+  let score = m;
+  for (let block = 0; block < blocks; block += 1) {
+    const start = block * 32;
+    const end = Math.min(start + 32, m);
+    const last = block === blocks - 1;
+    const top = (end - start - 1) & 31;
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)]! |= 1 << (k - start);
+    let pv = -1;
+    let mv = 0;
+    for (let i = 0; i < n; i += 1) {
+      const word = i >>> 5;
+      const bit = 1 << (i & 31);
+      const eq = peq[text.charCodeAt(i)]! | 0;
+      const pb = carryP[word]! & bit ? 1 : 0;
+      const mb = carryM[word]! & bit ? 1 : 0;
+      const xv = eq | mv;
+      const xh = ((((eq | mb) & pv) + pv) ^ pv) | eq | mb;
+      let ph = mv | ~(xh | pv);
+      let mh = pv & xh;
+      if (last) {
+        score += (ph >>> top) & 1;
+        score -= (mh >>> top) & 1;
+      }
+      if ((ph >>> 31) ^ pb) carryP[word]! ^= bit;
+      if ((mh >>> 31) ^ mb) carryM[word]! ^= bit;
+      ph = (ph << 1) | pb;
+      mh = (mh << 1) | mb;
+      pv = mh | ~(xv | ph);
+      mv = ph & xv;
+    }
+    for (let k = start; k < end; k += 1) peq[pattern.charCodeAt(k)] = 0;
+  }
+  return score;
+}
+
+/** Damerau (optimal string alignment) by dynamic programming, for long strings. */
+function osaDp(a: string, b: string): number {
   const n = a.length;
   ensureRows(n + 1);
   let prev2 = rowC;
   let prev = rowA;
   let curr = rowB;
   for (let i = 0; i <= n; i += 1) prev[i] = i;
-
+  let bPrev = -1;
   for (let j = 1; j <= b.length; j += 1) {
     const bj = b.charCodeAt(j - 1);
     curr[0] = j;
+    let left = j;
+    let aPrev = -1;
     for (let i = 1; i <= n; i += 1) {
       const ai = a.charCodeAt(i - 1);
-      const cost = ai === bj ? 0 : 1;
-      let value = Math.min(prev[i]! + 1, curr[i - 1]! + 1, prev[i - 1]! + cost);
-      if (
-        transpositions &&
-        i > 1 &&
-        j > 1 &&
-        ai === b.charCodeAt(j - 2) &&
-        a.charCodeAt(i - 2) === bj
-      ) {
-        value = Math.min(value, prev2[i - 2]! + 1);
+      let value = prev[i - 1]! + (ai === bj ? 0 : 1);
+      const up = prev[i]! + 1;
+      if (up < value) value = up;
+      if (left + 1 < value) value = left + 1;
+      if (ai === bPrev && aPrev === bj && ai !== bj) {
+        const swap = prev2[i - 2]! + 1;
+        if (swap < value) value = swap;
       }
       curr[i] = value;
+      left = value;
+      aPrev = ai;
     }
+    bPrev = bj;
     const tmp = prev2;
     prev2 = prev;
     prev = curr;
@@ -139,7 +195,7 @@ function editDistance(a: string, b: string, transpositions: boolean): number {
 
   if (a.length === 0) return b.length;
   if (a.length <= 32) return transpositions ? osa32(a, b) : myers32(a, b);
-  return dp(a, b, transpositions);
+  return transpositions ? osaDp(a, b) : myersBlocks(a, b);
 }
 
 const bag = new Int32Array(0x10000);
