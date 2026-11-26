@@ -3,6 +3,9 @@
   "version": "2.3.0",
   "description": "Fuzzy string matching toolkit and drop-in replacement for string-similarity (compareTwoStrings, findBestMatch), 3x faster. Typo-tolerant similarity, search-as-you-type, did-you-mean, highlight, dedupe, join, Levenshtein, Dice, Jaro-Winkler. Zero dependencies, TypeScript, ESM + CommonJS.",
   "keywords": [
+    "mcp",
+    "mcp-server",
+    "ai-tools",
     "fuzzy",
     "fuzzy-matching",
     "fuzzy-search",
@@ -118,7 +121,8 @@
     "bin",
     "README.md",
     "LICENSE",
-    "llms.txt"
+    "llms.txt",
+    "llms-full.txt"
   ],
   "sideEffects": false,
   "engines": {
@@ -130,8 +134,8 @@
     "test": "npm run build && node --test tests/*.test.mjs tests/*.test.cjs",
     "bench": "npm run build && node bench/bench.mjs",
     "prepublishOnly": "npm test",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:dev": "node scripts/llms-full.mjs && vitepress dev docs",
+    "docs:build": "node scripts/llms-full.mjs && vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "bench:real": "npm run build && node bench/real-data.mjs",
     "bench:versus": "npm run build && node bench/versus.mjs",

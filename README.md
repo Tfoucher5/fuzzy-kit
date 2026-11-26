@@ -197,6 +197,20 @@ npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
 
 Options: `-t` threshold, `-p` preset, `--phonetic`, `-i` word to ignore, `-l` limit, `--json`. See `npx fuzzy-toolkit --help`.
 
+### With AI agents (MCP)
+
+`npx fuzzy-toolkit mcp` starts an MCP server, so Claude, Cursor, VS Code and other agents can compare, search, dedupe and match lists for you. Local, no dependency, no file access.
+
+```sh
+claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp
+```
+
+```json
+{ "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
+```
+
+Coding assistants get [`llms.txt`](llms.txt) and `llms-full.txt` in the package, examples in every type declaration, and warnings for the usual mistakes (unknown option, a `0.8` threshold when scores go to 100, a `keys` name no item has). See [AI agents and assistants](https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents).
+
 ## API
 
 | Function | Returns |

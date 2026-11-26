@@ -13,6 +13,7 @@ import { DEFAULT_LANGUAGES, resolveLanguages } from './lang/index.js';
 import { PHONETIC_WEIGHT, soundsFor, type SoundOf } from './phonetic.js';
 import { mergeOptions } from './core.js';
 import { presetOf } from './presets.js';
+import { checkOptions } from './warn.js';
 import type { Algorithm, Comparison, Language, MatchOptions } from './types.js';
 
 const ALGORITHMS: readonly Algorithm[] = [
@@ -131,6 +132,13 @@ export function getEngine(options?: MatchOptions): Engine {
   if (!options) return (defaultEngine ??= compileEngine());
   let engine = engineCache.get(options);
   if (!engine) {
+    if (typeof options !== 'object') {
+      throw new TypeError(
+        `[fuzzy-toolkit] Options must be an object, got ${typeof options} ${JSON.stringify(options)}. ` +
+          'For example { threshold: 80 }, or { keys: ["name"] } to match a property of objects.',
+      );
+    }
+    checkOptions(options);
     engine = compileEngine(options);
     engineCache.set(options, engine);
   }

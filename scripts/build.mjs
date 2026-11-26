@@ -14,3 +14,6 @@ const { build } = await import('esbuild');
 const common = { entryPoints: ['dist/esm/index.js'], bundle: true, minify: true, target: 'es2020', legalComments: 'none', logLevel: 'warning' };
 await build({ ...common, format: 'esm', outfile: 'dist/browser/fuzzy-toolkit.min.js' });
 await build({ ...common, format: 'iife', globalName: 'fuzzyToolkit', outfile: 'dist/browser/fuzzy-toolkit.iife.min.js' });
+
+// llms-full.txt: the whole documentation in one file, for AI assistants.
+await import('./llms-full.mjs');

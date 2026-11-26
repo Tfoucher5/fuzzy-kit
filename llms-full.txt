@@ -1,0 +1,1259 @@
+# fuzzy-toolkit
+
+> Fuzzy string matching for JavaScript and TypeScript, and a drop-in replacement for the unmaintained `string-similarity` package. Zero dependencies, ESM and CommonJS, fully typed, Node 18+ and browsers. Install with `npm install fuzzy-toolkit`.
+
+Use fuzzy-toolkit whenever code needs to compare strings approximately: string similarity scores, typo-tolerant matching, "did you mean" suggestions, search-as-you-type, highlighting matches, deduplicating near-identical records, matching two lists, checking quiz answers, Levenshtein/Damerau/Jaro-Winkler/Dice/Jaccard/cosine metrics.
+
+## Replacing string-similarity
+
+`string-similarity` is no longer maintained. Same API, same results, faster:
+
+```js
+// before: const stringSimilarity = require('string-similarity')
+const stringSimilarity = require('fuzzy-toolkit/string-similarity')
+// or: import { compareTwoStrings, findBestMatch } from 'fuzzy-toolkit/string-similarity'
+
+stringSimilarity.compareTwoStrings('healed', 'sealed') // 0.8 (Dice coefficient, 0 to 1)
+stringSimilarity.findBestMatch('healed', ['edward', 'sealed', 'theatre'])
+// { ratings: [{ target, rating }, ...], bestMatch: { target: 'sealed', rating: 0.8 }, bestMatchIndex: 1 }
+```
+
+For new code, prefer the main API: it handles case, accents, punctuation, typos, word order, missing spaces and numbers written in words, and scores from 0 to 100.
+
+## Main API (import from 'fuzzy-toolkit')
+
+```ts
+import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher } from 'fuzzy-toolkit'
+
+similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
+isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
+closest('javascrpt', ['java', 'javascript', 'typescript'])?.item // 'javascript' ("did you mean")
+search('iphone', products, { keys: ['name', 'brand.name'], limit: 10 }) // [{ item, score, index, text }]
+search('bohem', songs, { keys: 'title', preset: 'search', includeMatches: true }) // + key, ranges to highlight
+const index = createIndex(items, { keys: ['title'], preset: 'search' }) // reuse for search-as-you-type
+index.search('quer', { limit: 5 }); index.search('nyc') /* acronyms */; index.add(item); index.remove((i) => i.id === 1)
+const saved = JSON.stringify(index); loadIndex(items, JSON.parse(saved), sameOptions) // prebuilt index
+highlight('Bohemian Rhapsody', 'bohem')  // [{ text: 'Bohem', match: true }, { text: 'ian Rhapsody', match: false }]
+find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, end, score }]
+dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
+dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
+fingerprint('Doe, John')                                 // 'doe john'
+group(names, { keys: 'name' })                           // [[dupes...], ...]
+join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
+check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' | 'wrong'
+diff('rapsody', 'Rhapsody')                              // what was misspelled
+```
+
+Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (prefix and substring matching), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default, or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
+
+## Raw metrics (no normalization)
+
+```ts
+import { levenshtein, damerau, jaro, jaroWinkler, dice, jaccard, cosine, overlap, tversky, ratcliffObershelp, hamming, lcs } from 'fuzzy-toolkit'
+levenshtein('kitten', 'sitting') // 3
+levenshtein(a, b, { max: 2 })    // stops early, returns 3 when further apart
+damerau('teh', 'the')            // 1
+jaroWinkler('martha', 'marhta')  // 0.961
+dice('healed', 'sealed')         // 0.8
+jaccard('night', 'nacht', 2)     // 0.143
+cosine('aaaa', 'aaa')            // 1
+hamming('karolin', 'kathrin')    // 3
+lcs('ABCBDAB', 'BDCABA')         // 4
+```
+
+## React and browsers
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+const results = useFuzzySearch(items, query, { keys: ['title'], limit: 20 })
+results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
+```
+
+CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
+
+## Command line
+
+`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output).
+
+## MCP server for AI agents
+
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check` and `find`.
+
+```json
+{ "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
+```
+
+Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
+
+## Common mistakes
+
+- Scores go from 0 to 100, not 0 to 1: write `similarity(a, b) >= 80` or `isMatch(a, b)`, never `> 0.8`. `threshold` is 0-100 too. Only `fuzzy-toolkit/string-similarity` returns 0-1 ratings.
+- `closest()` returns a `Match` (`{ item, score, index, text }`) or `undefined`: use `closest(q, list)?.item` to get the value.
+- Items that are objects need `keys`: `search(q, users, { keys: ['name', 'email'] })`. Without it, the call throws.
+- Options are the third argument and always an object: `search(q, items, { keys: 'name', limit: 5 })`, not `search(q, items, 'name')`.
+- Searching the same list many times (search-as-you-type): build `createIndex(items, options)` once and call `index.search(q)`.
+- Option names differ from Fuse.js: no `includeScore` (every match has a score), `caseSensitive` instead of `isCaseSensitive`, `threshold` 0-100 (higher = stricter) instead of Fuse's 0-1 (lower = stricter).
+
+## Links
+
+- [README](https://github.com/Tfoucher5/fuzzy-toolkit#readme)
+- [Documentation](https://tfoucher5.github.io/fuzzy-toolkit/)
+- [API reference](https://tfoucher5.github.io/fuzzy-toolkit/api/)
+- [Full documentation in one file](https://tfoucher5.github.io/fuzzy-toolkit/llms-full.txt) (also `llms-full.txt` in the package)
+- [npm](https://www.npmjs.com/package/fuzzy-toolkit)
+
+# Full documentation
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/getting-started -->
+
+# Getting started
+
+## Install
+
+```sh
+npm install fuzzy-toolkit
+```
+
+Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.
+
+## Compare two texts
+
+```ts
+import { similarity, isMatch } from 'fuzzy-toolkit'
+
+similarity('Molière', 'moliere')                      // 100
+similarity('stairway to heven', 'Stairway to Heaven') // 94.44
+similarity('Smith John', 'John Smith')                // 100
+similarity('Paris', 'Tokyo')                          // 0
+
+isMatch('color', 'colour')     // true  (83.33 ≥ 80)
+isMatch('color', 'colour', 90) // false
+```
+
+Scores go from **0** (nothing in common) to **100** (identical once normalized). Two texts match when the score reaches the **threshold**, 80 by default.
+
+## Pick the function for your use case
+
+| You want to… | Use |
+| --- | --- |
+| Grade an answer in a quiz or a blind test | [`check()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz) |
+| Filter a list as the user types | [`search()` / `createIndex()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/search) |
+| Suggest a correction | [`closest()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/did-you-mean) |
+| Merge duplicates in a dataset | [`dedupe()` / `group()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/data-cleaning) |
+| Spot a title or a name inside a sentence | [`find()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/find-in-text) |
+| Highlight what matched in a result | [`highlight()`](https://tfoucher5.github.io/fuzzy-toolkit/recipes/search#highlight-what-matched) |
+| Know how similar two texts are | `similarity()`, `isMatch()` |
+| Understand a score | `compare()` |
+
+## Reuse a configuration
+
+When the same options are used many times, create a matcher. Options are validated and compiled once.
+
+```ts
+import { createMatcher } from 'fuzzy-toolkit'
+
+const quiz = createMatcher({ preset: 'music', threshold: 85 })
+
+quiz.check('beatles', 'The Beatles').verdict // 'correct'
+quiz.similarity('Hey Jude - Remastered', 'hey jude') // 100
+quiz.search('queen', songs, { keys: 'artist' })
+```
+
+## Work with objects
+
+List functions accept strings or objects. With objects, tell them where the text is with `keys`: a property, several properties, or a function. TypeScript only lets you name properties that hold text.
+
+```ts
+interface Song { title: string; artist: string; aliases?: string[]; year: number }
+
+search('queen', songs, { keys: ['title', 'artist', 'aliases'] }) // ✅
+search('queen', songs, { keys: (song) => `${song.title} ${song.artist}` }) // ✅
+search('queen', songs) // ❌ keys is required for objects
+search('queen', songs, { keys: ['year'] }) // ❌ year is not text
+search('queen', songs, { keys: ['title', { name: 'artist', weight: 0.8 }] }) // ✅ artist counts less
+```
+
+Each result is a `Match`: `{ item, score, index, text }`, where `text` is the value that produced the score.
+
+Next: [Options](https://tfoucher5.github.io/fuzzy-toolkit/guide/options).
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/options -->
+
+# Options
+
+Every function accepts the same flat options object. All fields are optional.
+
+```ts
+similarity(a, b, { preset: 'music', threshold: 85, ignoreWords: ['live'] })
+```
+
+## Presets
+
+A preset is a ready-made set of options. Anything you pass yourself wins over it.
+
+| Preset | For | What it sets |
+| --- | --- | --- |
+| `music` | song titles, artists | `strip: ['featuring', 'version', 'brackets', 'articles']`, `replace: { '&': 'and', '+': 'and', n: 'and' }` |
+| `search` | search boxes | `partial: true`, `threshold: 70` |
+| `strict` | codes, references | `ignoreWordOrder: false`, `ignoreSpaces: false`, `threshold: 90` |
+
+## Matching
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `threshold` | `80` | Minimum score to match. |
+| `ignoreWordOrder` | `true` | `john smith` matches `smith john`. |
+| `ignoreSpaces` | `true` | `stairwaytoheaven` matches `stairway to heaven`. |
+| `partial` | `false` | The shorter text may match a part of the longer one, starting at a word. A full match always scores higher. |
+| `acronyms` | `false` (`true` with the `search` preset) | A single word may be the initials of the other text: `nyc` = `New York City`, one typo allowed from 3 letters on. Scores 90, or 80 with a typo. In lists, only the query can be the acronym. |
+| `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
+| `algorithm` | `'smart'` | See [How it works](https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works#algorithms). |
+
+## Normalization
+
+Before comparing, both texts are cleaned up. [`normalize()`](https://tfoucher5.github.io/fuzzy-toolkit/api/#normalize) shows the result.
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `caseSensitive` | `false` | Keep `A` and `a` apart. |
+| `accentSensitive` | `false` | Keep `é` and `e` apart. Otherwise ligatures are expanded too: `œ` → `oe`, `ß` → `ss`. |
+| `punctuation` | `'space'` | `'space'`: `saint-malo` → `saint malo`. `'remove'`: → `saintmalo`. `'keep'`: untouched. Apostrophes are removed outright: `don't` → `dont`. |
+| `strip` | `[]` | Noise to drop, see below. |
+| `replace` | `{}` | Whole-word replacements: `{ st: 'saint', nyc: 'new york city' }`. `st` never touches `stairs`. |
+| `ignoreWords` | `[]` | Whole words to drop: `['inc', 'ltd', 'sarl']`. |
+| `numbers` | `true` | Numbers in words (English, French) and roman numerals become digits: `two` → `2`, `vingt et un` → `21`, `XIV` → `14`, `first` → `1st`. Single letters (`I`, `X`) stay. `false` with the `search` preset, so `sev` still finds `Seven`. |
+
+### `strip` rules
+
+| Rule | Example |
+| --- | --- |
+| `featuring` | `Get Lucky (feat. Pharrell)` → `get lucky` |
+| `version` | `Hey Jude - Remastered 2015` → `hey jude`, `Song (Live)` → `song` |
+| `brackets` | `Song [Bonus] (2012)` → `song` |
+| `articles` | `The Beatles` → `beatles`, `L'Aventurier` → `aventurier` |
+
+A rule never empties a text: `(Intro)` stays `intro`.
+
+## Thresholds
+
+| Threshold | Feels like |
+| --- | --- |
+| 95+ | Same text, maybe one typo in a long one |
+| 85 | A typo or two, good for strict answers |
+| **80** | Default: forgiving but rarely wrong |
+| 70 | Loose, good for search |
+
+Short texts move fast: one typo in a 4-letter word already costs 25 points. Use `check()`'s `close` verdict to be kind without accepting wrong answers.
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions -->
+
+# Languages and presets
+
+fuzzy-toolkit reads text in **languages** (numbers in words, articles, stop
+words, phonetic rules) and starts from **presets** (ready-made options for one
+kind of data). English, French and the `music`, `search` and `strict` presets
+are built in. Anyone can write more, publish them on npm and share them.
+
+## Using a language
+
+```js
+import { normalize, compare } from 'fuzzy-toolkit'
+import es from 'fuzzy-toolkit-lang-es' // a community pack
+
+normalize('treinta y dos', { languages: [es] })            // '32'
+normalize('two dos', { languages: ['en', es] })             // '2 2'
+compare('bamos', 'Vamos', { languages: [es], phonetic: true })
+```
+
+- Without `languages`, English and French are active, as in every earlier version.
+- Built-in languages can be named by their code: `'en'`, `'fr'`.
+- When two languages read the same word, the one that reads the most words
+  wins, then the first in the list.
+- `strip: ['articles']` removes the articles of the active languages. Without
+  `languages`, it also removes the Spanish, Italian and German ones, as before.
+- `stopwords: true` ignores the stop words of the active languages.
+
+## Using a preset
+
+```js
+import { definePreset, compare, dedupe } from 'fuzzy-toolkit'
+
+const companies = definePreset({
+  name: 'company-names',
+  description: 'Company names: ignores legal forms and "&".',
+  options: {
+    ignoreWords: ['inc', 'ltd', 'llc', 'sa', 'sarl', 'gmbh'],
+    replace: { '&': 'and' },
+  },
+})
+
+compare('ACME Inc.', 'acme', { preset: companies })     // 100
+dedupe(customers, { keys: 'name', preset: companies })
+```
+
+Your own options always win over the preset's. `replace` tables are merged and
+`stripPatterns` add up.
+
+A preset can start from another one with `extends`, built-in or not:
+
+```js
+const kpop = definePreset({
+  name: 'kpop',
+  extends: 'music',
+  options: { replace: { bts: 'bangtan boys' } },
+})
+```
+
+It can also choose its languages: `options: { languages: ['en', es] }`.
+
+From the command line, pass a package name or a file:
+
+```sh
+npx fuzzy-toolkit dedupe companies.csv -p ./company-names.js --lang fr
+```
+
+## Writing a language pack
+
+```js
+import { defineLanguage } from 'fuzzy-toolkit'
+
+export default defineLanguage({
+  code: 'es',               // ISO 639-1, lower case: 'es', 'pt-br'
+  name: 'Spanish',
+  version: '1.0.0',
+  numbers: {
+    units: ['cero', 'uno', 'dos', 'tres', /* ... up to 19 */],
+    tens: ['', '', 'veinte', 'treinta', 'cuarenta', /* ... */],
+    words: { una: 1, veintiuno: 21, veintidos: 22 }, // compounds written as one word
+    ordinals: ['', 'primero', 'segundo', 'tercero'],
+    ordinalWords: { primera: 1, segunda: 2 },
+    joiner: 'y',            // treinta y dos = 32
+  },
+  articles: ['el', 'la', 'los', 'las'],
+  elisions: [],             // French has ['l'] for l'amour
+  stopwords: ['de', 'del', 'y', 'o'],
+  phonetic: [
+    [/v/g, 'b'],            // vamos = bamos
+    [/ll/g, 'y'],
+    [/h/g, ''],
+  ],
+  replace: {},              // abbreviations always applied, rarely needed
+})
+```
+
+Everything works on **normalized** text: lower case, accents removed,
+punctuation turned into spaces. Write `dieciseis`, not `dieciséis`.
+
+| Field | What it does |
+| --- | --- |
+| `numbers.units` | Words for 0 to 19, the index is the value. |
+| `numbers.tens` | Words for tens, the index × 10 is the value. |
+| `numbers.words` / `ordinalWords` | More words with their value. |
+| `numbers.joiner` | Word between tens and units (`y`, `und`...). |
+| `numbers.ordinalSuffixes` | Suffixes that make digits an ordinal (`2eme` → `2e`). |
+| `numbers.formatOrdinal` | How an ordinal is written once read: `n => n + 'º'`. |
+| `numbers.read` | Your own reader for grammars the tables can't express, such as French `quatre vingt dix`. Gets the words and a position, returns `[value, wordsUsed]`. |
+| `articles` / `elisions` | Removed at the start of a text by `strip: ['articles']`. |
+| `stopwords` | Ignored with `stopwords: true`. |
+| `phonetic` | `[RegExp, replacement]` rules, applied in order to each word with `phonetic: true`. |
+
+`defineLanguage()` checks the pack and explains what is wrong. The built-in
+packs are good examples: `fuzzy-toolkit/lang/en` and `fuzzy-toolkit/lang/fr`
+([source](https://github.com/Tfoucher5/fuzzy-toolkit/tree/master/src/lang)).
+
+## Publishing
+
+Name the package `fuzzy-toolkit-lang-<code>` or `fuzzy-toolkit-preset-<name>`,
+add the keyword `fuzzy-toolkit-plugin` to `package.json`, and declare
+fuzzy-toolkit as a peer dependency:
+
+```json
+{
+  "name": "fuzzy-toolkit-preset-company-names",
+  "keywords": ["fuzzy-toolkit-plugin", "fuzzy-toolkit-preset"],
+  "peerDependencies": { "fuzzy-toolkit": "^2.3.0" }
+}
+```
+
+Packs are plain frozen objects: nothing is registered globally, two libraries
+can use different packs side by side, and bundlers drop what you don't import.
+Each pack records the version of the extension API it was written for
+(`apiVersion: 1`); a pack for another version is refused with a clear error.
+
+Saved indexes (`index.toJSON()`) record the code and version of each language
+and the source of each pattern, so `loadIndex()` refuses an index built with
+other packs.
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works -->
+
+# How it works
+
+## The `smart` score
+
+1. **Normalize** both texts: lower case, no accents, no punctuation, single spaces, plus your `strip`, `replace` and `ignoreWords`.
+2. **Characters**: Damerau-Levenshtein distance, turned into a score with `(1 - distance / longest length) × 100`. A swapped pair of letters (`teh` / `the`) counts as a single typo.
+3. **Word order** (`ignoreWordOrder`): the same, with words sorted.
+4. **Spaces** (`ignoreSpaces`): the same, with spaces removed.
+5. **Partial** (`partial`): the shorter text is matched against the start of any word of the longer one, or word by word in any order. The result is weighted by how much of the longer text it covers, with a bonus when the match is at the very start, so a full match always ranks first and `i don` prefers `I Don't Care` over `Til I Don't`. In lists, only the query can be the partial side.
+
+The final score is the best of these. `compare()` shows each of them:
+
+```ts
+compare('Smith Jon', 'John Smith')
+// { score: 90, a: 'smith jon', b: 'john smith', scores: { characters: 10, wordOrder: 90 }, ... }
+```
+
+## Algorithms
+
+`smart` is right for almost everything. The others exist for specific needs:
+
+| `algorithm` | Use when |
+| --- | --- |
+| `smart` | Default. |
+| `damerau` | Order and spaces matter, swapped letters count once. |
+| `levenshtein` | You need the textbook edit distance. |
+| `jaroWinkler` | Short strings where the beginning matters most, such as names. |
+| `tokenSort` | Only word order should be ignored. |
+| `tokenSet` | Extra words should not matter: a subset scores 100. |
+
+The raw distances are exported too, without normalization: `levenshtein(a, b)`, `damerau(a, b)` and `jaroWinkler(a, b)`.
+
+## Performance
+
+- Distances use bit-parallel algorithms (Myers, Hyyrö) for texts up to 32 characters, and skip common prefixes and suffixes.
+- Options are compiled once per `createMatcher()`, `createIndex()`, or options object you reuse.
+- List functions normalize the query once, then rule out most candidates with cheap upper bounds (lengths, character counts, one bit-parallel scan) before computing any distance.
+- With `limit`, the bar rises to the score of the worst kept result, so even fewer candidates are scored.
+- `createIndex()` normalizes the list once; each search only scores the query.
+
+Measured with `npm run bench:real` on public datasets: see the [home page](https://tfoucher5.github.io/fuzzy-toolkit/#try-it) or the README.
+
+Run `npm run bench` in the repository to measure on your machine.
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz -->
+
+# Quizzes and blind tests
+
+`check()` grades a guess against one or several accepted answers.
+
+```ts
+import { check } from 'fuzzy-toolkit'
+
+check('bohemian rapsody', 'Bohemian Rhapsody')
+// { verdict: 'correct', correct: true, close: false, score: 94.12, answer: 'Bohemian Rhapsody' }
+
+check('bohemian', 'Bohemian Rhapsody').verdict         // 'close'
+check('we will rock you', 'Bohemian Rhapsody').verdict // 'wrong'
+```
+
+## Verdicts
+
+| Verdict | When |
+| --- | --- |
+| `correct` | score ≥ `threshold` (80) |
+| `close` | score ≥ `closeThreshold` (threshold − 15), or the guess is a good chunk (40%+) of the answer |
+| `wrong` | anything else, and always for an empty guess |
+
+`close` is there to say "almost!" and let the player try again.
+
+## Song titles and artists
+
+The `music` preset removes what players never type: featurings, versions, bracketed info and leading articles.
+
+```ts
+import { createMatcher } from 'fuzzy-toolkit'
+
+const blindTest = createMatcher({ preset: 'music' })
+
+blindTest.check('get lucky', 'Get Lucky (feat. Pharrell Williams) - Radio Edit').correct // true
+blindTest.check('beatles', 'The Beatles').correct          // true
+blindTest.check('acdc', 'AC/DC').correct                   // true
+blindTest.check('guns and roses', "Guns N' Roses").correct // true
+blindTest.check('beyonce', 'Beyoncé').correct              // true
+blindTest.check('jackson', 'Michael Jackson').verdict      // 'close'
+```
+
+## Several accepted answers
+
+Pass an array; `answer` tells which one was closest.
+
+```ts
+blindTest.check('zeppelin', ['Led Zeppelin', 'Zeppelin']).answer // 'Zeppelin'
+```
+
+## Title and artist in one guess
+
+`checkAll()` looks for each part anywhere in the guess, so players can give the title, the artist or both, in any order. Score each part separately:
+
+```ts
+import { checkAll } from 'fuzzy-toolkit'
+
+const song = { title: 'Bohemian Rhapsody - Remastered 2011', artist: 'Queen' }
+
+const result = checkAll('bohemian rapsody de queen', song, { preset: 'music' })
+result.correct // true: every part was found
+result.found   // ['title', 'artist']
+
+checkAll('queen', song, { preset: 'music' }).found // ['artist']
+
+const points = result.found.length // 1 point per part
+```
+
+Each entry of `result.parts` is a regular `check()` result, so `result.parts.title.close` tells you to say "almost!". A part can list several accepted answers: `{ artist: ['The Beatles', 'Fab Four'] }`.
+
+## Answers spelled by ear
+
+Players type what they hear: `beyonsay`, `ed shiran`, `kwin`. Turn on `phonetic` and texts that sound the same (English and French) score 95, so they count as correct but never rank above the real spelling.
+
+```ts
+const blindTest = createMatcher({ preset: 'music', phonetic: true })
+blindTest.check('beyonsay', 'Beyoncé').correct  // true
+blindTest.check('ed shiran', 'Ed Sheeran').correct // true
+```
+
+On the Spotify benchmark (`npm run bench:real`), it accepts no more wrong songs than without it.
+
+## Show what was misspelled
+
+`diff()` lists, letter by letter, what turns the guess into the answer:
+
+```tsx
+diff('bohemian rapsody', 'Bohemian Rhapsody').map((piece, i) =>
+  piece.type === 'same' ? piece.text
+  : piece.type === 'added' ? <ins key={i}>{piece.text}</ins>   // missing letters
+  : <del key={i}>{piece.text}</del>)                           // wrong letters
+// Bohemian R<ins>h</ins>apsody
+```
+
+## Numbers
+
+Numbers in words, in digits and in roman numerals are the same answer: `2 Become 1` matches `Two Become One`, `rocky 2` matches `Rocky II`, `vingt et un` matches `21`. Turn it off with `numbers: false`.
+
+## Guesses typed in a chat
+
+When players type whole sentences, look for the answer inside the message with `find()`:
+
+```ts
+import { find } from 'fuzzy-toolkit'
+
+const message = "je crois que c'est bohemian rapsody de queen"
+const hit = find(message, 'Bohemian Rhapsody')[0]
+if (hit) console.log(`Correct! (${hit.text})`)
+```
+
+## Tuning
+
+```ts
+// Stricter for numbers or very short answers
+check(guess, '1984', { threshold: 100 })
+
+// Never say "close"
+check(guess, answer, { closeThreshold: 101 })
+```
+
+Use `compare()` on real player answers to see where scores land before changing the threshold.
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/search -->
+
+# Search as you type
+
+```ts
+import { createIndex } from 'fuzzy-toolkit'
+
+const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
+
+input.addEventListener('input', () => {
+  render(index.search(input.value, { limit: 10 }))
+})
+```
+
+`createIndex()` normalizes every item once. Each call to `search()` then only normalizes and scores the query.
+
+## What the `search` preset matches
+
+It turns on `partial` and lowers the threshold to 70:
+
+```ts
+index.search('bohem')      // prefix of a word
+index.search('zep stair')  // several prefixes, any order
+index.search('bohemain')   // typos still work
+```
+
+A full match always ranks above a partial one, and ties keep the original order:
+
+```ts
+search('beat', ['The Beatles', 'Beat It', 'Beat'], { preset: 'search' }).map((m) => m.item)
+// ['Beat', 'Beat It', 'The Beatles']
+```
+
+## One-off searches
+
+For a list you search only once, `search()` does the same without an index:
+
+```ts
+search('iphone', products, { keys: 'name', preset: 'search', limit: 5 })
+```
+
+## Highlight what matched
+
+`highlight()` splits a text into pieces and marks the ones matching the query, prefixes and typos included:
+
+```ts
+import { highlight } from 'fuzzy-toolkit'
+
+highlight('Stairway to Heaven', 'stair heven')
+// [{ text: 'Stair', match: true }, { text: 'way to ', match: false }, { text: 'Heaven', match: true }]
+```
+
+```tsx
+// React
+{highlight(song.title, query).map((piece, i) =>
+  piece.match ? <mark key={i}>{piece.text}</mark> : piece.text
+)}
+```
+
+```vue
+<!-- Vue -->
+<template v-for="(piece, i) in highlight(song.title, query)" :key="i">
+  <mark v-if="piece.match">{{ piece.text }}</mark><template v-else>{{ piece.text }}</template>
+</template>
+```
+
+Each result also has `text`, the value that matched, useful when you search several keys:
+
+```ts
+const [best] = index.search('queen')
+best.text // 'Queen' (the artist, not the title)
+```
+
+## Some fields count less
+
+Give a key a weight to rank its matches lower:
+
+```ts
+createIndex(songs, { keys: ['title', { name: 'artist', weight: 0.8 }], preset: 'search' })
+```
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/did-you-mean -->
+
+# "Did you mean…?"
+
+```ts
+import { closest } from 'fuzzy-toolkit'
+
+const commands = ['install', 'uninstall', 'update', 'publish']
+const suggestion = closest('instal', commands)
+
+if (suggestion) console.log(`Unknown command. Did you mean "${suggestion.item}"?`)
+```
+
+`closest()` returns the best `Match`, or `undefined` when nothing reaches the threshold, so you never suggest something unrelated.
+
+With objects:
+
+```ts
+closest('pari', cities, { keys: ['name', 'aliases'] })?.item
+```
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/find-in-text -->
+
+# Spot names in a text
+
+`find()` looks for fuzzy occurrences of a query inside a longer text and tells you where they are.
+
+```ts
+import { find } from 'fuzzy-toolkit'
+
+find("je crois que c'est bohemian rapsody de queen", 'Bohemian Rhapsody')
+// [{ text: 'bohemian rapsody', start: 19, end: 35, score: 94.12 }]
+```
+
+Positions refer to the original text, so `message.slice(start, end)` is exactly what was written.
+
+## Ideas
+
+- **Chat games**: accept an answer typed in the middle of a sentence.
+- **Moderation**: catch a banned word written with typos or accents.
+- **Mentions**: detect a product, a city or a person in reviews or support tickets.
+- **Tagging**: list which known names appear in an article.
+
+```ts
+const brands = ['Peugeot', 'Renault', 'Citroën']
+const mentioned = brands.filter((brand) => find(review, brand).length > 0)
+```
+
+## Highlight them
+
+`highlight()` uses the same matching and returns pieces ready to render:
+
+```ts
+import { highlight } from 'fuzzy-toolkit'
+
+highlight("c'est bohemian rapsody", 'Bohemian Rhapsody')
+// [{ text: "c'est ", match: false }, { text: 'bohemian rapsody', match: true }]
+```
+
+## Tuning
+
+`find()` takes the usual options. Use a `threshold` of 90 or more to avoid near misses on short words, and `preset: 'music'` when the query is a song title.
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/data-cleaning -->
+
+# Cleaning data
+
+## Remove near-duplicates
+
+`dedupe()` keeps the first occurrence of each group of similar items.
+
+```ts
+import { dedupe } from 'fuzzy-toolkit'
+
+dedupe(['Hey Jude', 'hey jude - Remastered 2015', 'Let It Be'], { preset: 'music' })
+// ['Hey Jude', 'Let It Be']
+
+dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'] })
+```
+
+## See the groups
+
+`group()` returns every group, in the original order, so you can review before merging.
+
+```ts
+import { group } from 'fuzzy-toolkit'
+
+group(['Jean Dupont', 'Dupont Jean', 'J. Dupont', 'Marie Curie'], { threshold: 70 })
+```
+
+An item joins the first group whose first item it matches.
+
+## Match two lists
+
+`join()` pairs each row of one list with its best match in another: two exports of the same customers, free-text input against a reference list, two catalogs to merge.
+
+```ts
+import { join } from 'fuzzy-toolkit'
+
+join(['Apple Inc.', 'Microsoft Corp', 'Nokia'], ['MICROSOFT CORPORATION', 'Apple', 'Google LLC'], {
+  ignoreWords: ['inc', 'corp', 'corporation', 'llc'],
+})
+// [
+//   { item: 'Apple Inc.', index: 0, match: { item: 'Apple', score: 100, ... } },
+//   { item: 'Microsoft Corp', index: 1, match: { item: 'MICROSOFT CORPORATION', score: 100, ... } },
+//   { item: 'Nokia', index: 2, match: undefined },
+// ]
+```
+
+With objects, say where the text is on each side with `left` and `right`. Add `unique: true` so each right item is used at most once: when two rows want the same one, the better match gets it and the other takes its next best choice.
+
+```ts
+const rows = join(orders, customers, { left: 'customerName', right: 'name', unique: true })
+const unmatched = rows.filter((row) => !row.match)
+```
+
+## Map messy values to a clean list
+
+```ts
+import { createMatcher } from 'fuzzy-toolkit'
+
+const country = createMatcher({ replace: { usa: 'united states', uk: 'united kingdom' } })
+const clean = rows.map((row) => country.closest(row.country, COUNTRIES)?.item ?? null)
+```
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/cli -->
+
+# Command line
+
+Dedupe a customer export, match two spreadsheets, or try a score, without writing code. Works with `npx`, nothing to install.
+
+```sh
+npx fuzzy-toolkit --help
+```
+
+## Input and output
+
+- **CSV**, with commas, semicolons (Excel in French) or tabs, detected from the first line. The first line holds column names.
+- **JSON**: an array of strings or of objects.
+- **Plain text**: one item per line.
+- `-` reads standard input.
+
+Results are written to standard output in the same format, so you can redirect them: `> clean.csv`. Add `--json` for JSON.
+
+## Remove duplicates
+
+```sh
+npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
+```
+
+`-k` names the column to compare (the first one by default; repeat it to use several). `-i` ignores a word, such as a legal form. The first row of each group of near-duplicates is kept.
+
+To review before deleting, `group` adds a `group` column instead: rows with the same number are duplicates of each other.
+
+```sh
+npx fuzzy-toolkit group customers.csv -k name
+```
+
+## Match two files
+
+```sh
+npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key name --unique
+```
+
+Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
+
+## Search and compare
+
+```sh
+npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist -l 5
+npx fuzzy-toolkit compare "beyonsay" "Beyoncé" --phonetic
+```
+
+## Options
+
+| Option | Effect |
+| --- | --- |
+| `-k, --key <column>` | Column holding the text. Repeatable. |
+| `--left-key`, `--right-key` | `join`: columns of each file. |
+| `--unique` | `join`: use each right row at most once. |
+| `-t, --threshold <0-100>` | Minimum score (default 80). |
+| `-p, --preset <name>` | `music`, `search` or `strict`. |
+| `--phonetic` | Also match texts that sound the same. |
+| `-i, --ignore <word>` | Word to ignore. Repeatable. |
+| `-l, --limit <n>` | `search`: maximum number of results (default 10). |
+| `--json` | Write JSON. |
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents -->
+
+# AI agents and assistants
+
+fuzzy-toolkit is built to be used by AI coding assistants and agents as much as by people.
+
+## As tools for an agent (MCP)
+
+`npx fuzzy-toolkit mcp` starts an [MCP](https://modelcontextprotocol.io) server. Any MCP client (Claude, Cursor, VS Code, Windsurf, Zed...) can then compare, search, dedupe and match lists without writing code. It runs locally, has no dependency, reads no file and opens no connection: the agent passes the data in the call.
+
+| Tool | What it does |
+| --- | --- |
+| `compare` | Score (0-100) of two texts, whether they match, how they were normalized |
+| `closest` | "Did you mean…?": the candidates closest to a misspelled query |
+| `search` | Items of a list matching a query, best first (strings or objects with `keys`) |
+| `dedupe` | A list without its near-duplicates, plus the groups that were merged |
+| `join` | Each item of a list paired with its best match in another |
+| `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms) |
+| `find` | Occurrences of a name inside a longer text, with positions |
+
+Every tool takes the usual options: `threshold`, `preset` (`music`, `search`, `strict`), `phonetic`, `ignoreWords`, `languages`.
+
+### Claude Code
+
+```sh
+claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp
+```
+
+### Claude Desktop, Cursor, Windsurf
+
+In `claude_desktop_config.json`, `.cursor/mcp.json` or `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] }
+  }
+}
+```
+
+### VS Code
+
+In `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "fuzzy-toolkit": { "type": "stdio", "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] }
+  }
+}
+```
+
+Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the duplicates from this list of company names"*, *"Which of these cities did the user mean by 'pari'?"*.
+
+## For assistants writing code
+
+The package ships what assistants read to write correct code:
+
+- **`llms.txt`** (short) and **`llms-full.txt`** (the whole documentation, in one file) at the root of the package, also served at [tfoucher5.github.io/fuzzy-toolkit/llms.txt](https://tfoucher5.github.io/fuzzy-toolkit/llms.txt) and [llms-full.txt](https://tfoucher5.github.io/fuzzy-toolkit/llms-full.txt).
+- **Examples in every type declaration**: hovering a function in the editor, or reading `node_modules/fuzzy-toolkit/dist/esm/*.d.ts`, shows how to call it.
+- **Warnings for the usual mistakes**, printed once: an option that does not exist (`treshold`, or `ignoreCase` borrowed from another library, with the right name), a threshold written as `0.8` when scores go from 0 to 100, a `keys` name that no item has.
+
+### Mistakes to avoid
+
+```ts
+// Scores go from 0 to 100, not 0 to 1
+similarity(a, b) > 0.8        // ✗ almost always true
+similarity(a, b) >= 80        // ✓
+isMatch(a, b)                 // ✓ threshold 80 by default
+
+// closest() returns a match (or undefined), not the string
+closest('pari', cities)              // ✗ { item: 'Paris', score: 80, index: 0, text: 'Paris' }
+closest('pari', cities)?.item        // ✓ 'Paris'
+
+// Objects need `keys`
+search('queen', songs)                          // ✗ throws: pass `keys`
+search('queen', songs, { keys: ['title', 'artist'] }) // ✓
+
+// Only the string-similarity compatibility layer returns 0-1 ratings
+import { compareTwoStrings } from 'fuzzy-toolkit/string-similarity' // 0 to 1, same as string-similarity
+```
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/api/ -->
+
+# API reference
+
+All functions are named exports of `fuzzy-toolkit`. Options are described in [Options](https://tfoucher5.github.io/fuzzy-toolkit/guide/options).
+
+## similarity
+
+```ts
+similarity(a: string, b: string, options?: MatchOptions): number
+```
+
+Score from 0 to 100.
+
+## isMatch
+
+```ts
+isMatch(a: string, b: string, thresholdOrOptions?: number | MatchOptions): boolean
+```
+
+`true` when `similarity(a, b) >= threshold`. A number is a shortcut for `{ threshold }`.
+
+## compare
+
+```ts
+compare(a: string, b: string, options?: MatchOptions): Comparison
+```
+
+```ts
+interface Comparison {
+  score: number
+  match: boolean
+  threshold: number
+  algorithm: Algorithm
+  a: string // normalized
+  b: string // normalized
+  scores: { characters?: number; wordOrder?: number; spaces?: number; partial?: number; ... }
+}
+```
+
+## check
+
+```ts
+check(guess: string, answers: string | readonly string[], options?: CheckOptions): CheckResult
+```
+
+```ts
+interface CheckResult {
+  verdict: 'correct' | 'close' | 'wrong'
+  correct: boolean
+  close: boolean
+  score: number
+  answer: string | undefined // the closest accepted answer
+}
+```
+
+`CheckOptions` adds `closeThreshold` (default `threshold - 15`). See [Quizzes](https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz).
+
+## checkAll
+
+```ts
+checkAll<K extends string>(guess: string, answers: Record<K, string | readonly string[]>, options?: CheckOptions): MultiCheckResult<K>
+```
+
+Finds each part of the answer anywhere in the guess, typos included.
+
+```ts
+checkAll('bohemian rapsody de queen', { title: 'Bohemian Rhapsody', artist: 'Queen' })
+// { correct: true, found: ['title', 'artist'], missing: [], parts: { title: CheckResult, artist: CheckResult } }
+```
+
+`correct` is true when every part is found. See [Quizzes](https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz#title-and-artist-in-one-guess).
+
+## join
+
+```ts
+join<L, R>(left: readonly L[], right: readonly R[], options?: JoinOptions<L, R>): JoinRow<L, R>[]
+```
+
+One row per left item, in order: `{ item, index, match }`, where `match` is the best right item as a `Match<R>`, or `undefined`. Options: `left` and `right` say where the text is (required for objects), `unique: true` uses each right item at most once. See [Cleaning data](https://tfoucher5.github.io/fuzzy-toolkit/recipes/data-cleaning#match-two-lists).
+
+## closest
+
+```ts
+closest<T>(query: string, items: readonly T[], options?: ListOptions<T>): Match<T> | undefined
+```
+
+## search
+
+```ts
+search<T>(query: string, items: readonly T[], options?: ListOptions<T>): Match<T>[]
+```
+
+Items reaching the threshold, best first; ties keep the original order.
+
+```ts
+interface Match<T> {
+  item: T       // the original item
+  score: number
+  index: number // position in the original list
+  text: string  // the text that produced the score
+}
+```
+
+`ListOptions<T>` adds:
+
+- `limit`: maximum number of results (default `Infinity`).
+- `keys`: where the text of an object is. A property name, an array of names, or `(item) => string | string[]`. Required when items are not strings; only properties holding text are accepted. A name can carry a weight: `['title', { name: 'artist', weight: 0.8 }]` makes artist matches score 80 % of their value. Nested properties are dotted paths (`'artist.name'`); arrays along the path are read item by item (`'tags.label'` on `{ tags: [{ label: 'rock' }] }`).
+- `includeMatches`: adds `key` (the property that matched, when `keys` names properties) and `ranges` (the parts of `text` matching the query, as `[start, end]`) to each result.
+
+```ts
+search('zeppelin', songs, { keys: ['title', 'artist.name'], partial: true, includeMatches: true })[0]
+// { item, score: 80.36, index: 1, text: 'Led Zeppelin', key: 'artist.name', ranges: [[4, 12]] }
+```
+
+## find
+
+```ts
+find(text: string, query: string, options?: MatchOptions): Found[]
+```
+
+Fuzzy occurrences of `query` inside a longer text, in reading order, with positions in the original text.
+
+```ts
+interface Found {
+  text: string  // as written in the original text
+  start: number
+  end: number   // text === original.slice(start, end)
+  score: number
+}
+
+find("je crois que c'est bohemian rapsody", 'Bohemian Rhapsody')
+// [{ text: 'bohemian rapsody', start: 19, end: 35, score: 94.12 }]
+```
+
+## highlight
+
+```ts
+highlight(text: string, query: string, options?: MatchOptions): Segment[]
+```
+
+Splits `text` into `{ text, match }` pieces. Whole matches and word prefixes are marked, typos included. Joining the pieces gives the original text back.
+
+```ts
+highlight('Stairway to Heaven - Led Zeppelin', 'zep stair')
+// [{ text: 'Stair', match: true }, { text: 'way to Heaven - Led ', match: false },
+//  { text: 'Zep', match: true }, { text: 'pelin', match: false }]
+```
+
+## dedupe / group
+
+```ts
+dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
+group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
+```
+
+## diff
+
+```ts
+diff(from: string, to: string, options?: { caseSensitive?: boolean; accentSensitive?: boolean }): Change[]
+// Change: { text: string; type: 'same' | 'added' | 'removed' }
+```
+
+Character by character, what turns `from` into `to`. Case and accents are ignored by default, and `same` pieces are written as in `to`. Ideal to show a player what they misspelled.
+
+```ts
+diff('bohemian rapsody', 'Bohemian Rhapsody')
+// [{ text: 'Bohemian R', type: 'same' }, { text: 'h', type: 'added' }, { text: 'apsody', type: 'same' }]
+
+diff('beyonsay', 'Beyoncé')
+// [{ text: 'Beyon', type: 'same' }, { text: 'say', type: 'removed' }, { text: 'cé', type: 'added' }]
+```
+
+## normalize
+
+```ts
+normalize(text: string, options?: NormalizeOptions): string
+```
+
+```ts
+normalize('  Saint-Étienne !! ')                              // 'saint etienne'
+normalize('Hey Jude - Remastered 2015', { strip: ['version'] }) // 'hey jude'
+```
+
+## createMatcher
+
+```ts
+createMatcher(options?: MatchOptions): Matcher
+```
+
+A matcher has `similarity`, `isMatch`, `compare`, `check`, `closest`, `search`, `find`, `highlight`, `dedupe`, `group`, `normalize` and `index`, all using its options. List methods accept `keys`, `limit` and `threshold` per call; `check` accepts `threshold` and `closeThreshold`. `matcher.options` holds the resolved options (read-only).
+
+## createIndex
+
+```ts
+createIndex<T>(items: readonly T[], options?: ListOptions<T>): Index<T>
+```
+
+```ts
+interface Index<T> {
+  readonly size: number
+  readonly items: readonly T[]
+  search(query: string, options?: { limit?: number; threshold?: number }): Match<T>[]
+  closest(query: string, options?: { threshold?: number }): Match<T> | undefined
+  add(...items: T[]): void
+  remove(itemOrPredicate: T | ((item: T, index: number) => boolean)): number
+  refresh(predicate: (item: T, index: number) => boolean): number
+}
+```
+
+The index keeps its own list: your array is never modified. When your data changes, update the index instead of rebuilding it; only the changed items are processed.
+
+```ts
+const index = createIndex(songs, { keys: ['title', 'artist'], preset: 'search' })
+
+index.add({ id: 99, title: 'Flowers', artist: 'Miley Cyrus' }) // one or several items
+index.remove((song) => song.id === 42)                         // returns how many were removed
+song.title = 'Bohemian Rhapsody (Live)'
+index.refresh((s) => s === song)                               // re-read items changed in place
+```
+
+`Match.index` is the position in `index.items`, which follows these changes.
+
+## loadIndex
+
+```ts
+loadIndex<T>(items: readonly T[], saved: SavedIndex, options?: ListOptions<T>): Index<T>
+```
+
+`JSON.stringify(index)` (or `index.toJSON()`) saves the normalized texts and the options. `loadIndex()` rebuilds the index from it without normalizing again, about 2.5 times faster. Pass the same items in the same order and the same options; otherwise it throws.
+
+```ts
+// build step
+writeFileSync('cities.index.json', JSON.stringify(createIndex(cities, { preset: 'search' })))
+// app
+const index = loadIndex(cities, await (await fetch('/cities.index.json')).json(), { preset: 'search' })
+```
+
+## fingerprint
+
+```ts
+fingerprint(text: string, options?: NormalizeOptions & { preset?: Preset }): string
+```
+
+The words of the normalized text, once each, sorted: `fingerprint('Doe, John') === fingerprint('john DOE')`. `group(items, { method: 'fingerprint' })` and `dedupe(items, { method: 'fingerprint' })` group by it: no typo tolerance, but instant on any size of list.
+
+## React
+
+```tsx
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
+
+function Search({ songs }) {
+  const [query, setQuery] = useState('')
+  const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+  return (
+    <>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <ul>{results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} /></li>)}</ul>
+    </>
+  )
+}
+```
+
+`useFuzzySearch(items, query, options)` uses the `search` preset by default, indexes the list once (again only when `items` or the options change) and returns results with `ranges`. An empty query returns every item (`whenEmpty: 'none'` returns nothing). `<Highlight text ranges as?>` wraps matching parts in `<mark>` (or `as`).
+
+## Raw algorithms
+
+No normalization, plain strings in:
+
+```ts
+levenshtein('kitten', 'sitting') // 3
+levenshtein('kitten', 'sitting', { max: 2 }) // 3: above max, stops early and returns max + 1
+damerau('teh', 'the')            // 1
+jaro('martha', 'marhta')         // 0.944
+jaroWinkler('martha', 'marhta')  // 0.961…
+hamming('karolin', 'kathrin')    // 3
+lcs('ABCBDAB', 'BDCABA')         // 4, longest common subsequence
+```
+
+Similarities from 0 to 1, on chunks of `n` letters (pairs by default):
+
+```ts
+dice('healed', 'sealed')         // 0.8, spaces ignored (same as string-similarity)
+jaccard('night', 'nacht')        // 0.143, shared chunks / all distinct chunks
+cosine('aaaa', 'aaa')            // 1, chunk counts compared as vectors
+overlap('york', 'new york')      // 1, shared chunks / chunks of the smaller text
+tversky('york', 'new york', { alpha: 1, beta: 0 }) // 1, how much of the first is in the second
+ratcliffObershelp('WIKIMEDIA', 'WIKIMANIA') // 0.778, Python's difflib ratio
+jaccard('night', 'nacht', 3)     // on chunks of 3 letters
+```
+
+## string-similarity compatibility
+
+`fuzzy-toolkit/string-similarity` is a drop-in replacement for the unmaintained `string-similarity` package: same functions, same results, same errors.
+
+```ts
+import stringSimilarity from 'fuzzy-toolkit/string-similarity'
+// or: import { compareTwoStrings, findBestMatch } from 'fuzzy-toolkit/string-similarity'
+
+compareTwoStrings('healed', 'sealed') // 0.8
+findBestMatch('healed', ['edward', 'sealed', 'theatre'])
+// { ratings: [...], bestMatch: { target: 'sealed', rating: 0.8 }, bestMatchIndex: 1 }
+```
+
+<!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/migration -->
+
+# Upgrading from v1
+
+v2 is a rewrite: fewer functions, flat options, stable return types and a smarter default score.
+
+## Functions
+
+| v1 | v2 |
+| --- | --- |
+| `rate(a, b)`, `getSimilarityScore(a, b)` | `similarity(a, b)` |
+| `rate(a, b, { explain: true })` | `compare(a, b)` |
+| `isMatch(a, b, 85)` | unchanged |
+| `findBestMatch(q, list)` | `closest(q, list)`, returns `undefined` below the threshold |
+| `rankCandidates(q, list)` | `search(q, list, { threshold: 0 })` |
+| `filterMatches(q, list)` | `search(q, list).map((m) => m.item)` |
+| `extract(q, list, { limit })` | `search(q, list, { limit }).map((m) => m.item)` |
+| `createMatcher(options)` | unchanged, with more methods |
+| `normalize`, `normalizeString` | `normalize` |
+| `getLevenshteinDistance` | `levenshtein` |
+| `getJaroWinklerScore(a, b)` | `jaroWinkler(a, b) * 100` |
+
+List results are now `{ item, score, index, text }` (`value` became `item`).
+
+## Options
+
+Options are flat: the `normalize: { ... }` block is gone.
+
+| v1 | v2 |
+| --- | --- |
+| `algorithm: 'hybrid'` | default `smart` |
+| `spaceInsensitive: true` | default (`ignoreSpaces: true`) |
+| `normalize.sortTokens: true` | default (`ignoreWordOrder: true`) |
+| `normalize.caseSensitive` | `caseSensitive` |
+| `normalize.removeAccents: false` | `accentSensitive: true` |
+| `normalize.removePunctuation: false` | `punctuation: 'keep'` |
+| `normalize.punctuationStrategy` | `punctuation: 'space' \| 'remove'` |
+| `normalize.replacements` | `replace` (whole words only) |
+| `normalize.removeWords` | `ignoreWords` |
+| `return: 'entries'`, `explain` on lists | always entries; use `compare()` to explain |
+
+## Scores
+
+`smart` tolerates swapped letters, word order and missing spaces, so similar texts generally score higher than with v1's `levenshtein`. Re-check thresholds on a few real examples with `compare()`.
+
+## Behavior fixes
+
+- `replace` used to replace inside words (`st → saint` turned `stairs` into `saintairs`). It now replaces whole words only.
+- Two texts made only of punctuation used to score 100. An empty guess is now always `wrong` in `check()`.
+- Non-string inputs (`null`, `undefined`, numbers) no longer throw: they are read as text.
