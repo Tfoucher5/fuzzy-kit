@@ -3,7 +3,7 @@
 // call it and which mistakes to avoid. Writes a short block into the
 // instruction files they read; running it again updates the block in place.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 const START = '<!-- fuzzy-toolkit:start -->';
@@ -88,7 +88,7 @@ export function setup(dir, names) {
     const existed = existsSync(path);
     const before = existed ? readFileSync(path, 'utf8') : '';
     const after = target.whole ? cursorRule() : upsertBlock(existed ? before : `${target.title}\n`);
-    const label = relative(dir, path) || target.path;
+    const label = target.path;
     if (after === before) {
       done.push(`unchanged ${label}`);
       continue;

@@ -172,6 +172,7 @@
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs tests/*.test.cjs",
+    "coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=dist/esm/** --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=95 tests/*.test.mjs tests/*.test.cjs",
     "golden:update": "npm run build && node scripts/golden.mjs --update",
     "bench": "npm run build && node bench/bench.mjs",
     "prepublishOnly": "npm test",

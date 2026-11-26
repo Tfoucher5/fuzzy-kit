@@ -17,6 +17,9 @@ The project follows **semantic versioning**:
 
 ### Project
 - RELEASING.md: the npm trusted publisher needs **Allow npm publish** ticked.
+- Releases are automatic: merging a version bump creates the tag, the GitHub release and the npm publish.
+- CI checks test coverage (95% of lines, 90% of branches) and runs the OpenSSF Scorecard.
+- The tests pass on Windows.
 
 ---
 

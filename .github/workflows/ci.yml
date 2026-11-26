@@ -32,6 +32,9 @@ jobs:
         run: npm run typecheck
       - name: Build and test (golden results included)
         run: npm test
+      - name: Coverage (at least 95% of lines and functions, 90% of branches)
+        if: matrix.node-version == '24'
+        run: npm run coverage
       - name: Package contents
         run: npm pack --dry-run
 

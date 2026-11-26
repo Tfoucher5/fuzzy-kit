@@ -1,6 +1,7 @@
 // The language packs shipped as fuzzy-toolkit/lang/<code>.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 import { compare, normalize } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
@@ -70,7 +71,7 @@ test('default languages are unchanged: Spanish words stay words', () => {
 
 test('cli: --lang es, de and it load the packs', async () => {
   const { execFileSync } = await import('node:child_process');
-  const cli = new URL('../bin/fuzzy-toolkit.mjs', import.meta.url).pathname;
+  const cli = fileURLToPath(new URL('../bin/fuzzy-toolkit.mjs', import.meta.url));
   const score = (args) => JSON.parse(execFileSync(process.execPath, [cli, 'compare', ...args, '--json'], { encoding: 'utf8' })).score;
   assert.equal(score(['treinta y dos', '32', '--lang', 'es']), 100);
   assert.equal(score(['einundzwanzig', '21', '--lang', 'de']), 100);
