@@ -10,6 +10,7 @@ import stringSimilarity from 'string-similarity';
 import Fuse from 'fuse.js';
 import { distance as fastestDistance } from 'fastest-levenshtein';
 import fuzzysort from 'fuzzysort';
+import { matchSorter } from 'match-sorter';
 import * as kit from '../dist/esm/index.js';
 import kitCompat from '../dist/esm/compat/string-similarity.js';
 
@@ -18,6 +19,7 @@ const SOURCES = {
   'spotify.csv':
     'https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv',
   'count_1w.txt': 'https://raw.githubusercontent.com/norvig/pytudes/main/data/text/count_1w.txt',
+  'cities.json': 'https://raw.githubusercontent.com/lutangar/cities.json/master/cities.json',
 };
 
 async function load(name) {
@@ -113,6 +115,14 @@ const fl = median(() => { for (const [a, b] of pairs) fastestDistance(a, b); for
 const kl = median(() => { for (const [a, b] of pairs) kit.levenshtein(a, b); for (const [a, b] of wordPairs) kit.levenshtein(a, b); });
 line('fastest-levenshtein', fl);
 line('fuzzy-toolkit levenshtein', kl, `x${(fl / kl).toFixed(1)}`);
+const sentence = () => Array.from({ length: 20 + Math.floor(random() * 30) }, () => words[Math.floor(random() * 2000)]).join(' ');
+const longPairs = Array.from({ length: 2000 }, () => { const s = sentence(); return [s, typo(typo(s))]; });
+const fl2 = median(() => { for (const [a, b] of longPairs) fastestDistance(a, b); });
+const kl2 = median(() => { for (const [a, b] of longPairs) kit.levenshtein(a, b); });
+const kd2 = median(() => { for (const [a, b] of longPairs) kit.damerau(a, b); });
+line('fastest-levenshtein, 2,000 sentences (100-400 chars)', fl2);
+line('fuzzy-toolkit levenshtein, same', kl2, `x${(fl2 / kl2).toFixed(1)}`);
+line('fuzzy-toolkit damerau, same', kd2);
 
 /* 3. Did you mean ---------------------------------------------------------- */
 section(`"Did you mean": 500 misspelled words against the ${words.length} most common English words`);
@@ -145,11 +155,38 @@ const kitMs = median(() => { results = searches.map((s) => index.search(s.q, { l
 line('fuzzy-toolkit index.search (preset search)', kitMs / searches.length, hit(results));
 console.log('  (times per query)');
 
-/* 5. Dedupe ----------------------------------------------------------------- */
-section('Dedupe 5,000 song titles');
+/* 5. Acronyms ---------------------------------------------------------------- */
+const cities = [...new Set(JSON.parse(await load('cities.json')).map((c) => c.name))];
+const longNames = cities.filter((c) => kit.normalize(c).split(' ').length >= 3);
+const acronyms = Array.from({ length: 150 }, () => {
+  const name = longNames[Math.floor(random() * longNames.length)];
+  return { name, q: kit.normalize(name).split(' ').map((w) => w[0]).join('') };
+});
+section(`Acronyms: 150 city names of 3+ words typed as initials ("nyc"), ${cities.length} cities, top 10`);
+const found10 = (results) => `${((100 * acronyms.filter((a, i) => results[i].includes(a.name)).length) / acronyms.length).toFixed(1)} % found`;
+const msMs = median(() => { results = acronyms.map((a) => matchSorter(cities, a.q).slice(0, 10)); });
+line('match-sorter', msMs / acronyms.length, found10(results));
+const cityIndex = kit.createIndex(cities, { preset: 'search' });
+const acMs = median(() => { results = acronyms.map((a) => cityIndex.search(a.q, { limit: 10 }).map((r) => r.item)); });
+line('fuzzy-toolkit index.search (preset search)', acMs / acronyms.length, found10(results));
+console.log('  (times per query)');
+
+/* 6. Dedupe ----------------------------------------------------------------- */
+section('Dedupe song titles');
 const sample = titles.slice(0, 5000);
 const dd = median(() => kit.dedupe(sample));
-line('fuzzy-toolkit dedupe', dd, `${kit.dedupe(sample).length} unique`);
+line('fuzzy-toolkit dedupe, 5,000 titles', dd, `${kit.dedupe(sample).length} unique`);
+const big = titles.slice(0, 20000);
+const fp = median(() => kit.dedupe(big, { method: 'fingerprint' }));
+line("fuzzy-toolkit dedupe { method: 'fingerprint' }, 20,000", fp, `${kit.dedupe(big, { method: 'fingerprint' }).length} unique`);
+
+/* 7. Saved index -------------------------------------------------------------- */
+section(`Index of ${cities.length} cities: build vs load from JSON`);
+const saved = JSON.parse(JSON.stringify(cityIndex));
+const fuseBuild = median(() => Fuse.createIndex([], cities));
+line('Fuse.js createIndex', fuseBuild);
+line('fuzzy-toolkit createIndex', median(() => kit.createIndex(cities, { preset: 'search' })));
+line('fuzzy-toolkit loadIndex', median(() => kit.loadIndex(cities, saved, { preset: 'search' })));
 
 console.log(`\nNode ${process.version}, ${process.platform} ${process.arch}`);
 if (process.argv.includes('--json')) writeFileSync(new URL('./versus.json', import.meta.url), JSON.stringify(rows, null, 2));

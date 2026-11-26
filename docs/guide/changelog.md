@@ -15,12 +15,20 @@ The project follows **semantic versioning**:
 - `fuzzy-toolkit/string-similarity`: drop-in replacement for the unmaintained `string-similarity` package. `compareTwoStrings()` and `findBestMatch()` give the same results; only the import changes.
 - Classic metrics: `dice()`, `jaccard()`, `cosine()` (on chunks of `n` letters), `hamming()` and `lcs()` (longest common subsequence).
 - Nested keys: `keys: ['artist.name', 'tags.label']`, arrays included, checked by TypeScript.
-- `includeMatches` option of `search()`, `closest()` and indexes: each result gets `key` (the property that matched) and `ranges` (the parts of `text` to highlight).
-
+- `includeMatches` option of `search()`, `closest()` and indexes: each result gets `key` (the property that matched) and `ranges` (the parts of `text` to highlight, to the character: `New Yo|rk`).
+- `acronyms` option, on with the `search` preset: `nyc` finds New York City, one typo allowed from 3 letters on.
+- `index.toJSON()` and `loadIndex()`: save an index as JSON and load it 2.5 times faster than rebuilding it.
+- `fingerprint()` and `group`/`dedupe` `method: 'fingerprint'`: instant grouping of texts with the same words in any order.
+- `levenshtein(a, b, { max })` and `damerau(a, b, { max })`: stop early above a distance.
+- More metrics: `jaro()`, `overlap()`, `tversky()`, `ratcliffObershelp()` (Python's difflib ratio).
+- `fuzzy-toolkit/react`: `useFuzzySearch()` and `<Highlight>`. React is an optional peer dependency.
+- Minified browser builds for CDNs: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit">` gives `fuzzyToolkit`. `npm run size` reports what each import weighs.
 - `npm run bench:versus`: speed and accuracy against string-similarity, Fuse.js, fuzzysort and fastest-levenshtein on public data. See [Compared with other libraries](/guide/benchmarks).
 - `llms.txt` in the package and the repository, so AI coding assistants know the API.
 
 ### Faster
+- `levenshtein()` and `damerau()` on texts over 32 characters: blocked bit-parallel algorithms, 15 to 25 times faster, on par with fastest-levenshtein.
+- Searching skips items that lack too many of the query's letters, with the same results: up to 2.3 times faster.
 - `compareTwoStrings`/`dice()` 2.2 times faster than `string-similarity`, `findBestMatch` 3.5 times.
 - `dedupe()`, `group()` and `join()` skip pairs that cannot match, with the same results: 3 to 5 times faster on real lists (5,000 song titles: 4.5 s → 1 s). The command line tool benefits too.
 
