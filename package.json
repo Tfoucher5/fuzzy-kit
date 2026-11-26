@@ -145,6 +145,16 @@
         "default": "./dist/cjs/lang/it.js"
       }
     },
+    "./lang/nl": {
+      "import": {
+        "types": "./dist/esm/lang/nl.d.ts",
+        "default": "./dist/esm/lang/nl.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lang/nl.d.ts",
+        "default": "./dist/cjs/lang/nl.js"
+      }
+    },
     "./testing": {
       "import": {
         "types": "./dist/esm/testing.d.ts",
