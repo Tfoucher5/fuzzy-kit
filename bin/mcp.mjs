@@ -7,6 +7,11 @@
 // tools read no file and open no connection.
 import { readFileSync } from 'node:fs';
 import { check, checkAll, closest, compare, find, group, join, search } from '../dist/esm/index.js';
+import de from '../dist/esm/lang/de.js';
+import es from '../dist/esm/lang/es.js';
+import it from '../dist/esm/lang/it.js';
+
+const PACKS = { es, de, it };
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
@@ -44,14 +49,15 @@ const OPTIONS = {
   ignoreWords: { type: 'array', items: { type: 'string' }, description: 'Whole words to ignore, e.g. ["inc", "ltd", "sarl"].' },
   languages: {
     type: 'array',
-    items: { type: 'string', enum: ['en', 'fr'] },
-    description: 'Languages for numbers written in words and articles. Default ["en", "fr"].',
+    items: { type: 'string', enum: ['en', 'fr', 'es', 'de', 'it'] },
+    description: 'Languages for numbers written in words, articles and sounds. Default ["en", "fr"].',
   },
 };
 
 function optionsFrom(args) {
   const options = {};
   for (const name of Object.keys(OPTIONS)) if (args[name] !== undefined) options[name] = args[name];
+  if (Array.isArray(options.languages)) options.languages = options.languages.map((code) => PACKS[code] ?? code);
   return options;
 }
 

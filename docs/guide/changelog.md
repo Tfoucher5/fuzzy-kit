@@ -11,7 +11,8 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
-Nothing yet.
+### Added
+- Spanish, German and Italian language packs: `fuzzy-toolkit/lang/es`, `/de` and `/it`. Numbers in words (`treinta y dos`, `einundzwanzig`, `ventitré`), ordinals, articles, stop words and phonetic rules. Import one and pass it in `languages`; bundles only carry the packs they import. See [Languages and presets](/guide/extensions).
 
 ---
 

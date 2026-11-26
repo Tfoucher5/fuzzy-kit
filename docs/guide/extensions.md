@@ -9,15 +9,27 @@ are built in. Anyone can write more, publish them on npm and share them.
 
 ```js
 import { normalize, compare } from 'fuzzy-toolkit'
-import es from 'fuzzy-toolkit-lang-es' // a community pack
+import es from 'fuzzy-toolkit/lang/es'
 
 normalize('treinta y dos', { languages: [es] })            // '32'
 normalize('two dos', { languages: ['en', es] })             // '2 2'
 compare('bamos', 'Vamos', { languages: [es], phonetic: true })
 ```
 
+| Language | Import | Numbers | Phonetic |
+| --- | --- | --- | --- |
+| English | `'en'` (built in) | `twenty one`, `first` | shared with French |
+| French | `'fr'` (built in) | `quatre vingt dix`, `premier`, `2eme` | shared with English |
+| Spanish | `fuzzy-toolkit/lang/es` | `treinta y dos`, `veintiuno`, `segunda` → `2º` | b/v, c/s/z, silent h, ll/y |
+| German | `fuzzy-toolkit/lang/de` | `einundzwanzig`, `dreißig`, `zweite` | ue/ü, v/f, w/v, z/ts, ei/ai/ey |
+| Italian | `fuzzy-toolkit/lang/it` | `ventitré`, `quarantotto`, `seconda` → `2º` | c/ch/k, gli/li, gn, z/ts |
+
+Numbers are read from 0 to 99, plus 100. Community packs for other languages
+are published on npm as `fuzzy-toolkit-lang-<code>`.
+
 - Without `languages`, English and French are active, as in every earlier version.
-- Built-in languages can be named by their code: `'en'`, `'fr'`.
+- English and French can be named by their code: `'en'`, `'fr'`. The other
+  packs are imported, so a bundle only carries the languages it uses.
 - When two languages read the same word, the one that reads the most words
   wins, then the first in the list.
 - `strip: ['articles']` removes the articles of the active languages. Without
