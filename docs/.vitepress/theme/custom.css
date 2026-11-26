@@ -121,3 +121,22 @@ mark {
   border-radius: 3px;
   padding: 0 1px;
 }
+
+/* The version in the nav is a small badge linking to the changelog, not a menu. */
+.VPNavBarMenu a.VPNavBarMenuLink[href$='/guide/changelog'] {
+  margin-left: 6px;
+  padding: 0 10px;
+  height: 26px;
+  align-self: center;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  line-height: 24px;
+  color: var(--vp-c-text-2);
+}
+
+.VPNavBarMenu a.VPNavBarMenuLink[href$='/guide/changelog']:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+}

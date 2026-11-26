@@ -32,16 +32,17 @@ export default defineConfig({
       { text: 'API', link: '/api/' },
       { text: 'Playground', link: '/playground' },
       {
-        text: `v${version}`,
+        text: 'Community',
+        activeMatch: '/contributors',
         items: [
-          { text: 'Changelog', link: '/guide/changelog' },
-          { text: 'Releases', link: `${repo}/releases` },
-          { text: 'npm', link: 'https://www.npmjs.com/package/fuzzy-toolkit' },
           { text: 'Contributors', link: '/contributors' },
-          { text: 'Contributing', link: `${repo}/blob/master/CONTRIBUTING.md` },
+          { text: 'Contributing guide', link: `${repo}/blob/master/CONTRIBUTING.md` },
+          { text: 'Discussions', link: `${repo}/discussions` },
           { text: 'Support on Ko-fi', link: 'https://ko-fi.com/theofoucher' }
         ]
-      }
+      },
+      // The current version, linking to what changed in it.
+      { text: `v${version}`, link: '/guide/changelog' }
     ],
 
     sidebar: [
@@ -75,6 +76,14 @@ export default defineConfig({
         items: [
           { text: 'API', link: '/api/' },
           { text: 'Playground', link: '/playground' }
+        ]
+      },
+      {
+        text: 'Community',
+        items: [
+          { text: 'Contributors', link: '/contributors' },
+          { text: 'Contributing guide', link: `${repo}/blob/master/CONTRIBUTING.md` },
+          { text: 'Discussions', link: `${repo}/discussions` }
         ]
       }
     ],

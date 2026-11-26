@@ -13,7 +13,8 @@ import { withBase } from 'vitepress'
         <a href="https://github.com/Tfoucher5/fuzzy-toolkit" class="ft-btn ft-btn-ghost">Star on GitHub</a>
       </div>
       <p class="support">
-        Built and maintained in the open.
+        Built in the open.
+        <a :href="withBase('/contributors')">Meet the contributors</a> ·
         <a href="https://ko-fi.com/theofoucher">Support the project on Ko-fi</a>
       </p>
     </div>
