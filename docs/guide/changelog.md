@@ -9,6 +9,23 @@ The project follows **semantic versioning**:
 
 ---
 
+## v2.2.0
+
+### Added
+- `fuzzy-toolkit/string-similarity`: drop-in replacement for the unmaintained `string-similarity` package. `compareTwoStrings()` and `findBestMatch()` give the same results; only the import changes.
+- Classic metrics: `dice()`, `jaccard()`, `cosine()` (on chunks of `n` letters), `hamming()` and `lcs()` (longest common subsequence).
+- Nested keys: `keys: ['artist.name', 'tags.label']`, arrays included, checked by TypeScript.
+- `includeMatches` option of `search()`, `closest()` and indexes: each result gets `key` (the property that matched) and `ranges` (the parts of `text` to highlight).
+
+- `npm run bench:versus`: speed and accuracy against string-similarity, Fuse.js, fuzzysort and fastest-levenshtein on public data. See [Compared with other libraries](/guide/benchmarks).
+- `llms.txt` in the package and the repository, so AI coding assistants know the API.
+
+### Faster
+- `compareTwoStrings`/`dice()` 2.2 times faster than `string-similarity`, `findBestMatch` 3.5 times.
+- `dedupe()`, `group()` and `join()` skip pairs that cannot match, with the same results: 3 to 5 times faster on real lists (5,000 song titles: 4.5 s → 1 s). The command line tool benefits too.
+
+---
+
 ## v2.1.0
 
 **The package is renamed `fuzzy-toolkit`** (formerly `guess-rater`) so it is easier to find. Nothing else changes: replace `guess-rater` with `fuzzy-toolkit` in your imports.

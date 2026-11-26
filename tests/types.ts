@@ -12,6 +12,9 @@ import {
   type CheckResult,
   type Match,
 } from '../src/index.js';
+import stringSimilarity, { findBestMatch } from '../src/compat/string-similarity.js';
+const rating: number = stringSimilarity.compareTwoStrings('a', 'b') + findBestMatch('a', ['b']).bestMatch.rating;
+export { rating };
 
 interface Song {
   id: number;
@@ -94,3 +97,19 @@ songIndex.refresh((song) => song.id === 9);
 const pieces: Change[] = diff('bohemian rapsody', 'Bohemian Rhapsody', { caseSensitive: false });
 const kind: 'same' | 'added' | 'removed' = pieces[0]!.type;
 similarity('fone', 'phone', { phonetic: true });
+
+// Nested keys are dotted paths, checked against the data.
+interface Track {
+  title: string;
+  artist: { name: string; country?: string; formed: number };
+  tags: { label: string }[];
+}
+declare const tracks: Track[];
+const nested: Match<Track>[] = search('queen', tracks, { keys: ['title', 'artist.name', 'tags.label'], includeMatches: true });
+const ranges: [number, number][] | undefined = nested[0]?.ranges;
+// @ts-expect-error `artist.formed` is a number
+search('queen', tracks, { keys: ['artist.formed'] });
+// @ts-expect-error unknown nested property
+search('queen', tracks, { keys: ['artist.label'] });
+
+export { nested, ranges };

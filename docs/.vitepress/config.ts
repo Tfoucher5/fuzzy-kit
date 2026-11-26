@@ -20,6 +20,7 @@ export default defineConfig({
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Options', link: '/guide/options' },
           { text: 'How it works', link: '/guide/how-it-works' },
+          { text: 'Compared with other libraries', link: '/guide/benchmarks' },
           { text: 'Upgrading from v1', link: '/guide/migration' },
           { text: 'Changelog', link: '/guide/changelog' }
         ]

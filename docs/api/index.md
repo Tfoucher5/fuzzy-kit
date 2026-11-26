@@ -103,7 +103,13 @@ interface Match<T> {
 `ListOptions<T>` adds:
 
 - `limit`: maximum number of results (default `Infinity`).
-- `keys`: where the text of an object is. A property name, an array of names, or `(item) => string | string[]`. Required when items are not strings; only properties holding text are accepted. A name can carry a weight: `['title', { name: 'artist', weight: 0.8 }]` makes artist matches score 80 % of their value.
+- `keys`: where the text of an object is. A property name, an array of names, or `(item) => string | string[]`. Required when items are not strings; only properties holding text are accepted. A name can carry a weight: `['title', { name: 'artist', weight: 0.8 }]` makes artist matches score 80 % of their value. Nested properties are dotted paths (`'artist.name'`); arrays along the path are read item by item (`'tags.label'` on `{ tags: [{ label: 'rock' }] }`).
+- `includeMatches`: adds `key` (the property that matched, when `keys` names properties) and `ranges` (the parts of `text` matching the query, as `[start, end]`) to each result.
+
+```ts
+search('zeppelin', songs, { keys: ['title', 'artist.name'], partial: true, includeMatches: true })[0]
+// { item, score: 80.36, index: 1, text: 'Led Zeppelin', key: 'artist.name', ranges: [[4, 12]] }
+```
 
 ## find
 
@@ -221,4 +227,28 @@ No normalization, plain strings in:
 levenshtein('kitten', 'sitting') // 3
 damerau('teh', 'the')            // 1
 jaroWinkler('martha', 'marhta')  // 0.961…
+hamming('karolin', 'kathrin')    // 3
+lcs('ABCBDAB', 'BDCABA')         // 4, longest common subsequence
+```
+
+Similarities from 0 to 1, on chunks of `n` letters (pairs by default):
+
+```ts
+dice('healed', 'sealed')         // 0.8, spaces ignored (same as string-similarity)
+jaccard('night', 'nacht')        // 0.143, shared chunks / all distinct chunks
+cosine('aaaa', 'aaa')            // 1, chunk counts compared as vectors
+jaccard('night', 'nacht', 3)     // on chunks of 3 letters
+```
+
+## string-similarity compatibility
+
+`fuzzy-toolkit/string-similarity` is a drop-in replacement for the unmaintained `string-similarity` package: same functions, same results, same errors.
+
+```ts
+import stringSimilarity from 'fuzzy-toolkit/string-similarity'
+// or: import { compareTwoStrings, findBestMatch } from 'fuzzy-toolkit/string-similarity'
+
+compareTwoStrings('healed', 'sealed') // 0.8
+findBestMatch('healed', ['edward', 'sealed', 'theatre'])
+// { ratings: [...], bestMatch: { target: 'sealed', rating: 0.8 }, bestMatchIndex: 1 }
 ```

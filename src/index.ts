@@ -20,6 +20,7 @@ export { diff } from './diff.js';
 export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';
 export { damerau, jaroWinkler, levenshtein } from './distance.js';
+export { cosine, dice, hamming, jaccard, lcs } from './metrics.js';
 export type { ResolvedOptions } from './engine.js';
 export type {
   Algorithm,

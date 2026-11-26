@@ -153,11 +153,26 @@ export interface CheckOptions extends MatchOptions {
   closeThreshold?: number;
 }
 
-/** Names of the properties of `T` that hold text. */
-export type TextKey<T> = {
-  [K in keyof T]-?: NonNullable<T[K]> extends string | readonly string[] ? K : never;
-}[keyof T] &
-  string;
+type Depth = [never, 0, 1, 2];
+type IsText<V> = NonNullable<V> extends string | readonly string[] ? true : false;
+type Item<V> = NonNullable<V> extends readonly (infer U)[] ? NonNullable<U> : NonNullable<V>;
+
+/**
+ * Names of the properties of `T` that hold text, including nested ones as
+ * dotted paths (`'artist.name'`, up to 3 levels). Arrays along the path are
+ * read item by item.
+ */
+export type TextKey<T, D extends number = 3> = [D] extends [never]
+  ? never
+  : {
+      [K in keyof T & string]-?: IsText<T[K]> extends true
+        ? K
+        : Item<T[K]> extends string | number | boolean | bigint | symbol | ((...args: never[]) => unknown)
+          ? never
+          : Item<T[K]> extends object
+            ? `${K}.${TextKey<Item<T[K]>, Depth[D]>}`
+            : never;
+    }[keyof T & string];
 
 /**
  * A property that counts less (or more) than others. Matches on it score
@@ -200,6 +215,15 @@ export interface ListOptions<T> extends MatchOptions {
    * search('queen', songs, { keys: (song) => song.artist.name })
    */
   keys?: KeysOption<T>;
+  /**
+   * Add `ranges` to each result: the parts of `text` that match the query,
+   * ready to highlight in a list of results.
+   * @default false
+   * @example
+   * search('queen', songs, { keys: ['title', 'artist.name'], includeMatches: true })[0]
+   * // { ..., text: 'Queen', key: 'artist.name', ranges: [[0, 5]] }
+   */
+  includeMatches?: boolean;
 }
 
 /** Options of {@link dedupe} and {@link group}. */
@@ -223,6 +247,13 @@ export interface Match<T> {
   index: number;
   /** The text of the item that produced the score. */
   text: string;
+  /** The property `text` was read from, when `keys` names properties. */
+  key?: string;
+  /**
+   * With `includeMatches`: the parts of `text` that match the query, as
+   * `[start, end]` positions (`text.slice(start, end)`).
+   */
+  ranges?: [start: number, end: number][];
 }
 
 /** Outcome of {@link check}. */
