@@ -11,7 +11,7 @@ import {
 import { compileNormalizer, type Normalizer } from './normalize.js';
 import { DEFAULT_LANGUAGES, resolveLanguages } from './lang/index.js';
 import { PHONETIC_WEIGHT, soundsFor, type SoundOf } from './phonetic.js';
-import { mergeOptions } from './plugins.js';
+import { mergeOptions } from './core.js';
 import { presetOf } from './presets.js';
 import type { Algorithm, Comparison, Language, MatchOptions } from './types.js';
 

@@ -1,25 +1,13 @@
-// The extension API: language packs and presets anyone can publish.
-//
-// A pack is a plain, frozen object. Nothing is registered globally: you pass
-// the object in the options, so two libraries using different packs never
-// step on each other and bundlers drop what you don't import.
+// The extension API: language packs and presets anyone can publish. Both
+// functions check what they are given and explain what is wrong, then freeze
+// it. See core.ts for how packs are used.
 
-import type {
-  Language,
-  LanguageDefinition,
-  MatchOptions,
-  NumberWords,
-  PhoneticRule,
-} from './types.js';
+import { API_VERSION, dropUndefined, fail, mergeOptions, preset } from './core.js';
+import { presetOf } from './presets.js';
+import type { Language, LanguageDefinition, NumberWords, PhoneticRule, PresetDefinition, PresetPack } from './types.js';
 
-/** Version of the extension API. A pack written for another version is refused. */
-export const API_VERSION = 1;
-
+const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const CODE_RE = /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/;
-
-export function fail(what: string, message: string): never {
-  throw new TypeError(`[fuzzy-toolkit] ${what}: ${message}`);
-}
 
 function words(what: string, field: string, value: unknown, allowEmpty = false): readonly string[] | undefined {
   if (value === undefined) return undefined;
@@ -91,11 +79,6 @@ function phonetic(what: string, value: unknown): readonly PhoneticRule[] | undef
   return rules;
 }
 
-export function dropUndefined<T extends object>(value: T): T {
-  for (const key of Object.keys(value) as (keyof T)[]) if (value[key] === undefined) delete value[key];
-  return value;
-}
-
 /**
  * Declares a language pack: how a language writes numbers, its articles,
  * stop words and phonetic rules. Checks the pack and freezes it.
@@ -134,29 +117,37 @@ export function defineLanguage(definition: LanguageDefinition): Language {
 }
 
 /**
- * Merges two sets of options: `over` wins, `replace` tables are combined and
- * `stripPatterns` add up.
+ * Declares a preset: a named set of options for one kind of data (addresses,
+ * company names, medicine...). It can extend a built-in or another preset.
+ * Checks it and freezes it.
+ *
+ * @example
+ * export default definePreset({
+ *   name: 'company-names',
+ *   description: 'Company names: ignores legal forms and "&".',
+ *   options: {
+ *     ignoreWords: ['inc', 'ltd', 'llc', 'sa', 'sarl', 'gmbh'],
+ *     replace: { '&': 'and' },
+ *   },
+ * })
+ *
+ * compare('ACME Inc.', 'Acme', { preset: companyNames }) // 100
  */
-export function mergeOptions(base: MatchOptions, over: MatchOptions): MatchOptions {
-  const merged: MatchOptions = { ...base };
-  for (const key of Object.keys(over) as (keyof MatchOptions)[]) {
-    if (over[key] !== undefined) (merged as Record<string, unknown>)[key] = over[key];
+export function definePreset(definition: PresetDefinition): PresetPack {
+  if (typeof definition !== 'object' || definition === null) fail('definePreset()', 'expects an object.');
+  const { name, description, version, options } = definition;
+  if (typeof name !== 'string' || !NAME_RE.test(name)) {
+    fail('definePreset()', `"name" must be lower-case words joined by dashes such as "company-names", got ${JSON.stringify(name)}.`);
   }
-  if (base.replace || over.replace) merged.replace = { ...base.replace, ...over.replace };
-  if (base.stripPatterns || over.stripPatterns) {
-    merged.stripPatterns = [...(base.stripPatterns ?? []), ...(over.stripPatterns ?? [])];
+  const what = `Preset "${name}"`;
+  if (typeof options !== 'object' || options === null) fail(what, '"options" must be an object.');
+  if ('preset' in options) fail(what, 'use "extends" instead of "options.preset".');
+  if (
+    options.stripPatterns !== undefined &&
+    (!Array.isArray(options.stripPatterns) || options.stripPatterns.some((re) => !(re instanceof RegExp)))
+  ) {
+    fail(what, '"options.stripPatterns" must be an array of regular expressions.');
   }
-  return merged;
-}
-
-/** Checks a language given in the options. */
-export function checkLanguage(language: unknown): Language {
-  if (typeof language !== 'object' || language === null || (language as Language).kind !== 'language') {
-    fail('Invalid language', `pass a built-in code or a pack made with defineLanguage(), got ${JSON.stringify(language)}.`);
-  }
-  const pack = language as Language;
-  if (pack.apiVersion !== API_VERSION) {
-    fail(`Language "${pack.code}"`, `was written for extension API ${pack.apiVersion}, this version supports ${API_VERSION}.`);
-  }
-  return pack;
+  const base = definition.extends === undefined ? {} : presetOf(definition.extends, 'preset to extend').options;
+  return preset(name, mergeOptions(base, options), description, version);
 }

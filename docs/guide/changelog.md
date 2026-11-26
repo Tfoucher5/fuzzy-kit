@@ -21,7 +21,7 @@ The project follows **semantic versioning**:
 - CLI: `--preset` takes a package or a file, `--lang` picks languages.
 
 ### Changed
-- English, French and the `music`, `search` and `strict` presets now run on the extension API. Results are identical: checked on 320,000 comparisons of real data against v2.2.0.
+- English, French and the `music`, `search` and `strict` presets now run on the extension API. Results are identical: checked on 320,000 comparisons of real data against v2.2.0. The bundle grows by about 1.4 kB (min+gzip) for `similarity`.
 - `ResolvedOptions.preset` is now the preset's name as a `string`, built-in or not.
 
 ---

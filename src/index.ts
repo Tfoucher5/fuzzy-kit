@@ -18,8 +18,8 @@ export {
 } from './matcher.js';
 export type { Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';
-export { API_VERSION, defineLanguage } from './plugins.js';
-export { definePreset } from './presets.js';
+export { API_VERSION } from './core.js';
+export { defineLanguage, definePreset } from './define.js';
 export { diff } from './diff.js';
 export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';

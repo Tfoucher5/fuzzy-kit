@@ -1,4 +1,4 @@
-import { checkLanguage } from '../plugins.js';
+import { checkLanguage } from '../core.js';
 import type { BuiltinLanguage, Language } from '../types.js';
 import { en } from './en.js';
 import { fr } from './fr.js';

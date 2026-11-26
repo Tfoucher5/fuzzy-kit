@@ -1,5 +1,6 @@
 import { LATIN_SOUNDS } from '../phonetic.js';
-import { defineLanguage } from '../plugins.js';
+// Built-in packs skip the checks of defineLanguage(); write yours with it.
+import { language as defineLanguage } from '../core.js';
 
 const UNITS = [
   'zero', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
