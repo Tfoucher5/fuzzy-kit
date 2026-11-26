@@ -3,6 +3,11 @@ name: Docs
 on:
   push:
     branches: [master]
+  # Rebuild weekly so new npm packages with the keyword fuzzy-toolkit-plugin
+  # appear on the Extensions page.
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read

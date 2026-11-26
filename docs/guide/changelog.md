@@ -11,6 +11,9 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+- [Extensions](/extensions) page on the docs site: the packs shipped with fuzzy-toolkit and community ones, found on npm by the keyword `fuzzy-toolkit-plugin` or reviewed in `docs/extensions.json`, with a fuzzy search box. The site rebuilds weekly so new packages appear.
+
 ---
 
 ## v2.5.0

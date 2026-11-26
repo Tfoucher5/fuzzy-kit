@@ -10,6 +10,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Recipes', link: '/recipes/quiz' },
+      { text: 'Extensions', link: '/extensions' },
       { text: 'API', link: '/api/' }
     ],
 
@@ -20,6 +21,7 @@ export default defineConfig({
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Options', link: '/guide/options' },
           { text: 'Languages and presets', link: '/guide/extensions' },
+          { text: 'Extensions directory', link: '/extensions' },
           { text: 'How it works', link: '/guide/how-it-works' },
           { text: 'Compared with other libraries', link: '/guide/benchmarks' },
           { text: 'Upgrading from v1', link: '/guide/migration' },
