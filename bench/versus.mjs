@@ -13,6 +13,7 @@ import fuzzysort from 'fuzzysort';
 import { matchSorter } from 'match-sorter';
 import * as kit from '../dist/esm/index.js';
 import kitCompat from '../dist/esm/compat/string-similarity.js';
+import KitFuse from '../dist/esm/compat/fuse.js';
 
 const DATA = new URL('./.data/', import.meta.url);
 const SOURCES = {
@@ -153,6 +154,9 @@ line('fuzzysort', fzMs / searches.length, hit(results));
 const index = kit.createIndex(titles, { preset: 'search' });
 const kitMs = median(() => { results = searches.map((s) => index.search(s.q, { limit: 10 }).map((r) => r.item)); });
 line('fuzzy-toolkit index.search (preset search)', kitMs / searches.length, hit(results));
+const kitFuse = new KitFuse(titles);
+const kitFuseMs = median(() => { results = searches.map((s) => kitFuse.search(s.q, { limit: 10 }).map((r) => r.item)); });
+line('fuzzy-toolkit/fuse (same code as Fuse.js)', kitFuseMs / searches.length, hit(results));
 console.log('  (times per query)');
 
 /* 5. Acronyms ---------------------------------------------------------------- */

@@ -18,6 +18,7 @@ const cases = {
   'createIndex / search / highlight': `export { createIndex, search, highlight } from './dist/esm/index.js'`,
   'levenshtein / damerau': `export { levenshtein, damerau } from './dist/esm/index.js'`,
   'fuzzy-toolkit/string-similarity': `export * from './dist/esm/compat/string-similarity.js'`,
+  'fuzzy-toolkit/fuse': `export { default } from './dist/esm/compat/fuse.js'`,
   'fuzzy-toolkit/react': `export * from './dist/esm/react.js'`,
   'one extra language (lang/es)': `export { default } from './dist/esm/lang/es.js'`,
 };

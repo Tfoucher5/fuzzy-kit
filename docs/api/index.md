@@ -299,3 +299,27 @@ compareTwoStrings('healed', 'sealed') // 0.8
 findBestMatch('healed', ['edward', 'sealed', 'theatre'])
 // { ratings: [...], bestMatch: { target: 'sealed', rating: 0.8 }, bestMatchIndex: 1 }
 ```
+
+## Fuse.js compatibility
+
+`fuzzy-toolkit/fuse` has the Fuse.js API: change the import, keep the code. The results come from fuzzy-toolkit: on song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster ([benchmarks](/guide/benchmarks)).
+
+```ts
+import Fuse from 'fuzzy-toolkit/fuse' // was: import Fuse from 'fuse.js'
+// CommonJS: const Fuse = require('fuzzy-toolkit/fuse')
+
+const fuse = new Fuse(books, { keys: ['title', 'author.name'], includeScore: true, includeMatches: true })
+fuse.search('jon', { limit: 5 })
+// [{ item, refIndex, score, matches: [{ indices: [[0, 2]], key: 'title', value: '...' }] }]
+```
+
+What carries over: `keys` (names, paths as `'a.b'` or `['a', 'b']`, weights), `threshold`, `includeScore` (0 is a perfect match, like Fuse), `includeMatches` (ends included, like Fuse), `minMatchCharLength`, `shouldSort`, `isCaseSensitive`, `ignoreDiacritics`, `search(query, { limit })`, `add`, `remove`, `removeAt`, `setCollection`, `getIndex`, `Fuse.createIndex` and `Fuse.parseIndex`.
+
+What differs:
+
+- **Scores and ranking** are fuzzy-toolkit's: typos anywhere, word order, acronyms. Scores are not the ones Fuse would give.
+- **`threshold`** maps to `100 × (1 − threshold)`. When you leave it out, the default is 70 (like `threshold: 0.3`), stricter than Fuse's 0.6, which lets in a lot of noise.
+- **No extended or logical search** (`useExtendedSearch`, `{ $and: [...] }`), no `getFn` and no `sortFn`. A logical query throws an error, and the other options print a warning. `location`, `distance` and `ignoreLocation` are accepted but have no effect, because fuzzy-toolkit does not score by position.
+- **Saved indexes** from Fuse.js cannot be loaded: save one again with `JSON.stringify(fuse.getIndex())`.
+
+For new code, prefer [`createIndex`](#createindex): it has more options (presets, languages, `closest`, `highlight`).
