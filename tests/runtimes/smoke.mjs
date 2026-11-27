@@ -3,6 +3,7 @@
 // `deno run --allow-read tests/runtimes/smoke.mjs`.
 import { check, closest, createIndex, dedupe, find, highlight, levenshtein, similarity } from '../../dist/esm/index.js';
 import stringSimilarity from '../../dist/esm/compat/string-similarity.js';
+import Fuse from '../../dist/esm/compat/fuse.js';
 import es from '../../dist/esm/lang/es.js';
 
 const runtime = globalThis.Deno ? `Deno ${Deno.version.deno}` : globalThis.Bun ? `Bun ${Bun.version}` : 'Node';
@@ -23,6 +24,7 @@ expect('index', createIndex(['New York', 'Newark'], { preset: 'search' }).search
 expect('levenshtein', levenshtein('kitten', 'sitting'), 3);
 expect('language pack', similarity('treinta y dos', '32', { languages: [es] }), 100);
 expect('string-similarity', stringSimilarity.compareTwoStrings('healed', 'sealed'), 0.8);
+expect('fuse.js compat', new Fuse(['Hotel California', 'Bohemian Rhapsody']).search('bohemain')[0]?.refIndex, 1);
 
 console.log(`${runtime}: ${failed ? `${failed} failed` : 'all passed'}`);
 if (failed) throw new Error(`${failed} check(s) failed on ${runtime}`);
