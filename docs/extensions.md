@@ -14,8 +14,14 @@ one kind of data: song titles, addresses, company names... See
 
 ## Add yours
 
-1. Write your pack with `defineLanguage()` or `definePreset()` and test it with
-   [`fuzzy-toolkit/testing`](/guide/extensions#testing-your-pack).
+1. Start the package in one command. It writes `package.json`, the pack and its test:
+
+   ```sh
+   npx fuzzy-toolkit new-pack language pt      # or: new-pack preset company-names
+   ```
+
+   Fill in the pack with `defineLanguage()` or `definePreset()`, and add cases to the test, which uses
+   [`fuzzy-toolkit/testing`](/guide/extensions#testing-your-pack). The [Wanted](#wanted) list above shows what people asked for.
 2. Publish it on npm as `fuzzy-toolkit-lang-<code>` or
    `fuzzy-toolkit-preset-<name>`, with the keyword `fuzzy-toolkit-plugin`
    ([details](/guide/extensions#publishing)). It shows up here on the next

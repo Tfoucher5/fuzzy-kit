@@ -11,6 +11,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+- `npx fuzzy-toolkit new-pack language <code>` and `new-pack preset <name>` write a ready-to-publish package for a language pack or a preset, with a test that uses `fuzzy-toolkit/testing`.
+- The [Extensions](/extensions) page has a **Wanted** list: the language packs and presets people asked for in issues, each with the command to start it.
+
 ### Fixed
 - `npx fuzzy-toolkit ai-setup` on Windows: a Cursor rule written by 2.5.0 and checked out with CRLF line ends was taken for a hand-edited file and left as is. It is now updated like on other systems.
 
