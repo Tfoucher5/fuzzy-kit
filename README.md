@@ -90,7 +90,7 @@ Yes. `npx fuzzy-toolkit mcp` gives agents the tools, and `npx fuzzy-toolkit ai-s
 
 ## Contributing
 
-Bug reports with a wrong score, new languages, presets and feature ideas are very welcome: open an [issue](https://github.com/Tfoucher5/fuzzy-toolkit/issues) or a [discussion](https://github.com/Tfoucher5/fuzzy-toolkit/discussions). See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+Bug reports with a wrong score, new languages, presets and feature ideas are very welcome. To write a language pack or a preset, `npx fuzzy-toolkit new-pack language pt` starts the package, and the [Wanted list](https://tfoucher5.github.io/fuzzy-toolkit/extensions#wanted) shows what people asked for. Otherwise open an [issue](https://github.com/Tfoucher5/fuzzy-toolkit/issues) or a [discussion](https://github.com/Tfoucher5/fuzzy-toolkit/discussions). See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 Everyone who contributed is on the [Contributors page](https://tfoucher5.github.io/fuzzy-toolkit/contributors).
 
