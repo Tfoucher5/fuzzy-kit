@@ -11,6 +11,14 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Behavior change
+
+- `fuzzy-toolkit/fuse`: `useExtendedSearch: true` and `sortFn` used to be ignored with a warning; they now apply, as in Fuse.js, and a logical query no longer throws. To keep the old results, leave out `useExtendedSearch` and `sortFn`. Plain searches are unchanged.
+
+### Added
+
+- `fuzzy-toolkit/fuse` now supports the rest of the Fuse.js API: extended search (`useExtendedSearch`: `=exact`, `'include`, `^prefix`, `suffix$`, `!exclude`, `|` for OR), logical queries (`{ $and }`, `{ $or }`, `{ $path, $val }`), `getFn` (global or on a key) and `sortFn`. They find the same items as Fuse.js on its own examples. See [Fuse.js compatibility](/api/#fuse-js-compatibility).
+
 ---
 
 ## v2.7.0

@@ -30,7 +30,7 @@ const fuse = new Fuse(books, { keys: ['title', 'author.name'], includeScore: tru
 fuse.search('jon', { limit: 5 }) // [{ item, refIndex, score }], score 0 = perfect, like Fuse
 ```
 
-Not supported: extended/logical search, `getFn`, `sortFn`. `threshold` (0 to 1) maps to `100 * (1 - threshold)`, and the default is 70, not Fuse's 0.6.
+Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), `getFn` and `sortFn` work as in Fuse. Not supported: token search. `threshold` (0 to 1) maps to `100 * (1 - threshold)`, and the default is 70, not Fuse's 0.6.
 
 ## Main API (import from 'fuzzy-toolkit')
 

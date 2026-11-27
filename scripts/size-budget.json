@@ -6,7 +6,7 @@
   "createIndex / search / highlight": 13.0,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
-  "fuzzy-toolkit/fuse": 13.9,
+  "fuzzy-toolkit/fuse": 15.2,
   "fuzzy-toolkit/react": 13.3,
   "one extra language (lang/es)": 0.8
 }
