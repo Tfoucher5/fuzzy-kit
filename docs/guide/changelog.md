@@ -11,6 +11,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+
+- `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
+
 ### Performance
 
 - Search as you type is about 35% faster (8.2 to 5.3 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.

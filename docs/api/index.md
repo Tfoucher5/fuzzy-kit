@@ -152,6 +152,29 @@ dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 ```
 
+## mapFields
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+```ts
+mapFields(from: readonly string[], to: readonly string[], options?: MapFieldsOptions): FieldMapping
+// MapFieldsOptions: { threshold?: number (default 70); synonyms?: Record<string, string[]> }
+// FieldMapping: { mapping: Record<string, string>; matches: { from, to, score }[]; unmatched: string[]; missing: string[] }
+```
+
+Pairs field names with the fields of a schema, each at most once, best scores first: CSV headers with your columns, a form with your model, the keys an AI or an API returned with the ones you expect. It reads camelCase, snake_case, kebab-case and `#` (number), and knows common synonyms in English, French and Spanish: zip and postal code, dob and date of birth, qty and quantity, tel and phone, prénom and first name...
+
+```ts
+mapFields(['First Name', 'E-mail', 'Zip', 'Phone #', 'DOB'], ['firstName', 'email', 'postalCode', 'phoneNumber', 'dateOfBirth']).mapping
+// { 'First Name': 'firstName', 'E-mail': 'email', Zip: 'postalCode', 'Phone #': 'phoneNumber', DOB: 'dateOfBirth' }
+
+// Rename the keys of a row (or of an AI's JSON output) to your schema
+const { mapping, unmatched, missing } = mapFields(Object.keys(row), ['sku', 'name', 'price'], { synonyms: { sku: ['ref', 'item code'] } })
+const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in mapping ? [[mapping[k], v]] : [])))
+```
+
 ## diff
 
 ```ts

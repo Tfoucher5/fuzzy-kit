@@ -8,6 +8,8 @@ import {
   search,
   similarity,
   diff,
+  mapFields,
+  type FieldMapping,
   defineLanguage,
   definePreset,
   type Change,
@@ -154,3 +156,8 @@ const title: string | undefined = found[0]?.item.title;
 void title;
 // @ts-expect-error limit is a number
 fuse.search('dune', { limit: '3' });
+
+// mapFields returns a mapping from one list's names to the other's.
+const fields: FieldMapping = mapFields(['Zip'], ['postalCode'], { threshold: 70, synonyms: { sku: ['ref'] } });
+const column: string | undefined = fields.mapping['Zip'];
+const fieldScore: number = fields.matches[0]!.score;

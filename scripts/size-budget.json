@@ -1,9 +1,10 @@
 {
-  "everything": 17.9,
+  "everything": 18.9,
   "similarity / isMatch": 10,
   "check / checkAll (quiz)": 10.6,
   "createMatcher (every method)": 14.8,
   "createIndex / search / highlight": 13.3,
+  "mapFields": 10.9,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
   "fuzzy-toolkit/fuse": 14.1,
