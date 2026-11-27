@@ -1,3 +1,8 @@
+---
+title: "Command line: dedupe, join and clean CSV files"
+description: "Remove near-duplicate rows, match two spreadsheets, rename columns and search a CSV or JSON file from the terminal with npx, no code."
+---
+
 # Command line
 
 Dedupe a customer export, match two spreadsheets, or try a score, without writing code. Works with `npx`, nothing to install.

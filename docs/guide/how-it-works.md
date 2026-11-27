@@ -1,3 +1,8 @@
+---
+title: "How it works: normalization, Damerau-Levenshtein and bit-parallel search"
+description: "How fuzzy-toolkit reads texts (case, accents, numbers in words, word order) and scores them, and why it stays fast on big lists."
+---
+
 # How it works
 
 ## The `smart` score

@@ -1,3 +1,8 @@
+---
+title: "Benchmarks: fuzzy-toolkit vs Fuse.js, fuzzysort, string-similarity, fastest-levenshtein"
+description: "Speed and accuracy of fuzzy-toolkit against Fuse.js, fuzzysort, match-sorter, string-similarity and fastest-levenshtein, on real data: song titles, English words, world cities."
+---
+
 # Compared with other libraries
 
 Measured with `npm run bench:versus` on public data (Spotify song titles, the 20,000 most common English words, 151,000 world cities), Node 22, median of 7 runs. Every library gets the same inputs. Run it yourself: the numbers move a little from one machine to another.

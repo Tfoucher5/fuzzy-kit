@@ -1,3 +1,8 @@
+---
+title: "\"Did you mean…?\" suggestions in JavaScript"
+description: "Suggest the closest command, city, product or word when the input has a typo, with fuzzy-toolkit closest() and createIndex()."
+---
+
 # "Did you mean…?"
 
 ```ts

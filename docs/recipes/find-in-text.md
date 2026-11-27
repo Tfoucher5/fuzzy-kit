@@ -1,3 +1,8 @@
+---
+title: "Find names in a text, typos included"
+description: "Spot a title, a product or a person mentioned with typos inside a message, a paragraph or a transcript, with positions and scores."
+---
+
 # Spot names in a text
 
 `find()` looks for fuzzy occurrences of a query inside a longer text and tells you where they are.
