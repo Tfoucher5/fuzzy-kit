@@ -7,6 +7,7 @@ import HomeStats from './HomeStats.vue'
 import HomeBenchmarks from './HomeBenchmarks.vue'
 import HomeCode from './HomeCode.vue'
 import HomeCli from './HomeCli.vue'
+import HomeExtensions from './HomeExtensions.vue'
 import HomeTrust from './HomeTrust.vue'
 import HomeCta from './HomeCta.vue'
 </script>
@@ -22,6 +23,7 @@ import HomeCta from './HomeCta.vue'
     <HomeBenchmarks />
     <HomeCode />
     <HomeCli />
+    <HomeExtensions />
     <HomeTrust />
     <HomeCta />
   </div>

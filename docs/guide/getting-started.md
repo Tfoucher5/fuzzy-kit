@@ -22,7 +22,9 @@ bun add fuzzy-toolkit
 
 :::
 
-Works with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.
+Works with ES modules (`import`) and CommonJS (`require`), in Node 18+, Bun, Deno and every modern browser or bundler (Node, Bun and Deno are tested in CI). Types are included.
+
+Already using Fuse.js or string-similarity? Change the import to [`fuzzy-toolkit/fuse`](/api/#fuse-js-compatibility) or [`fuzzy-toolkit/string-similarity`](/api/#string-similarity-compatibility) and keep your code.
 
 Without a bundler, load it from a CDN: the script gives a global `fuzzyToolkit`.
 

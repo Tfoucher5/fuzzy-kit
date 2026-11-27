@@ -7,7 +7,7 @@ export const announcement = {
   link: '/guide/changelog',
 }
 
-export const works = ['Node 18+', 'Every browser', 'TypeScript', 'React hook', 'CDN', 'Command line', 'MCP server']
+export const works = ['Node 18+', 'Bun & Deno', 'Every browser', 'Fuse.js API', 'TypeScript', 'React hook', 'CDN', 'Command line', 'MCP server']
 
 /** Examples played by the hero demo. Scores are computed live by the library. */
 export const examples = [
