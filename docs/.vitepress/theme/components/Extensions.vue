@@ -358,7 +358,8 @@ const registryEntry = `{
   z-index: 2;
   pointer-events: none;
   border-radius: 40px;
-  background: radial-gradient(420px circle at calc(var(--mx, -999px) + 40px) calc(var(--my, -999px) + 40px), var(--vp-c-brand-soft), transparent 65%);
+  /* Faint: the cards under it must stay as readable as without it. */
+  background: radial-gradient(320px circle at calc(var(--mx, -999px) + 40px) calc(var(--my, -999px) + 40px), rgba(67, 56, 202, 0.05), transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
