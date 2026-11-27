@@ -23,6 +23,8 @@ export { defineLanguage, definePreset } from './define.js';
 export { diff } from './diff.js';
 export { mapFields } from './fields.js';
 export type { FieldMapping, FieldMatch, MapFieldsOptions } from './fields.js';
+export { repair } from './repair.js';
+export type { JsonSchema, Repair, RepairOptions, RepairResult } from './repair.js';
 export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';
 export { damerau, jaro, jaroWinkler, levenshtein } from './distance.js';

@@ -37,6 +37,20 @@ npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key na
 
 Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
 
+## Rename columns to your names
+
+A CSV export never names its columns like your code does. `map-fields` renames them, reading camelCase, snake_case and synonyms (zip and postal code, prénom and first name), and puts them in your order:
+
+```sh
+npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
+# Prénom -> firstName
+# E-mail -> email
+# Zip -> postalCode
+# not found, left empty: lastName
+```
+
+What was renamed goes to the terminal, the file to standard output. Columns that match none of your names are kept at the end (`--drop` leaves them out), and `--to` also takes a `.json` file: an array of names or a JSON Schema.
+
 ## Search and compare
 
 ```sh
