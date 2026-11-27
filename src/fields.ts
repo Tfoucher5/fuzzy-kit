@@ -71,7 +71,8 @@ function plain(name: string): string {
   return name
     .replace(/#/g, ' number ')
     .replace(/([\p{Ll}\d])(\p{Lu})/gu, '$1 $2')
-    .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, '$1 $2')
+    // A lookahead, not `(\p{Lu}+)(\p{Lu}\p{Ll})`: that one backtracks on long capitals.
+    .replace(/(\p{Lu})(?=\p{Lu}\p{Ll})/gu, '$1 ')
     .replace(/(\p{L})(\d)|(\d)(\p{L})/gu, '$1$3 $2$4')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
