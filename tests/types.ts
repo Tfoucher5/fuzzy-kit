@@ -158,6 +158,15 @@ void title;
 // @ts-expect-error limit is a number
 fuse.search('dune', { limit: '3' });
 
+// Extended search, logical queries, getFn and sortFn.
+const fullFuse = new Fuse([{ title: 'Dune', author: { name: 'Herbert' } }], {
+  keys: ['title', { name: 'author', getFn: (book) => book.author.name }],
+  useExtendedSearch: true,
+  sortFn: (a, b) => a.score - b.score || a.idx - b.idx,
+});
+fullFuse.search("^du 'ne | =Dune");
+fullFuse.search({ $and: [{ title: 'dune' }, { $path: ['author'], $val: 'herbert' }] });
+
 // mapFields returns a mapping from one list's names to the other's.
 const fields: FieldMapping = mapFields(['Zip'], ['postalCode'], { threshold: 70, synonyms: { sku: ['ref'] } });
 const column: string | undefined = fields.mapping['Zip'];

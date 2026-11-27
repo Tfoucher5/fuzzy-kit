@@ -82,15 +82,84 @@ test('fuse: saved index round-trip, and a stale one is rebuilt', () => {
   assert.equal(new Fuse(['Nantes'], {}, Fuse.parseIndex(saved)).search('nantes')[0].item, 'Nantes');
 });
 
-test('fuse: logical queries are refused, unsupported options warned about', () => {
-  assert.throws(() => new Fuse(books, { keys: ['title'] }).search({ $and: [{ title: 'old' }] }), /only string queries/);
+test('fuse: extended search, the same items as fuse.js', () => {
+  const list = [
+    { title: 'Old Man War', tags: ['scifi'] },
+    { title: 'The Lock Artist', tags: ['thriller'] },
+    { title: 'HTML5 for beginners', tags: ['web'] },
+    { title: 'JavaScript: The Good Parts', tags: ['web', 'js'] },
+    { title: 'Learning Python', tags: ['python'] },
+    { title: 'Ruby on Rails', tags: ['web', 'ruby'] },
+  ];
+  const options = { keys: ['title'], useExtendedSearch: true, threshold: 0.3 };
+  const ours = new Fuse(list, options);
+  const theirs = new RealFuse(list, options);
+  const ids = (results) => results.map((r) => r.refIndex).sort();
+  for (const query of ["'the", '=Ruby on Rails', '^Old', 'Parts$', '!the', '!^Old', '!Rails$', "^java 'good", "'python | 'ruby", '="Ruby on Rails"', "'The !Lock"]) {
+    assert.deepEqual(ids(ours.search(query)), ids(theirs.search(query)), query);
+  }
+  // Fuzzy words still forgive typos.
+  assert.deepEqual(ids(ours.search('pyhton')), [4]);
+  assert.deepEqual(ours.search("'xyz"), []);
+  // Exact matches report where they are.
+  const [hit] = new Fuse(list, { ...options, includeMatches: true, includeScore: true }).search('^HTML');
+  assert.deepEqual(hit.matches, [{ indices: [[0, 3]], value: 'HTML5 for beginners', key: 'title' }]);
+  assert.equal(hit.score, 0);
+  // Strings without keys, and case sensitivity.
+  const fruits = ['Apple', 'apple pie'];
+  assert.deepEqual(ids(new Fuse(fruits, { useExtendedSearch: true }).search('=apple')), ids(new RealFuse(fruits, { useExtendedSearch: true }).search('=apple')));
+  assert.deepEqual(new Fuse(['Apple', 'apple'], { useExtendedSearch: true, isCaseSensitive: true }).search('=apple').map((r) => r.item), ['apple']);
+});
+
+test('fuse: logical queries, the same items as fuse.js', () => {
+  const options = { keys: ['title', 'author.lastName', 'tags'], useExtendedSearch: true };
+  const ours = new Fuse(books, options);
+  const theirs = new RealFuse(books, options);
+  const ids = (results) => results.map((r) => r.refIndex).sort();
+  for (const query of [
+    { $and: [{ title: "'old" }, { 'author.lastName': '^scal' }] },
+    { $or: [{ title: '^html' }, { tags: '=humor' }] },
+    { $and: [{ $path: ['author', 'lastName'], $val: "'ham" }] },
+    { title: "'the", tags: '=thriller' },
+  ]) {
+    assert.deepEqual(ids(ours.search(query)), ids(theirs.search(query)), JSON.stringify(query));
+  }
+  // Without extended search, a leaf is fuzzy, on its key only.
+  const fuzzy = new Fuse(books, { keys: ['title', 'author.lastName'] });
+  assert.deepEqual(fuzzy.search({ 'author.lastName': 'hamiltn' }).map((r) => r.refIndex), [1]);
+  assert.deepEqual(fuzzy.search({ title: 'hamilton' }), []);
+  assert.throws(() => fuzzy.search({ year: '2001' }), /not one of the keys/);
+  assert.throws(() => fuzzy.search({ title: 1 }), /must be a string/);
+  assert.throws(() => fuzzy.search(42), /string or a logical query/);
+});
+
+test('fuse: getFn and sortFn', () => {
+  const people = [{ name: { first: 'Ada', last: 'Lovelace' } }, { name: { first: 'Alan', last: 'Turing' } }];
+  const byFn = new Fuse(people, { keys: [{ name: 'full', getFn: (p) => `${p.name.first} ${p.name.last}` }], includeMatches: true });
+  const [hit] = byFn.search('alan turng');
+  assert.equal(hit.refIndex, 1);
+  assert.equal(hit.item, people[1]);
+  assert.equal(hit.matches[0].key, 'full');
+  const global = new Fuse(people, { keys: ['name'], getFn: (p, path) => (path[0] === 'name' ? p.name.last : '') });
+  assert.equal(global.search('lovelace')[0].item, people[0]);
+  global.add({ name: { first: 'Grace', last: 'Hopper' } });
+  assert.equal(global.search('hoper')[0].refIndex, 2);
+  assert.deepEqual(global.remove((p) => p.name.first === 'Ada').map((p) => p.name.last), ['Lovelace']);
+  assert.equal(global.search('hopper')[0].refIndex, 1);
+
+  const reversed = new Fuse(['abc', 'abd', 'abe'], { sortFn: (a, b) => b.idx - a.idx });
+  assert.deepEqual(reversed.search('ab').map((r) => r.item), ['abe', 'abd', 'abc']);
+  assert.deepEqual(reversed.search('ab', { limit: 1 }).map((r) => r.item), ['abe']);
+});
+
+test('fuse: unsupported options are warned about', () => {
   const warnings = [];
   const warn = console.warn;
   console.warn = (m) => warnings.push(m);
   try {
-    new Fuse(books, { keys: ['title'], useExtendedSearch: true });
+    new Fuse(books, { keys: ['title'], useTokenSearch: true });
   } finally {
     console.warn = warn;
   }
-  assert.match(warnings.join('\n'), /useExtendedSearch/);
+  assert.match(warnings.join('\n'), /useTokenSearch/);
 });

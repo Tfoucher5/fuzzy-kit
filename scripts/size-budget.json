@@ -8,7 +8,7 @@
   "repair": 14.6,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
-  "fuzzy-toolkit/fuse": 14.1,
+  "fuzzy-toolkit/fuse": 15.6,
   "fuzzy-toolkit/react": 13.6,
   "one extra language (lang/es)": 0.8
 }
