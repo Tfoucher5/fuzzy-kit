@@ -1,3 +1,8 @@
+---
+title: "Changelog"
+description: "Every fuzzy-toolkit release: what was added, fixed and made faster, and any behavior change with the option that restores the old one."
+---
+
 # Changelog
 
 All notable changes to fuzzy-toolkit are documented in this file.

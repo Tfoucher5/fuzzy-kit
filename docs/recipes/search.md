@@ -1,3 +1,8 @@
+---
+title: "Search as you type: a fast fuzzy search box"
+description: "Build a typo-tolerant search box with prefixes, acronyms and highlighted matches, in React or plain JavaScript, fast on tens of thousands of items."
+---
+
 # Search as you type
 
 ```ts

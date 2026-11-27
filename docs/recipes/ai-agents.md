@@ -1,3 +1,8 @@
+---
+title: "AI agents: MCP server, repairing LLM JSON output, ai-setup"
+description: "Give AI agents fuzzy matching tools with the fuzzy-toolkit MCP server, repair the JSON a model returns against its schema, and teach coding assistants the API."
+---
+
 # AI agents and assistants
 
 fuzzy-toolkit is built to be used by AI coding assistants and agents as much as by people.

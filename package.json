@@ -43,7 +43,17 @@
     "text-similarity",
     "deduplication",
     "record-linkage",
-    "fuse.js-alternative"
+    "fuse.js-alternative",
+    "fusejs",
+    "fuzzy-join",
+    "data-cleaning",
+    "csv",
+    "column-mapping",
+    "schema-mapping",
+    "json-repair",
+    "llm",
+    "llm-output",
+    "structured-output"
   ],
   "license": "MIT",
   "author": "Theo Foucher",

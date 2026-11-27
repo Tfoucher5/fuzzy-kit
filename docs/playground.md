@@ -1,5 +1,7 @@
 ---
 aside: false
+title: "Playground: try fuzzy matching in the browser"
+description: "Type two texts and see their similarity score, how each was normalized and what every strategy gives, live in the browser."
 ---
 
 # Playground

@@ -3,6 +3,22 @@ import { defineConfig } from 'vitepress'
 
 const { version } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'))
 const repo = 'https://github.com/Tfoucher5/fuzzy-toolkit'
+const site = 'https://tfoucher5.github.io/fuzzy-toolkit/'
+
+// What search engines read about the package (schema.org).
+const structured = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareSourceCode',
+  name: 'fuzzy-toolkit',
+  description: 'Fuzzy string matching and fuzzy search for JavaScript and TypeScript, with zero dependencies.',
+  url: site,
+  codeRepository: repo,
+  programmingLanguage: ['TypeScript', 'JavaScript'],
+  runtimePlatform: ['Node.js', 'Bun', 'Deno', 'Browser'],
+  license: 'https://opensource.org/licenses/MIT',
+  version,
+  author: { '@type': 'Person', name: 'Théo Foucher', url: 'https://github.com/Tfoucher5' },
+}
 
 export default defineConfig({
   title: 'fuzzy-toolkit',
@@ -11,13 +27,27 @@ export default defineConfig({
   base: '/fuzzy-toolkit/',
   cleanUrls: true,
   lastUpdated: true,
+  sitemap: { hostname: site },
 
   head: [
     ['meta', { name: 'theme-color', content: '#4338ca' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'fuzzy-toolkit: close enough is a match' }],
-    ['meta', { property: 'og:description', content: 'Fuzzy string matching for JavaScript and TypeScript. Typos, accents, word order and numbers in words, in about 10 kB with zero dependencies.' }],
+    ['meta', { property: 'og:site_name', content: 'fuzzy-toolkit' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['script', { type: 'application/ld+json' }, JSON.stringify(structured)],
   ],
+
+  // Each page gets its own canonical address and share card.
+  transformHead({ pageData, title, description }) {
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+    const url = site + path
+    return [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+    ]
+  },
 
   markdown: {
     // Code blocks stay dark in both themes (see custom.css).

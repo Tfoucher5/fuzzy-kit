@@ -1,3 +1,8 @@
+---
+title: "Options: threshold, presets, partial, phonetic, acronyms, word order"
+description: "Every fuzzy-toolkit option explained with examples: threshold, presets, partial and substring matching, phonetic, acronyms, word order, spaces, case, accents, numbers, ignored words."
+---
+
 # Options
 
 Every function accepts the same flat options object. All fields are optional.
