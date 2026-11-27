@@ -40,7 +40,8 @@ export interface RepairOptions {
 }
 
 const BOOLEANS: Record<string, boolean> = { true: true, yes: true, y: true, on: true, '1': true, false: false, no: false, n: false, off: false, '0': false };
-const NUMBER = /^\s*-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
+// Each part can only start one way, so a long string of digits cannot backtrack.
+const NUMBER = /^\s*-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?\s*$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
