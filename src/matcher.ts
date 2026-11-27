@@ -16,7 +16,7 @@ import {
 } from './engine.js';
 import { canBlock, createBlocker } from './blocking.js';
 import { partialDistance } from './distance.js';
-import { findIn, highlightIn, type Found, type Segment } from './text.js';
+import { findAllIn, findIn, highlightIn, type Found, type Name, type Segment } from './text.js';
 import { warnOnce, checkOptions } from './warn.js';
 import type {
   CheckOptions,
@@ -1108,6 +1108,44 @@ function fingerprintOf(normalized: string): string {
 export function find(text: string, query: string, options?: MatchOptions): Found[] {
   const engine = getEngine(options);
   return findIn(toText(text), toText(query), engine, engine.options.threshold);
+}
+
+/** An item of the list mentioned in the text, by {@link findAll}. */
+export interface FoundItem<T> extends Found {
+  /** The item mentioned. */
+  item: T;
+  /** Its position in the list. */
+  index: number;
+  /** The key whose text matched, for object items. */
+  key?: string;
+}
+
+/**
+ * Which items of a list are mentioned in a text, typos included, with where:
+ * the products in a message, the cities in an address, the songs in a
+ * transcript. Each part of the text goes to its best item; results come in
+ * reading order. For objects, pass `keys`, aliases included
+ * (`keys: ['name', 'aliases']`).
+ *
+ * @example
+ * findAll('2 iphone 15 et un macbok air svp', ['iPhone 15', 'MacBook Air', 'iPad'])
+ * // [{ item: 'iPhone 15', index: 0, text: 'iphone 15', start: 2, end: 11, score: 100 },
+ * //  { item: 'MacBook Air', index: 1, text: 'macbok air', start: 18, end: 28, score: 90.91 }]
+ */
+export function findAll<T>(text: string, items: readonly T[], ...args: ItemsArgs<T, MatchOptions & { keys?: KeysOption<T> }>): FoundItem<T>[] {
+  const options = args[0] as (MatchOptions & { keys?: KeysOption<T> }) | undefined;
+  const engine = getEngine(options);
+  const names: Name<{ entry: Entry<T>; at: number }>[] = [];
+  for (const entry of buildEntries(items, options?.keys, engine)) {
+    // The joined text of several keys is not a name of its own.
+    const count = entry.joined ? entry.prepared.length - 1 : entry.prepared.length;
+    for (let at = 0; at < count; at += 1) names.push({ prepared: entry.prepared[at]!, weight: entry.weights[at]!, ref: { entry, at } });
+  }
+  return findAllIn(toText(text), names, engine, engine.options.threshold).map(({ ref: { entry, at }, ...found }) => {
+    const out: FoundItem<T> = { item: entry.item, index: entry.index, ...found };
+    if (entry.keys[at] !== undefined) out.key = entry.keys[at];
+    return out;
+  });
 }
 
 /**

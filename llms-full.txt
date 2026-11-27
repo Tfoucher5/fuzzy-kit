@@ -35,7 +35,7 @@ Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, highlight, find, findAll, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -47,6 +47,7 @@ index.search('quer', { limit: 5 }); index.search('nyc') /* acronyms */; index.ad
 const saved = JSON.stringify(index); loadIndex(items, JSON.parse(saved), sameOptions) // prebuilt index
 highlight('Bohemian Rhapsody', 'bohem')  // [{ text: 'Bohem', match: true }, { text: 'ian Rhapsody', match: false }]
 find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, end, score }]
+findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which items are mentioned: [{ item, index, key, text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
 fingerprint('Doe, John')                                 // 'doe john'
@@ -91,7 +92,7 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `mapFields` and `repair`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
@@ -123,6 +124,11 @@ Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 # Full documentation
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/getting-started -->
+
+---
+title: "Getting started: fuzzy string matching in JavaScript"
+description: "Install fuzzy-toolkit, compare two strings, search a list with typos, suggest \"did you mean\", and pick the right function for your use case. Node, Bun, Deno, browsers."
+---
 
 # Getting started
 
@@ -226,6 +232,11 @@ Next: [Options](https://tfoucher5.github.io/fuzzy-toolkit/guide/options).
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/options -->
 
+---
+title: "Options: threshold, presets, partial, phonetic, acronyms, word order"
+description: "Every fuzzy-toolkit option explained with examples: threshold, presets, partial and substring matching, phonetic, acronyms, word order, spaces, case, accents, numbers, ignored words."
+---
+
 # Options
 
 Every function accepts the same flat options object. All fields are optional.
@@ -298,6 +309,11 @@ A rule never empties a text: `(Intro)` stays `intro`.
 Short texts move fast: one typo in a 4-letter word already costs 25 points. Use `check()`'s `close` verdict to be kind without accepting wrong answers.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions -->
+
+---
+title: "Languages and presets: Spanish, German, Italian, Dutch and your own"
+description: "Numbers in words, articles, stop words and sounds-alike rules per language, ready-made presets for song titles or search, and how to write and test your own pack."
+---
 
 # Languages and presets
 
@@ -513,6 +529,11 @@ other packs.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works -->
 
+---
+title: "How it works: normalization, Damerau-Levenshtein and bit-parallel search"
+description: "How fuzzy-toolkit reads texts (case, accents, numbers in words, word order) and scores them, and why it stays fast on big lists."
+---
+
 # How it works
 
 ## The `smart` score
@@ -558,6 +579,11 @@ Measured with `npm run bench:real` on public datasets: see the [home page](https
 Run `npm run bench` in the repository to measure on your machine.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz -->
+
+---
+title: "Quizzes and blind tests: grading typed answers"
+description: "Accept answers with typos, accents and word order mistakes, say \"almost\" when it is close, and check a title and an artist at once."
+---
 
 # Quizzes and blind tests
 
@@ -682,6 +708,11 @@ Use `compare()` on real player answers to see where scores land before changing 
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/search -->
 
+---
+title: "Search as you type: a fast fuzzy search box"
+description: "Build a typo-tolerant search box with prefixes, acronyms and highlighted matches, in React or plain JavaScript, fast on tens of thousands of items."
+---
+
 # Search as you type
 
 ```ts
@@ -776,6 +807,11 @@ createIndex(songs, { keys: ['title', { name: 'artist', weight: 0.8 }], preset: '
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/did-you-mean -->
 
+---
+title: "\"Did you mean…?\" suggestions in JavaScript"
+description: "Suggest the closest command, city, product or word when the input has a typo, with fuzzy-toolkit closest() and createIndex()."
+---
+
 # "Did you mean…?"
 
 ```ts
@@ -797,6 +833,11 @@ closest('pari', cities, { keys: ['name', 'aliases'] })?.item
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/find-in-text -->
 
+---
+title: "Find names in a text, typos included"
+description: "Spot a title, a product or a person mentioned with typos inside a message, a paragraph or a transcript, with positions and scores."
+---
+
 # Spot names in a text
 
 `find()` looks for fuzzy occurrences of a query inside a longer text and tells you where they are.
@@ -817,10 +858,24 @@ Positions refer to the original text, so `message.slice(start, end)` is exactly 
 - **Mentions**: detect a product, a city or a person in reviews or support tickets.
 - **Tagging**: list which known names appear in an article.
 
+## Every known name at once
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+
 ```ts
-const brands = ['Peugeot', 'Renault', 'Citroën']
-const mentioned = brands.filter((brand) => find(review, brand).length > 0)
+import { findAll } from 'fuzzy-toolkit'
+
+findAll('2 iphone 15 et un macbok air svp', ['iPhone 15', 'MacBook Air', 'iPad'])
+// [{ item: 'iPhone 15', index: 0, text: 'iphone 15', start: 2, end: 11, score: 100 },
+//  { item: 'MacBook Air', index: 1, text: 'macbok air', start: 18, end: 28, score: 90.91 }]
+
+// Objects, with their aliases
+findAll(message, cities, { keys: ['name', 'aliases'] }) // each result has the key that matched
 ```
+
+With a long list of short, common names (thousands of song titles), raise the `threshold` to 90: common words in the text would otherwise match short titles.
 
 ## Highlight them
 
@@ -838,6 +893,11 @@ highlight("c'est bohemian rapsody", 'Bohemian Rhapsody')
 `find()` takes the usual options. Use a `threshold` of 90 or more to avoid near misses on short words, and `preset: 'music'` when the query is a song title.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/data-cleaning -->
+
+---
+title: "Cleaning data: dedupe, record linkage, column mapping"
+description: "Remove near-duplicates, match two lists of customers or products (record linkage), map messy values and CSV headers to a clean schema in JavaScript."
+---
 
 # Cleaning data
 
@@ -918,6 +978,11 @@ const clean = rows.map((row) => country.closest(row.country, COUNTRIES)?.item ??
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/cli -->
 
+---
+title: "Command line: dedupe, join and clean CSV files"
+description: "Remove near-duplicate rows, match two spreadsheets, rename columns and search a CSV or JSON file from the terminal with npx, no code."
+---
+
 # Command line
 
 Dedupe a customer export, match two spreadsheets, or try a score, without writing code. Works with `npx`, nothing to install.
@@ -995,6 +1060,11 @@ npx fuzzy-toolkit compare "beyonsay" "Beyoncé" --phonetic
 | `--json` | Write JSON. |
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents -->
+
+---
+title: "AI agents: MCP server, repairing LLM JSON output, ai-setup"
+description: "Give AI agents fuzzy matching tools with the fuzzy-toolkit MCP server, repair the JSON a model returns against its schema, and teach coding assistants the API."
+---
 
 # AI agents and assistants
 
@@ -1106,6 +1176,11 @@ import { compareTwoStrings } from 'fuzzy-toolkit/string-similarity' // 0 to 1, s
 ```
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/api/ -->
+
+---
+title: "API reference"
+description: "Every fuzzy-toolkit function with its signature and examples: similarity, search, createIndex, closest, dedupe, join, check, find, highlight, diff, mapFields, repair, raw metrics, Fuse.js and string-similarity compatibility."
+---
 
 # API reference
 
@@ -1238,6 +1313,23 @@ interface Found {
 
 find("je crois que c'est bohemian rapsody", 'Bohemian Rhapsody')
 // [{ text: 'bohemian rapsody', start: 19, end: 35, score: 94.12 }]
+```
+
+## findAll
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+findAll<T>(text: string, items: readonly T[], options?: MatchOptions & { keys? }): FoundItem<T>[]
+// FoundItem: Found & { item: T; index: number; key?: string }
+```
+
+Which items of a list are mentioned in a text, typos included, with where, in reading order. Each part of the text goes to one item: the set of parts that covers the most text, weighted by score, so a longer name wins over its parts. For objects, `keys` says where their names are, aliases included.
+
+```ts
+findAll('2 iphone 15 et un macbok air svp', ['iPhone 15', 'MacBook Air', 'iPad'])
+// [{ item: 'iPhone 15', index: 0, text: 'iphone 15', start: 2, end: 11, score: 100 },
+//  { item: 'MacBook Air', index: 1, text: 'macbok air', start: 18, end: 28, score: 90.91 }]
 ```
 
 ## highlight
@@ -1487,6 +1579,11 @@ What differs:
 For new code, prefer [`createIndex`](#createindex): it has more options (presets, languages, `closest`, `highlight`).
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/migration -->
+
+---
+title: "Upgrading from v1"
+description: "What changed between fuzzy-toolkit v1 and v2: renamed functions and options, the 0-100 scores, and behavior fixes."
+---
 
 # Upgrading from v1
 

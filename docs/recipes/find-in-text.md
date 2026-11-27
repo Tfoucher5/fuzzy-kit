@@ -23,10 +23,26 @@ Positions refer to the original text, so `message.slice(start, end)` is exactly 
 - **Mentions**: detect a product, a city or a person in reviews or support tickets.
 - **Tagging**: list which known names appear in an article.
 
+## Every known name at once
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+`findAll()` looks for all the items of a list in one pass and says which part of the text goes with which item. A longer name wins over its parts: "hotel californa" is Hotel California, not Hotel and California.
+
 ```ts
-const brands = ['Peugeot', 'Renault', 'Citroën']
-const mentioned = brands.filter((brand) => find(review, brand).length > 0)
+import { findAll } from 'fuzzy-toolkit'
+
+findAll('2 iphone 15 et un macbok air svp', ['iPhone 15', 'MacBook Air', 'iPad'])
+// [{ item: 'iPhone 15', index: 0, text: 'iphone 15', start: 2, end: 11, score: 100 },
+//  { item: 'MacBook Air', index: 1, text: 'macbok air', start: 18, end: 28, score: 90.91 }]
+
+// Objects, with their aliases
+findAll(message, cities, { keys: ['name', 'aliases'] }) // each result has the key that matched
 ```
+
+With a long list of short, common names (thousands of song titles), raise the `threshold` to 90: common words in the text would otherwise match short titles.
 
 ## Highlight them
 

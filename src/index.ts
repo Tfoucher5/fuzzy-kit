@@ -7,6 +7,7 @@ export {
   createMatcher,
   dedupe,
   find,
+  findAll,
   fingerprint,
   group,
   highlight,
@@ -16,7 +17,7 @@ export {
   search,
   similarity,
 } from './matcher.js';
-export type { Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
+export type { FoundItem, Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';
 export { API_VERSION } from './core.js';
 export { defineLanguage, definePreset } from './define.js';
