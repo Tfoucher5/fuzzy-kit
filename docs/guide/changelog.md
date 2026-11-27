@@ -11,6 +11,9 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Fixed
+- `npx fuzzy-toolkit ai-setup` on Windows: a Cursor rule written by 2.5.0 and checked out with CRLF line ends was taken for a hand-edited file and left as is. It is now updated like on other systems.
+
 ---
 
 ## v2.6.0
