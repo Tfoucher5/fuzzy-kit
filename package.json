@@ -43,7 +43,11 @@
     "text-similarity",
     "deduplication",
     "record-linkage",
-    "fuse.js-alternative"
+    "fuse.js-alternative",
+    "vue",
+    "svelte",
+    "vue-composable",
+    "svelte-store"
   ],
   "license": "MIT",
   "author": "Theo Foucher",
@@ -103,6 +107,26 @@
       "require": {
         "types": "./dist/cjs/react.d.ts",
         "default": "./dist/cjs/react.js"
+      }
+    },
+    "./vue": {
+      "import": {
+        "types": "./dist/esm/vue.d.ts",
+        "default": "./dist/esm/vue.js"
+      },
+      "require": {
+        "types": "./dist/cjs/vue.d.ts",
+        "default": "./dist/cjs/vue.js"
+      }
+    },
+    "./svelte": {
+      "import": {
+        "types": "./dist/esm/svelte.d.ts",
+        "default": "./dist/esm/svelte.js"
+      },
+      "require": {
+        "types": "./dist/cjs/svelte.d.ts",
+        "default": "./dist/cjs/svelte.js"
       }
     },
     "./lang/en": {
@@ -223,13 +247,18 @@
     "react-dom": "^18.3.1",
     "string-similarity": "^4.0.4",
     "typescript": "^5.9.3",
-    "vitepress": "^1.6.4"
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.0"
   },
   "peerDependencies": {
-    "react": ">=16.8"
+    "react": ">=16.8",
+    "vue": ">=3.3"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
