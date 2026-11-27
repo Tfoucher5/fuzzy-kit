@@ -97,6 +97,8 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 
+`npx fuzzy-toolkit new-pack language <code>` (or `preset <name>`) writes a ready-to-publish language pack or preset with its tests.
+
 `npx fuzzy-toolkit ai-setup` adds usage notes for AI assistants to the project's AGENTS.md, CLAUDE.md, Cursor rules or Copilot instructions.
 
 ## Common mistakes

@@ -15,6 +15,7 @@ import { withBase } from 'vitepress'
       <p class="support">
         Built in the open.
         <a :href="withBase('/contributors')">Meet the contributors</a> ·
+        <a :href="withBase('/extensions')">Write an extension</a> ·
         <a href="https://ko-fi.com/theofoucher">Support the project on Ko-fi</a>
       </p>
     </div>

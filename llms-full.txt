@@ -97,6 +97,8 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 
+`npx fuzzy-toolkit new-pack language <code>` (or `preset <name>`) writes a ready-to-publish language pack or preset with its tests.
+
 `npx fuzzy-toolkit ai-setup` adds usage notes for AI assistants to the project's AGENTS.md, CLAUDE.md, Cursor rules or Copilot instructions.
 
 ## Common mistakes
@@ -142,7 +144,9 @@ yarn add fuzzy-toolkit
 bun add fuzzy-toolkit
 ```
 
-**with ES modules (`import`) and CommonJS (`require`), in Node 18+ and every modern browser or bundler. Types are included.**
+**with ES modules (`import`) and CommonJS (`require`), in Node 18+, Bun, Deno and every modern browser or bundler (each tested in CI). Types are included.**
+
+Already using Fuse.js or string-similarity? Change the import to [`fuzzy-toolkit/fuse`](https://tfoucher5.github.io/fuzzy-toolkit/api/#fuse-js-compatibility) or [`fuzzy-toolkit/string-similarity`](https://tfoucher5.github.io/fuzzy-toolkit/api/#string-similarity-compatibility) and keep your code.
 
 Without a bundler, load it from a CDN: the script gives a global `fuzzyToolkit`.
 
