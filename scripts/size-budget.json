@@ -1,12 +1,12 @@
 {
-  "everything": 17.6,
-  "similarity / isMatch": 9.8,
-  "check / checkAll (quiz)": 10.4,
-  "createMatcher (every method)": 14.5,
-  "createIndex / search / highlight": 13.0,
+  "everything": 17.8,
+  "similarity / isMatch": 10,
+  "check / checkAll (quiz)": 10.6,
+  "createMatcher (every method)": 14.7,
+  "createIndex / search / highlight": 13.2,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
-  "fuzzy-toolkit/fuse": 13.9,
-  "fuzzy-toolkit/react": 13.3,
+  "fuzzy-toolkit/fuse": 14.1,
+  "fuzzy-toolkit/react": 13.5,
   "one extra language (lang/es)": 0.8
 }
