@@ -1,10 +1,10 @@
-// The command line commands: fuzzy dedupe, join, search and compare on CSV,
+// The command line commands: fuzzy dedupe, join, search, compare and map-fields on CSV,
 // TSV, JSON or plain text files. Run `npx fuzzy-toolkit --help`.
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createMatcher, dedupe, group, join, search } from '../dist/esm/index.js';
+import { createMatcher, dedupe, group, join, mapFields, search } from '../dist/esm/index.js';
 
 const HELP = `fuzzy-toolkit: fuzzy matching from the command line
 
@@ -14,6 +14,8 @@ Usage
   fuzzy-toolkit join    <left> <right>         Add to each left row its best match on the right
   fuzzy-toolkit search  <query> <file>         Rows matching a query, best first
   fuzzy-toolkit compare <a> <b>                Score two texts and show how they were read
+  fuzzy-toolkit map-fields <file> --to <names> Rename the columns to your names: "E-mail",
+                                               "Zip" and "Prénom" become email, postalCode...
   fuzzy-toolkit mcp                            Start an MCP server so AI agents (Claude,
                                                Cursor, VS Code...) can use these tools
   fuzzy-toolkit ai-setup                       Tell the AI assistants of this project how to
@@ -30,6 +32,9 @@ Options
       --left-key <column>   join: column of the left file
       --right-key <column>  join: column of the right file
       --unique              join: use each right row at most once
+      --to <names>          map-fields: the column names you want, comma-separated
+                            or repeated, or a .json file (array of names or JSON Schema)
+      --drop                map-fields: leave out the columns that match none of them
   -t, --threshold <0-100>   Minimum score to match (default 80)
   -p, --preset <name>       music, search or strict, or a preset package or
                             file made with definePreset()
@@ -47,6 +52,7 @@ Examples
   npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist
   npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
   npx fuzzy-toolkit dedupe companies.csv -p ./company-names.js --lang fr
+  npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
 `;
 
 function fail(message) {
@@ -176,6 +182,8 @@ const { values, positionals } = (() => {
         'left-key': { type: 'string', multiple: true },
         'right-key': { type: 'string', multiple: true },
         unique: { type: 'boolean' },
+        to: { type: 'string', multiple: true },
+        drop: { type: 'boolean' },
         threshold: { type: 'string', short: 't' },
         preset: { type: 'string', short: 'p' },
         lang: { type: 'string', multiple: true },
@@ -295,6 +303,34 @@ try {
       const matches = search(args[0], input.rows, { ...options, keys, limit });
       const rows = matches.map((m) => ({ score: m.score, ...m.item }));
       write(rows, ['score', ...input.columns], input, values.json);
+      break;
+    }
+    case 'map-fields': {
+      if (args.length !== 1) fail('map-fields needs one file');
+      if (!values.to) fail('map-fields needs --to with the column names you want');
+      const input = readInput(args[0]);
+      const names = values.to.flatMap((spec) => {
+        if (!/.json$/i.test(spec)) return spec.split(',').map((n) => n.trim()).filter(Boolean);
+        const schema = JSON.parse(readFileSync(spec, 'utf8'));
+        return Array.isArray(schema) ? schema.map(String) : Object.keys(schema?.properties ?? fail(`"${spec}" must hold an array of names or a JSON Schema with properties`));
+      });
+      const { mapping, missing, unmatched } = mapFields(input.columns, names, { threshold: options.threshold });
+      const from = new Map(Object.entries(mapping).map(([column, name]) => [name, column]));
+      const extra = values.drop ? [] : unmatched;
+      const rows = input.rows.map((row) => {
+        const out = {};
+        for (const name of names) out[name] = from.has(name) ? row[from.get(name)] : '';
+        for (const column of extra) out[column] = row[column];
+        return out;
+      });
+      // What was renamed goes to stderr, so the output stays a clean file.
+      for (const [column, name] of Object.entries(mapping)) if (column !== name) process.stderr.write(`${column} -> ${name}
+`);
+      if (missing.length) process.stderr.write(`not found, left empty: ${missing.join(', ')}
+`);
+      if (unmatched.length) process.stderr.write(`${values.drop ? 'left out' : 'kept as is'}: ${unmatched.join(', ')}
+`);
+      write(rows, [...names, ...extra], input, values.json);
       break;
     }
     default:

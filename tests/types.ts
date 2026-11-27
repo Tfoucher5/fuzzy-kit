@@ -9,6 +9,7 @@ import {
   similarity,
   diff,
   mapFields,
+  repair,
   type FieldMapping,
   defineLanguage,
   definePreset,
@@ -170,3 +171,9 @@ fullFuse.search({ $and: [{ title: 'dune' }, { $path: ['author'], $val: 'herbert'
 const fields: FieldMapping = mapFields(['Zip'], ['postalCode'], { threshold: 70, synonyms: { sku: ['ref'] } });
 const column: string | undefined = fields.mapping['Zip'];
 const fieldScore: number = fields.matches[0]!.score;
+
+// repair: a typed copy, the changes and what is left to fix.
+const repaired = repair<{ email: string }>({ Email: 'a@b.c' }, { type: 'object', properties: { email: { type: 'string' } }, required: ['email'] }, { threshold: 80 });
+const repairedEmail: string = repaired.value.email;
+const repairKind: 'key' | 'value' | 'type' | 'removed' | undefined = repaired.changes[0]?.kind;
+const toAsk: string[] = repaired.unresolved.map((u) => u.path);

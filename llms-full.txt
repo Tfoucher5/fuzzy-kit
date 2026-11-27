@@ -35,7 +35,7 @@ Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -55,6 +55,7 @@ join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{
 check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' | 'wrong'
 diff('rapsody', 'Rhapsody')                              // what was misspelled
 mapFields(['First Name', 'Zip', 'Phone #'], ['firstName', 'postalCode', 'phoneNumber']).mapping // { 'First Name': 'firstName', Zip: 'postalCode', 'Phone #': 'phoneNumber' }: CSV headers or an AI's JSON keys to your schema, camelCase/snake_case and synonyms (dob, qty, zip...)
+repair(modelOutput, jsonSchema) // { value, changes, unresolved }: keys renamed to the schema's, enum typos fixed ('hight' -> 'high'), '36' -> 36, extra keys dropped if additionalProperties is false
 ```
 
 Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
@@ -86,11 +87,11 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## Command line
 
-`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output).
+`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output). `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames columns to your names.
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find` and `mapFields`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `mapFields` and `repair`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
@@ -954,6 +955,20 @@ npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key na
 
 Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
 
+## Rename columns to your names
+
+A CSV export never names its columns like your code does. `map-fields` renames them, reading camelCase, snake_case and synonyms (zip and postal code, prénom and first name), and puts them in your order:
+
+```sh
+npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
+# Prénom -> firstName
+# E-mail -> email
+# Zip -> postalCode
+# not found, left empty: lastName
+```
+
+What was renamed goes to the terminal, the file to standard output. Columns that match none of your names are kept at the end (`--drop` leaves them out), and `--to` also takes a `.json` file: an array of names or a JSON Schema.
+
 ## Search and compare
 
 ```sh
@@ -1031,18 +1046,18 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 
 ## Fix what a model returns
 
-Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`. Repair the output instead of retrying the call:
+Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`, `"36"` instead of `36`. Repair the output against the schema instead of paying for another call:
 
 ```ts
-import { closest, mapFields } from 'fuzzy-toolkit'
+import { repair } from 'fuzzy-toolkit'
 
-const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight" }
-const { mapping } = mapFields(Object.keys(output), ['fullName', 'email', 'priority'])
-const fixed = Object.fromEntries(Object.entries(output).map(([key, value]) => [mapping[key] ?? key, value]))
-fixed.priority = closest(fixed.priority, ['low', 'medium', 'high'])?.item // 'high'
+const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight", "age": "36" }
+const { value, unresolved } = repair(output, toolSchema)
+// value: { fullName: 'Ada', email: 'ada@x.io', priority: 'high', age: 36 }
+if (unresolved.length) askAgain(unresolved) // only what could not be fixed: [{ path, reason }]
 ```
 
-The MCP server has the same tool: `mapFields`.
+The schema is plain JSON Schema, so the one you gave the model works as is. To match names only, such as CSV headers, use [`mapFields`](https://tfoucher5.github.io/fuzzy-toolkit/api/#mapfields). The MCP server has both tools: `repair` and `mapFields`.
 
 ## For assistants writing code
 
@@ -1257,6 +1272,28 @@ mapFields(['First Name', 'E-mail', 'Zip', 'Phone #', 'DOB'], ['firstName', 'emai
 // Rename the keys of a row (or of an AI's JSON output) to your schema
 const { mapping, unmatched, missing } = mapFields(Object.keys(row), ['sku', 'name', 'price'], { synonyms: { sku: ['ref', 'item code'] } })
 const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in mapping ? [[mapping[k], v]] : [])))
+```
+
+## repair
+
+```ts
+repair<T>(value: unknown, schema: JsonSchema, options?: RepairOptions): RepairResult<T>
+// RepairOptions: { threshold?: number (enum values, default 70); keyThreshold?: number (property names, default 70); synonyms? }
+// RepairResult: { value: T; changes: { path, kind: 'key' | 'value' | 'type' | 'removed', from, to }[]; unresolved: { path, reason }[] }
+```
+
+Repairs a value against the JSON Schema it should follow, typically what a model returned: property names matched to the schema's (with [`mapFields`](#mapfields)), enum values corrected, numbers and booleans written as text converted, a single item wrapped in an array, and properties removed where `additionalProperties` is `false`. It reads `type`, `properties`, `required`, `additionalProperties`, `items` and `enum`, at any depth. The input is never changed: you get a repaired copy, what was changed, and what could not be repaired, to ask the model again only when needed.
+
+```ts
+const schema = {
+  type: 'object',
+  properties: { email: { type: 'string' }, priority: { enum: ['low', 'medium', 'high'] }, age: { type: 'integer' } },
+  required: ['email', 'title'],
+}
+const { value, changes, unresolved } = repair({ 'Email Address': 'ada@x.io', Priority: 'hight', age: '36' }, schema)
+// value      { email: 'ada@x.io', priority: 'high', age: 36 }
+// changes    [{ path: 'Email Address', kind: 'key', from: 'Email Address', to: 'email' }, ...]
+// unresolved [{ path: 'title', reason: 'required, missing' }]
 ```
 
 ## diff

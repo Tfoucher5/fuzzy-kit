@@ -56,18 +56,18 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 Not on npm yet: it comes with the next release.
 :::
 
-Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`. Repair the output instead of retrying the call:
+Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`, `"36"` instead of `36`. Repair the output against the schema instead of paying for another call:
 
 ```ts
-import { closest, mapFields } from 'fuzzy-toolkit'
+import { repair } from 'fuzzy-toolkit'
 
-const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight" }
-const { mapping } = mapFields(Object.keys(output), ['fullName', 'email', 'priority'])
-const fixed = Object.fromEntries(Object.entries(output).map(([key, value]) => [mapping[key] ?? key, value]))
-fixed.priority = closest(fixed.priority, ['low', 'medium', 'high'])?.item // 'high'
+const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight", "age": "36" }
+const { value, unresolved } = repair(output, toolSchema)
+// value: { fullName: 'Ada', email: 'ada@x.io', priority: 'high', age: 36 }
+if (unresolved.length) askAgain(unresolved) // only what could not be fixed: [{ path, reason }]
 ```
 
-The MCP server has the same tool: `mapFields`.
+The schema is plain JSON Schema, so the one you gave the model works as is. To match names only, such as CSV headers, use [`mapFields`](/api/#mapfields). The MCP server has both tools: `repair` and `mapFields`.
 
 ## For assistants writing code
 

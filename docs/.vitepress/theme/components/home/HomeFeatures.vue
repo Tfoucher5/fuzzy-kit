@@ -79,7 +79,7 @@ function move(event: PointerEvent) {
             <div><span class="muted">$</span> npx fuzzy-toolkit mcp</div>
             <div><span class="ok">✓</span> compare, closest, search,</div>
             <div class="indent">dedupe, join, check, find,</div>
-            <div class="indent">mapFields</div>
+            <div class="indent">mapFields, repair</div>
           </div>
         </article>
       </div>
