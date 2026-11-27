@@ -1,14 +1,14 @@
 {
-  "everything": 19.6,
-  "similarity / isMatch": 9.8,
-  "check / checkAll (quiz)": 10.4,
-  "createMatcher (every method)": 14.5,
-  "createIndex / search / highlight": 13.0,
-  "mapFields": 10.8,
-  "repair": 14.4,
+  "everything": 19.8,
+  "similarity / isMatch": 10,
+  "check / checkAll (quiz)": 10.6,
+  "createMatcher (every method)": 14.8,
+  "createIndex / search / highlight": 13.3,
+  "mapFields": 10.9,
+  "repair": 14.6,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
-  "fuzzy-toolkit/fuse": 13.9,
-  "fuzzy-toolkit/react": 13.3,
+  "fuzzy-toolkit/fuse": 14.1,
+  "fuzzy-toolkit/react": 13.6,
   "one extra language (lang/es)": 0.8
 }

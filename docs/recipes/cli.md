@@ -39,6 +39,10 @@ Each row of `orders.csv` gets the columns of its best match in `customers.csv`, 
 
 ## Rename columns to your names
 
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
 A CSV export never names its columns like your code does. `map-fields` renames them, reading camelCase, snake_case and synonyms (zip and postal code, prénom and first name), and puts them in your order:
 
 ```sh

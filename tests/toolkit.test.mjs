@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { closest, compare, cosine, damerau, dedupe, dice, group, hamming, isMatch, jaccard, jaro, join, lcs, levenshtein, overlap, ratcliffObershelp, search, similarity, tversky } from '../dist/esm/index.js';
+import { closest, compare, cosine, createIndex, damerau, dedupe, dice, group, hamming, isMatch, jaccard, jaro, join, lcs, levenshtein, overlap, ratcliffObershelp, search, similarity, tversky } from '../dist/esm/index.js';
 import stringSimilarity, { compareTwoStrings, findBestMatch } from '../dist/esm/compat/string-similarity.js';
 
 /* metrics -------------------------------------------------------------------- */
@@ -129,6 +129,38 @@ test('group/dedupe/join: candidate filtering never changes the result', () => {
     const best = Math.max(...scores);
     if (best >= 80) assert.equal(row.match?.score, best, row.item);
     else assert.equal(row.match, undefined, row.item);
+  }
+});
+
+test('search: the bounds that skip candidates never change the results', () => {
+  // With threshold 0 nothing is skipped: keeping what reaches the threshold
+  // must give what the pruned search returns.
+  const words = ['love', 'night', 'dance', 'moon', 'river', 'fire', 'dream', 'heart', 'light', 'blue', 'you', 'me', 'remix'];
+  let seed = 3;
+  const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = () => words[Math.floor(random() * words.length)];
+  const edit = (s) => {
+    const i = Math.floor(random() * s.length);
+    const r = random();
+    if (r < 0.25) return s.slice(0, i) + s.slice(i + 1);
+    if (r < 0.5) return s.slice(0, i) + (s[i + 1] ?? '') + s[i] + s.slice(i + 2);
+    return s.slice(0, i) + 'xq'[Math.floor(random() * 2)] + s.slice(i + (r < 0.75 ? 1 : 0));
+  };
+  const items = Array.from({ length: 300 }, () => Array.from({ length: 1 + Math.floor(random() * 4) }, pick).join(' '));
+  const queries = Array.from({ length: 80 }, () => {
+    let q = items[Math.floor(random() * items.length)].slice(0, 3 + Math.floor(random() * 14));
+    for (let k = Math.floor(random() * 3); k > 0; k -= 1) q = edit(q);
+    return q;
+  });
+  for (const options of [{ preset: 'search' }, { preset: 'search', substring: true }, { partial: true, threshold: 60 }]) {
+    const index = createIndex(items, options);
+    const all = createIndex(items, { ...options, threshold: 0 });
+    const threshold = options.threshold ?? 65;
+    for (const q of queries) {
+      const expected = all.search(q).filter((m) => m.score >= threshold);
+      assert.deepEqual(index.search(q, { threshold }), expected, q);
+      assert.deepEqual(index.search(q, { threshold, limit: 5 }), expected.slice(0, 5), q);
+    }
   }
 });
 

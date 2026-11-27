@@ -51,6 +51,10 @@ const unmatched = rows.filter((row) => !row.match)
 
 ## Map columns to your schema
 
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
 A CSV export never names its columns like your code does. `mapFields` pairs them, reading camelCase, snake_case and synonyms (zip and postal code, dob and date of birth, prénom and first name), and tells you what it could not place:
 
 ```ts

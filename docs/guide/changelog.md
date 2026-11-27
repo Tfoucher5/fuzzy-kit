@@ -17,6 +17,10 @@ The project follows **semantic versioning**:
 - `repair(value, schema)` repairs a value, typically a model's JSON output, against its JSON Schema: property names matched, enum values corrected, numbers and booleans written as text converted, extra properties dropped where the schema says so. It returns the repaired copy, the list of changes and what could not be repaired. Also an MCP tool, `repair`. See [repair](/api/#repair).
 - `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames a file's columns to your names. See [Command line](/recipes/cli#rename-columns-to-your-names).
 
+### Performance
+
+- Search as you type is about 35% faster (8.2 to 5.3 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.
+
 ---
 
 ## v2.7.0
