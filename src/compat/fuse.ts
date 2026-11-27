@@ -201,8 +201,26 @@ interface Token {
   text: string;
 }
 
-/** Splits on spaces outside double quotes, like Fuse. */
-const SPACES = / +(?=(?:[^"]*"[^"]*")*[^"]*$)/;
+/**
+ * Splits on spaces followed by an even number of double quotes, like Fuse's
+ * pattern, in one pass instead of a regular expression that backtracks.
+ */
+function words(text: string): string[] {
+  const out: string[] = [];
+  let quotes = 0;
+  for (let i = 0; i < text.length; i += 1) if (text.charCodeAt(i) === 34) quotes += 1;
+  let start = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text.charCodeAt(i);
+    if (c === 34) quotes -= 1;
+    else if (c === 32 && quotes % 2 === 0) {
+      if (i > start) out.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  if (start < text.length) out.push(text.slice(start));
+  return out;
+}
 
 /** `=exact`, `'include`, `^prefix`, `suffix$`, `!not`, `!^not-prefix`, `!not-suffix$`, or fuzzy. */
 function tokenOf(raw: string): Token {
@@ -222,7 +240,7 @@ function tokenOf(raw: string): Token {
 function parse(query: string): Token[][] {
   return query
     .split('|')
-    .map((group) => group.trim().split(SPACES).filter(Boolean).map(tokenOf))
+    .map((group) => words(group.trim()).map(tokenOf))
     .filter((group) => group.length > 0);
 }
 
