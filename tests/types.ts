@@ -177,3 +177,14 @@ const repaired = repair<{ email: string }>({ Email: 'a@b.c' }, { type: 'object',
 const repairedEmail: string = repaired.value.email;
 const repairKind: 'key' | 'value' | 'type' | 'removed' | undefined = repaired.changes[0]?.kind;
 const toAsk: string[] = repaired.unresolved.map((u) => u.path);
+
+// Vue and Svelte helpers.
+import { useFuzzySearch as useVueSearch, Highlight as VueHighlight } from '../src/vue.js';
+import { fuzzySearch, segments } from '../src/svelte.js';
+import { ref as vueRef } from 'vue';
+const vueQuery = vueRef('');
+const vueResults = useVueSearch([{ title: 'Dune' }], vueQuery, { keys: ['title'], limit: 5 });
+const vueFirst: string | undefined = vueResults.value[0]?.item.title;
+void VueHighlight;
+const svelteResults = fuzzySearch(['Dune', 'Emma'], { subscribe: (run: (v: string) => void) => (run('dun'), () => {}) }, { limit: 3 });
+const stopSvelte: () => void = svelteResults.subscribe((matches) => matches.map((m) => segments(m.text, m.ranges)));

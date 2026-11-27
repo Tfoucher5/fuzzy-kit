@@ -49,7 +49,7 @@ Scores go from 0 to 100, and the default threshold is 80.
 - **Finds more, waits less.** On song titles with typos it finds more than Fuse.js, 7 times faster ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)).
 - **Speaks 6 languages.** Numbers in words, articles and sounds in English, French, Spanish, German, Italian and Dutch, plus your own packs.
 - **Small and typed.** About 10 kB (min+gzip) for the usual imports, no dependencies, ESM and CommonJS, Node 18+, Bun, Deno and every browser. Every option autocompletes.
-- **More than a library.** A React hook, a command line tool for CSV files, and an MCP server for AI agents.
+- **More than a library.** React, Vue and Svelte helpers, a command line tool for CSV files, and an MCP server for AI agents.
 
 ## Coming from `string-similarity`
 

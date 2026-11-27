@@ -75,13 +75,15 @@ hamming('karolin', 'kathrin')    // 3
 lcs('ABCBDAB', 'BDCABA')         // 4
 ```
 
-## React and browsers
+## React, Vue, Svelte and browsers
 
 ```tsx
 import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
 const results = useFuzzySearch(items, query, { keys: ['title'], limit: 20 })
 results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
 ```
+
+Vue (2.8.0+): `import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'`, the same hook on refs: `useFuzzySearch(items, queryRef, options).value`. Svelte (2.8.0+): `import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'`, a store: `const results = fuzzySearch(items, queryStore, options)`, then `$results`; `segments(r.text, r.ranges)` gives the parts to wrap in `<mark>`.
 
 CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
 
@@ -123,6 +125,11 @@ Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 # Full documentation
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/getting-started -->
+
+---
+title: "Getting started: fuzzy string matching in JavaScript"
+description: "Install fuzzy-toolkit, compare two strings, search a list with typos, suggest \"did you mean\", and pick the right function for your use case. Node, Bun, Deno, browsers."
+---
 
 # Getting started
 
@@ -226,6 +233,11 @@ Next: [Options](https://tfoucher5.github.io/fuzzy-toolkit/guide/options).
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/options -->
 
+---
+title: "Options: threshold, presets, partial, phonetic, acronyms, word order"
+description: "Every fuzzy-toolkit option explained with examples: threshold, presets, partial and substring matching, phonetic, acronyms, word order, spaces, case, accents, numbers, ignored words."
+---
+
 # Options
 
 Every function accepts the same flat options object. All fields are optional.
@@ -298,6 +310,11 @@ A rule never empties a text: `(Intro)` stays `intro`.
 Short texts move fast: one typo in a 4-letter word already costs 25 points. Use `check()`'s `close` verdict to be kind without accepting wrong answers.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/extensions -->
+
+---
+title: "Languages and presets: Spanish, German, Italian, Dutch and your own"
+description: "Numbers in words, articles, stop words and sounds-alike rules per language, ready-made presets for song titles or search, and how to write and test your own pack."
+---
 
 # Languages and presets
 
@@ -513,6 +530,11 @@ other packs.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works -->
 
+---
+title: "How it works: normalization, Damerau-Levenshtein and bit-parallel search"
+description: "How fuzzy-toolkit reads texts (case, accents, numbers in words, word order) and scores them, and why it stays fast on big lists."
+---
+
 # How it works
 
 ## The `smart` score
@@ -558,6 +580,11 @@ Measured with `npm run bench:real` on public datasets: see the [home page](https
 Run `npm run bench` in the repository to measure on your machine.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/quiz -->
+
+---
+title: "Quizzes and blind tests: grading typed answers"
+description: "Accept answers with typos, accents and word order mistakes, say \"almost\" when it is close, and check a title and an artist at once."
+---
 
 # Quizzes and blind tests
 
@@ -682,6 +709,11 @@ Use `compare()` on real player answers to see where scores land before changing 
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/search -->
 
+---
+title: "Search as you type: a fast fuzzy search box"
+description: "Build a typo-tolerant search box with prefixes, acronyms and highlighted matches, in React or plain JavaScript, fast on tens of thousands of items."
+---
+
 # Search as you type
 
 ```ts
@@ -766,6 +798,21 @@ results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} 
 
 See [`useFuzzySearch`](https://tfoucher5.github.io/fuzzy-toolkit/api/#react) for every option.
 
+## With Vue or Svelte
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+
+```ts
+// Vue
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a ref
+// Svelte
+const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a store: {#each $results as r}
+```
+
+Full examples: [Vue](https://tfoucher5.github.io/fuzzy-toolkit/api/#vue), [Svelte](https://tfoucher5.github.io/fuzzy-toolkit/api/#svelte).
+
 ## Some fields count less
 
 Give a key a weight to rank its matches lower:
@@ -775,6 +822,11 @@ createIndex(songs, { keys: ['title', { name: 'artist', weight: 0.8 }], preset: '
 ```
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/did-you-mean -->
+
+---
+title: "\"Did you mean…?\" suggestions in JavaScript"
+description: "Suggest the closest command, city, product or word when the input has a typo, with fuzzy-toolkit closest() and createIndex()."
+---
 
 # "Did you mean…?"
 
@@ -796,6 +848,11 @@ closest('pari', cities, { keys: ['name', 'aliases'] })?.item
 ```
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/find-in-text -->
+
+---
+title: "Find names in a text, typos included"
+description: "Spot a title, a product or a person mentioned with typos inside a message, a paragraph or a transcript, with positions and scores."
+---
 
 # Spot names in a text
 
@@ -838,6 +895,11 @@ highlight("c'est bohemian rapsody", 'Bohemian Rhapsody')
 `find()` takes the usual options. Use a `threshold` of 90 or more to avoid near misses on short words, and `preset: 'music'` when the query is a song title.
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/data-cleaning -->
+
+---
+title: "Cleaning data: dedupe, record linkage, column mapping"
+description: "Remove near-duplicates, match two lists of customers or products (record linkage), map messy values and CSV headers to a clean schema in JavaScript."
+---
 
 # Cleaning data
 
@@ -918,6 +980,11 @@ const clean = rows.map((row) => country.closest(row.country, COUNTRIES)?.item ??
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/cli -->
 
+---
+title: "Command line: dedupe, join and clean CSV files"
+description: "Remove near-duplicate rows, match two spreadsheets, rename columns and search a CSV or JSON file from the terminal with npx, no code."
+---
+
 # Command line
 
 Dedupe a customer export, match two spreadsheets, or try a score, without writing code. Works with `npx`, nothing to install.
@@ -995,6 +1062,11 @@ npx fuzzy-toolkit compare "beyonsay" "Beyoncé" --phonetic
 | `--json` | Write JSON. |
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/recipes/ai-agents -->
+
+---
+title: "AI agents: MCP server, repairing LLM JSON output, ai-setup"
+description: "Give AI agents fuzzy matching tools with the fuzzy-toolkit MCP server, repair the JSON a model returns against its schema, and teach coding assistants the API."
+---
 
 # AI agents and assistants
 
@@ -1106,6 +1178,11 @@ import { compareTwoStrings } from 'fuzzy-toolkit/string-similarity' // 0 to 1, s
 ```
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/api/ -->
+
+---
+title: "API reference"
+description: "Every fuzzy-toolkit function with its signature and examples: similarity, search, createIndex, closest, dedupe, join, check, find, highlight, diff, mapFields, repair, raw metrics, Fuse.js and string-similarity compatibility."
+---
 
 # API reference
 
@@ -1415,6 +1492,52 @@ function Search({ songs }) {
 
 `useFuzzySearch(items, query, options)` uses the `search` preset by default, indexes the list once (again only when `items` or the options change) and returns results with `ranges`. An empty query returns every item (`whenEmpty: 'none'` returns nothing). `<Highlight text ranges as?>` wraps matching parts in `<mark>` (or `as`).
 
+## Vue
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+<script setup>
+import { ref } from 'vue'
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'
+
+const props = defineProps(['songs'])
+const query = ref('')
+const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<template>
+  <input v-model="query" />
+  <ul><li v-for="r in results" :key="r.index"><Highlight :text="r.text" :ranges="r.ranges" /></li></ul>
+</template>
+```
+
+`useFuzzySearch(items, query, options)` takes refs, getters or plain values and returns a computed ref of results with `ranges`. It works like the React hook: `search` preset by default, the list indexed again only when the items or the options change, `whenEmpty`. `<Highlight :text :ranges as?>` wraps matching parts in `<mark>`. Vue 3.3 or later.
+
+## Svelte
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+<script>
+  import { writable } from 'svelte/store'
+  import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'
+
+  export let songs
+  const query = writable('')
+  const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<input bind:value={$query} />
+<ul>
+  {#each $results as r (r.index)}
+    <li>{#each segments(r.text, r.ranges) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</li>
+  {/each}
+</ul>
+```
+
+`fuzzySearch(items, query, options)` is a store: `items` and `query` can be stores or plain values, and the list is indexed again only when the items change. It uses the store contract only, so it works in Svelte 3, 4 and 5 (with runes, read it with `$results` or `fromStore`), and with any library that has `subscribe`. `segments(text, ranges)` cuts a text into the parts to show, the matching ones flagged.
+
 ## Raw algorithms
 
 No normalization, plain strings in:
@@ -1487,6 +1610,11 @@ What differs:
 For new code, prefer [`createIndex`](#createindex): it has more options (presets, languages, `closest`, `highlight`).
 
 <!-- https://tfoucher5.github.io/fuzzy-toolkit/guide/migration -->
+
+---
+title: "Upgrading from v1"
+description: "What changed between fuzzy-toolkit v1 and v2: renamed functions and options, the 0-100 scores, and behavior fixes."
+---
 
 # Upgrading from v1
 
