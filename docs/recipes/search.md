@@ -87,6 +87,23 @@ results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} 
 
 See [`useFuzzySearch`](/api/#react) for every option.
 
+## With Vue or Svelte
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+`fuzzy-toolkit/vue` has the same `useFuzzySearch`, on refs, and a `<Highlight>` component. `fuzzy-toolkit/svelte` has a `fuzzySearch` store and `segments()` to render the matches:
+
+```ts
+// Vue
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a ref
+// Svelte
+const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a store: {#each $results as r}
+```
+
+Full examples: [Vue](/api/#vue), [Svelte](/api/#svelte).
+
 ## Some fields count less
 
 Give a key a weight to rank its matches lower:
