@@ -50,6 +50,21 @@ In `.vscode/mcp.json`:
 
 Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the duplicates from this list of company names"*, *"Which of these cities did the user mean by 'pari'?"*.
 
+## Fix what a model returns
+
+Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`. Repair the output instead of retrying the call:
+
+```ts
+import { closest, mapFields } from 'fuzzy-toolkit'
+
+const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight" }
+const { mapping } = mapFields(Object.keys(output), ['fullName', 'email', 'priority'])
+const fixed = Object.fromEntries(Object.entries(output).map(([key, value]) => [mapping[key] ?? key, value]))
+fixed.priority = closest(fixed.priority, ['low', 'medium', 'high'])?.item // 'high'
+```
+
+The MCP server has the same tool: `mapFields`.
+
 ## For assistants writing code
 
 ### Tell them in your project

@@ -11,6 +11,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+
+- `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
+
 ---
 
 ## v2.7.0

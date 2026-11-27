@@ -35,7 +35,7 @@ Not supported: extended/logical search, `getFn`, `sortFn`. `threshold` (0 to 1) 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -54,6 +54,7 @@ group(names, { keys: 'name' })                           // [[dupes...], ...]
 join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
 check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' | 'wrong'
 diff('rapsody', 'Rhapsody')                              // what was misspelled
+mapFields(['First Name', 'Zip', 'Phone #'], ['firstName', 'postalCode', 'phoneNumber']).mapping // { 'First Name': 'firstName', Zip: 'postalCode', 'Phone #': 'phoneNumber' }: CSV headers or an AI's JSON keys to your schema, camelCase/snake_case and synonyms (dob, qty, zip...)
 ```
 
 Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
@@ -89,7 +90,7 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check` and `find`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find` and `mapFields`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }

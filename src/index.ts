@@ -21,6 +21,8 @@ export { normalize } from './normalize.js';
 export { API_VERSION } from './core.js';
 export { defineLanguage, definePreset } from './define.js';
 export { diff } from './diff.js';
+export { mapFields } from './fields.js';
+export type { FieldMapping, FieldMatch, MapFieldsOptions } from './fields.js';
 export type { Change, DiffOptions } from './diff.js';
 export type { Found, Segment } from './text.js';
 export { damerau, jaro, jaroWinkler, levenshtein } from './distance.js';

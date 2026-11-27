@@ -6,7 +6,7 @@
 // Messages are JSON-RPC 2.0, one per line. Everything runs in memory: the
 // tools read no file and open no connection.
 import { readFileSync } from 'node:fs';
-import { check, checkAll, closest, compare, find, group, join, search } from '../dist/esm/index.js';
+import { check, checkAll, closest, compare, find, group, join, mapFields, search } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
@@ -20,7 +20,7 @@ const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const INSTRUCTIONS = `Fuzzy string matching tools: they forgive typos, accents, case, punctuation, word order, missing spaces and numbers written in words ("two" = "2").
 Scores go from 0 (nothing in common) to 100 (identical once normalized); the default match threshold is 80.
 Use the "music" preset for song titles and artists, "search" for search-as-you-type and prefixes, "strict" for codes and references.
-To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find).`;
+To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find, mapFields).`;
 
 /* ---------------------------------------------------------------------- */
 /* Tools                                                                   */
@@ -202,7 +202,32 @@ const TOOLS = [
     ['text', 'query'],
     (args) => find(args.text, args.query, optionsFrom(args)),
   ),
+  fieldsTool(),
 ];
+
+// Field names have no preset or language: only the threshold applies.
+function fieldsTool() {
+  const t = tool(
+    'mapFields',
+    'Map fields to a schema',
+    'Pairs field names with the fields of a schema, one to one: CSV or spreadsheet headers to your columns, the keys of a JSON object (from an API or an AI) to the expected ones. Reads camelCase, snake_case and kebab-case and common synonyms (zip = postal code, dob = date of birth, qty = quantity, French and Spanish names too). Returns the mapping, the fields left unmatched and the schema fields missing.',
+    {
+      from: { type: 'array', items: { type: 'string' }, description: 'Field names to map, such as CSV headers.' },
+      to: { type: 'array', items: { type: 'string' }, description: 'The expected field names (the schema).' },
+      synonyms: {
+        type: 'object',
+        additionalProperties: { type: 'array', items: { type: 'string' } },
+        description: 'More words that mean the same, such as {"sku": ["ref", "item code"]}.',
+      },
+    },
+    ['from', 'to'],
+    (args) => mapFields(args.from, args.to, { threshold: args.threshold, synonyms: args.synonyms }),
+  );
+  const { threshold } = t.definition.inputSchema.properties;
+  t.definition.inputSchema.properties = { ...t.definition.inputSchema.properties, threshold: { ...threshold, description: 'Minimum score (0-100) to pair two fields. Default 70.' } };
+  for (const name of Object.keys(OPTIONS)) if (name !== 'threshold') delete t.definition.inputSchema.properties[name];
+  return t;
+}
 
 const BY_NAME = new Map(TOOLS.map((t) => [t.definition.name, t]));
 

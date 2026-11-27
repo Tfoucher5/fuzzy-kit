@@ -49,6 +49,21 @@ const rows = join(orders, customers, { left: 'customerName', right: 'name', uniq
 const unmatched = rows.filter((row) => !row.match)
 ```
 
+## Map columns to your schema
+
+A CSV export never names its columns like your code does. `mapFields` pairs them, reading camelCase, snake_case and synonyms (zip and postal code, dob and date of birth, prénom and first name), and tells you what it could not place:
+
+```ts
+import { mapFields } from 'fuzzy-toolkit'
+
+const { mapping, unmatched, missing } = mapFields(headers, ['firstName', 'lastName', 'email', 'postalCode', 'phoneNumber'])
+// headers ['Prénom', 'NOM', 'E-mail', 'Zip', 'Tel.'] → { Prénom: 'firstName', NOM: 'lastName', 'E-mail': 'email', Zip: 'postalCode', 'Tel.': 'phoneNumber' }
+if (missing.length) console.warn('Columns not found:', missing)
+const records = rows.map((row) => Object.fromEntries(Object.entries(mapping).map(([from, to]) => [to, row[from]])))
+```
+
+Words of your own domain go in `synonyms`: `mapFields(headers, fields, { synonyms: { sku: ['ref', 'item code'] } })`.
+
 ## Map messy values to a clean list
 
 ```ts
