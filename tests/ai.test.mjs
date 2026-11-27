@@ -176,6 +176,13 @@ test('ai-setup: replaces what 2.5.0 wrote', async () => {
   );
   assert.deepEqual(setup(dir, ['agents', 'cursor']), ['updated  AGENTS.md', 'updated  .cursor/rules/fuzzy-toolkit.mdc']);
   assert.doesNotMatch(readFileSync(joinPath(dir, 'AGENTS.md'), 'utf8'), /node_modules\/fuzzy-toolkit\/llms\.txt`/);
+
+  // The same files after a Windows checkout (CRLF line ends) are still recognized.
+  const crlf = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
+  mkdirSync(joinPath(crlf, '.cursor/rules'), { recursive: true });
+  const rule = `---\ndescription: How to do fuzzy string matching (similarity, did you mean, fuzzy search, dedupe, matching lists) with fuzzy-toolkit\nalwaysApply: false\n---\n\n${old.replace(/\r\n/g, '\n')}\n`;
+  writeFileSync(joinPath(crlf, '.cursor/rules/fuzzy-toolkit.mdc'), rule.replace(/\n/g, '\r\n'));
+  assert.deepEqual(setup(crlf, ['cursor']), ['updated  .cursor/rules/fuzzy-toolkit.mdc']);
 });
 
 test('ai-setup: only writes when package.json lists fuzzy-toolkit', async () => {
@@ -184,7 +191,7 @@ test('ai-setup: only writes when package.json lists fuzzy-toolkit', async () => 
   const { join: joinPath } = await import('node:path');
   const { execFileSync, spawnSync } = await import('node:child_process');
   const { isDependency } = await import('../bin/ai-setup.mjs');
-  const bin = new URL('../bin/fuzzy-toolkit.mjs', import.meta.url).pathname;
+  const bin = (await import('node:url')).fileURLToPath(new URL('../bin/fuzzy-toolkit.mjs', import.meta.url));
 
   const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
   assert.equal(isDependency(dir), false);
