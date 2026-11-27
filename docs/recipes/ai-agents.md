@@ -52,6 +52,10 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 
 ## Fix what a model returns
 
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
 Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`. Repair the output instead of retrying the call:
 
 ```ts

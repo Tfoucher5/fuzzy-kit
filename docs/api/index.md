@@ -154,6 +154,10 @@ group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 
 ## mapFields
 
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
 ```ts
 mapFields(from: readonly string[], to: readonly string[], options?: MapFieldsOptions): FieldMapping
 // MapFieldsOptions: { threshold?: number (default 70); synonyms?: Record<string, string[]> }
