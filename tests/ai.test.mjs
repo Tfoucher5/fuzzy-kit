@@ -211,3 +211,16 @@ test('ai-setup: only writes when package.json lists fuzzy-toolkit', async () => 
   const forced = mkdtempSync(joinPath(tmpdir(), 'fuzzy-ai-'));
   assert.match(execFileSync(process.execPath, [bin, 'ai-setup', '--dir', forced, '--force'], { encoding: 'utf8' }), /created {2}AGENTS\.md/);
 });
+
+test('MCP registry: server.json agrees with package.json', async () => {
+  const { readFileSync } = await import('node:fs');
+  const server = JSON.parse(readFileSync(new URL('../server.json', import.meta.url), 'utf8'));
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(server.name, pkg.mcpName);
+  assert.ok(server.description.length >= 1 && server.description.length <= 100, 'the registry allows 100 characters');
+  // The publish workflow sets both versions from package.json; they must not drift in the repo either.
+  assert.equal(server.version, pkg.version);
+  assert.equal(server.packages[0].version, pkg.version);
+  assert.equal(server.packages[0].identifier, pkg.name);
+  assert.deepEqual(server.packages[0].packageArguments, [{ type: 'positional', value: 'mcp' }]);
+});
