@@ -35,7 +35,7 @@ Not supported: extended/logical search, `getFn`, `sortFn`. `threshold` (0 to 1) 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -54,6 +54,7 @@ group(names, { keys: 'name' })                           // [[dupes...], ...]
 join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
 check('bohemian rapsody', 'Bohemian Rhapsody').verdict   // 'correct' | 'close' | 'wrong'
 diff('rapsody', 'Rhapsody')                              // what was misspelled
+mapFields(['First Name', 'Zip', 'Phone #'], ['firstName', 'postalCode', 'phoneNumber']).mapping // { 'First Name': 'firstName', Zip: 'postalCode', 'Phone #': 'phoneNumber' }: CSV headers or an AI's JSON keys to your schema (2.8.0+), camelCase/snake_case and synonyms (dob, qty, zip...)
 ```
 
 Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
@@ -89,7 +90,7 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check` and `find`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find` and `mapFields`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
@@ -888,6 +889,23 @@ const rows = join(orders, customers, { left: 'customerName', right: 'name', uniq
 const unmatched = rows.filter((row) => !row.match)
 ```
 
+## Map columns to your schema
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+**CSV export never names its columns like your code does. `mapFields` pairs them, reading camelCase, snake_case and synonyms (zip and postal code, dob and date of birth, prénom and first name), and tells you what it could not place:**
+
+```ts
+import { mapFields } from 'fuzzy-toolkit'
+
+const { mapping, unmatched, missing } = mapFields(headers, ['firstName', 'lastName', 'email', 'postalCode', 'phoneNumber'])
+// headers ['Prénom', 'NOM', 'E-mail', 'Zip', 'Tel.'] → { Prénom: 'firstName', NOM: 'lastName', 'E-mail': 'email', Zip: 'postalCode', 'Tel.': 'phoneNumber' }
+if (missing.length) console.warn('Columns not found:', missing)
+const records = rows.map((row) => Object.fromEntries(Object.entries(mapping).map(([from, to]) => [to, row[from]])))
+```
+
+Words of your own domain go in `synonyms`: `mapFields(headers, fields, { synonyms: { sku: ['ref', 'item code'] } })`.
+
 ## Map messy values to a clean list
 
 ```ts
@@ -1012,6 +1030,23 @@ In `.vscode/mcp.json`:
 ```
 
 Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the duplicates from this list of company names"*, *"Which of these cities did the user mean by 'pari'?"*.
+
+## Fix what a model returns
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+**drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`. Repair the output instead of retrying the call:**
+
+```ts
+import { closest, mapFields } from 'fuzzy-toolkit'
+
+const output = JSON.parse(reply) // { "Full Name": "Ada", "Email Address": "ada@x.io", "priority": "hight" }
+const { mapping } = mapFields(Object.keys(output), ['fullName', 'email', 'priority'])
+const fixed = Object.fromEntries(Object.entries(output).map(([key, value]) => [mapping[key] ?? key, value]))
+fixed.priority = closest(fixed.priority, ['low', 'medium', 'high'])?.item // 'high'
+```
+
+The MCP server has the same tool: `mapFields`.
 
 ## For assistants writing code
 
@@ -1207,6 +1242,27 @@ highlight('Stairway to Heaven - Led Zeppelin', 'zep stair')
 ```ts
 dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
+```
+
+## mapFields
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+mapFields(from: readonly string[], to: readonly string[], options?: MapFieldsOptions): FieldMapping
+// MapFieldsOptions: { threshold?: number (default 70); synonyms?: Record<string, string[]> }
+// FieldMapping: { mapping: Record<string, string>; matches: { from, to, score }[]; unmatched: string[]; missing: string[] }
+```
+
+Pairs field names with the fields of a schema, each at most once, best scores first: CSV headers with your columns, a form with your model, the keys an AI or an API returned with the ones you expect. It reads camelCase, snake_case, kebab-case and `#` (number), and knows common synonyms in English, French and Spanish: zip and postal code, dob and date of birth, qty and quantity, tel and phone, prénom and first name...
+
+```ts
+mapFields(['First Name', 'E-mail', 'Zip', 'Phone #', 'DOB'], ['firstName', 'email', 'postalCode', 'phoneNumber', 'dateOfBirth']).mapping
+// { 'First Name': 'firstName', 'E-mail': 'email', Zip: 'postalCode', 'Phone #': 'phoneNumber', DOB: 'dateOfBirth' }
+
+// Rename the keys of a row (or of an AI's JSON output) to your schema
+const { mapping, unmatched, missing } = mapFields(Object.keys(row), ['sku', 'name', 'price'], { synonyms: { sku: ['ref', 'item code'] } })
+const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in mapping ? [[mapping[k], v]] : [])))
 ```
 
 ## diff
