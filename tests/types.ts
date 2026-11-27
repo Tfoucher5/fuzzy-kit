@@ -178,6 +178,14 @@ const repairedEmail: string = repaired.value.email;
 const repairKind: 'key' | 'value' | 'type' | 'removed' | undefined = repaired.changes[0]?.kind;
 const toAsk: string[] = repaired.unresolved.map((u) => u.path);
 
+// findAll: items mentioned in a text.
+import { findAll, type FoundItem } from '../src/index.js';
+const mentioned: FoundItem<{ name: string }>[] = findAll('a trip to pariss', [{ name: 'Paris' }], { keys: ['name'] });
+const mentionedName: string | undefined = mentioned[0]?.item.name;
+const mentionedStrings = findAll('pariss', ['Paris']);
+// @ts-expect-error objects need keys
+findAll('pariss', [{ name: 'Paris' }]);
+
 // Vue and Svelte helpers.
 import { useFuzzySearch as useVueSearch, Highlight as VueHighlight } from '../src/vue.js';
 import { fuzzySearch, segments } from '../src/svelte.js';

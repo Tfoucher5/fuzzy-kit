@@ -6,7 +6,7 @@
 // Messages are JSON-RPC 2.0, one per line. Everything runs in memory: the
 // tools read no file and open no connection.
 import { readFileSync } from 'node:fs';
-import { check, checkAll, closest, compare, find, group, join, mapFields, repair, search } from '../dist/esm/index.js';
+import { check, checkAll, closest, compare, find, findAll, group, join, mapFields, repair, search } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
@@ -20,7 +20,7 @@ const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const INSTRUCTIONS = `Fuzzy string matching tools: they forgive typos, accents, case, punctuation, word order, missing spaces and numbers written in words ("two" = "2").
 Scores go from 0 (nothing in common) to 100 (identical once normalized); the default match threshold is 80.
 Use the "music" preset for song titles and artists, "search" for search-as-you-type and prefixes, "strict" for codes and references.
-To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find, mapFields, repair).`;
+To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find, findAll, mapFields, repair).`;
 
 /* ---------------------------------------------------------------------- */
 /* Tools                                                                   */
@@ -207,6 +207,18 @@ const TOOLS = [
     },
     ['text', 'query'],
     (args) => find(args.text, args.query, optionsFrom(args)),
+  ),
+  tool(
+    'findAll',
+    'Find known names in text',
+    'Which items of a list are mentioned in a text (a message, an email, a transcript), typos included, with their positions: products in an order, cities in a trip, songs in a request. Each part of the text goes to one item, and a longer name wins over its parts. For objects, pass the properties holding their names (aliases included) in "keys".',
+    {
+      text: { type: 'string', description: 'The text to look in.' },
+      items: TEXT_LIST('The known names: strings, or objects with "keys".'),
+      keys: KEYS,
+    },
+    ['text', 'items'],
+    (args) => findAll(args.text, args.items, { ...optionsFrom(args), keys: keysFor(args.items, args.keys) }),
   ),
   ownTool(
     'mapFields',

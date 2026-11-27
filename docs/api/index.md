@@ -136,6 +136,25 @@ find("je crois que c'est bohemian rapsody", 'Bohemian Rhapsody')
 // [{ text: 'bohemian rapsody', start: 19, end: 35, score: 94.12 }]
 ```
 
+## findAll
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+```ts
+findAll<T>(text: string, items: readonly T[], options?: MatchOptions & { keys? }): FoundItem<T>[]
+// FoundItem: Found & { item: T; index: number; key?: string }
+```
+
+Which items of a list are mentioned in a text, typos included, with where, in reading order. Each part of the text goes to one item: the set of parts that covers the most text, weighted by score, so a longer name wins over its parts. For objects, `keys` says where their names are, aliases included.
+
+```ts
+findAll('2 iphone 15 et un macbok air svp', ['iPhone 15', 'MacBook Air', 'iPad'])
+// [{ item: 'iPhone 15', index: 0, text: 'iphone 15', start: 2, end: 11, score: 100 },
+//  { item: 'MacBook Air', index: 1, text: 'macbok air', start: 18, end: 28, score: 90.91 }]
+```
+
 ## highlight
 
 ```ts

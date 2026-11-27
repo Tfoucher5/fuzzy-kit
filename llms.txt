@@ -35,7 +35,7 @@ Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, highlight, find, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, highlight, find, findAll, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -47,6 +47,7 @@ index.search('quer', { limit: 5 }); index.search('nyc') /* acronyms */; index.ad
 const saved = JSON.stringify(index); loadIndex(items, JSON.parse(saved), sameOptions) // prebuilt index
 highlight('Bohemian Rhapsody', 'bohem')  // [{ text: 'Bohem', match: true }, { text: 'ian Rhapsody', match: false }]
 find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, end, score }]
+findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which items are mentioned: [{ item, index, key, text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
 fingerprint('Doe, John')                                 // 'doe john'
@@ -93,7 +94,7 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `mapFields` and `repair`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
