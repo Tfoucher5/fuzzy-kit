@@ -144,7 +144,7 @@ yarn add fuzzy-toolkit
 bun add fuzzy-toolkit
 ```
 
-**with ES modules (`import`) and CommonJS (`require`), in Node 18+, Bun, Deno and every modern browser or bundler (each tested in CI). Types are included.**
+**with ES modules (`import`) and CommonJS (`require`), in Node 18+, Bun, Deno and every modern browser or bundler (Node, Bun and Deno are tested in CI). Types are included.**
 
 Already using Fuse.js or string-similarity? Change the import to [`fuzzy-toolkit/fuse`](https://tfoucher5.github.io/fuzzy-toolkit/api/#fuse-js-compatibility) or [`fuzzy-toolkit/string-similarity`](https://tfoucher5.github.io/fuzzy-toolkit/api/#string-similarity-compatibility) and keep your code.
 

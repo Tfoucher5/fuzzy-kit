@@ -458,6 +458,38 @@ const registryEntry = `{
   white-space: pre;
 }
 
+/* Thin scrollbars that match the dark code blocks. */
+.code,
+.command code,
+.screen {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ft-ink-line) transparent;
+}
+
+.code::-webkit-scrollbar,
+.command code::-webkit-scrollbar,
+.screen::-webkit-scrollbar {
+  height: 6px;
+}
+
+.code::-webkit-scrollbar-track,
+.command code::-webkit-scrollbar-track,
+.screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code::-webkit-scrollbar-thumb,
+.command code::-webkit-scrollbar-thumb,
+.screen::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--ft-ink-line);
+}
+
+.code:hover::-webkit-scrollbar-thumb,
+.screen:hover::-webkit-scrollbar-thumb {
+  background: var(--ft-ink-muted);
+}
+
 .code code {
   padding: 0;
   background: none;
