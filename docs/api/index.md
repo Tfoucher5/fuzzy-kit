@@ -1,3 +1,8 @@
+---
+title: "API reference"
+description: "Every fuzzy-toolkit function with its signature and examples: similarity, search, createIndex, closest, dedupe, join, check, find, highlight, diff, mapFields, repair, raw metrics, Fuse.js and string-similarity compatibility."
+---
+
 # API reference
 
 All functions are named exports of `fuzzy-toolkit`. Options are described in [Options](/guide/options).

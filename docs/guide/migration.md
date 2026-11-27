@@ -1,3 +1,8 @@
+---
+title: "Upgrading from v1"
+description: "What changed between fuzzy-toolkit v1 and v2: renamed functions and options, the 0-100 scores, and behavior fixes."
+---
+
 # Upgrading from v1
 
 v2 is a rewrite: fewer functions, flat options, stable return types and a smarter default score.
