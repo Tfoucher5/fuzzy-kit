@@ -21,27 +21,28 @@ function ensureRows(size: number): void {
   rowC = new Int32Array(length);
 }
 
-function fillPeq(pattern: string): void {
-  for (let i = 0; i < pattern.length; i += 1) {
-    peq[pattern.charCodeAt(i)]! |= 1 << i;
+function fillPeq(pattern: string, start = 0, end = pattern.length): void {
+  for (let i = start; i < end; i += 1) {
+    peq[pattern.charCodeAt(i)]! |= 1 << (i - start);
   }
 }
 
-function clearPeq(pattern: string): void {
-  for (let i = 0; i < pattern.length; i += 1) {
+function clearPeq(pattern: string, start = 0, end = pattern.length): void {
+  for (let i = start; i < end; i += 1) {
     peq[pattern.charCodeAt(i)] = 0;
   }
 }
 
-function myers32(pattern: string, text: string): number {
-  const m = pattern.length;
+/** Distance between `pattern[ps, pe)` and `text[ts, te)`: offsets spare a slice. */
+function myers32(pattern: string, ps: number, pe: number, text: string, ts: number, te: number): number {
+  const m = pe - ps;
   const last = 1 << (m - 1);
   let pv = -1;
   let mv = 0;
   let score = m;
 
-  fillPeq(pattern);
-  for (let j = 0; j < text.length; j += 1) {
+  fillPeq(pattern, ps, pe);
+  for (let j = ts; j < te; j += 1) {
     const eq = peq[text.charCodeAt(j)]!;
     const xv = eq | mv;
     const xh = (((eq & pv) + pv) ^ pv) | eq;
@@ -54,12 +55,12 @@ function myers32(pattern: string, text: string): number {
     pv = mh | ~(xv | ph);
     mv = ph & xv;
   }
-  clearPeq(pattern);
+  clearPeq(pattern, ps, pe);
   return score;
 }
 
-function osa32(pattern: string, text: string): number {
-  const m = pattern.length;
+function osa32(pattern: string, ps: number, pe: number, text: string, ts: number, te: number): number {
+  const m = pe - ps;
   const last = 1 << (m - 1);
   let vp = -1;
   let vn = 0;
@@ -67,8 +68,8 @@ function osa32(pattern: string, text: string): number {
   let pmOld = 0;
   let score = m;
 
-  fillPeq(pattern);
-  for (let j = 0; j < text.length; j += 1) {
+  fillPeq(pattern, ps, pe);
+  for (let j = ts; j < te; j += 1) {
     const pm = peq[text.charCodeAt(j)]!;
     const tr = (((~d0) & pm) << 1) & pmOld;
     d0 = ((((pm & vp) + vp) ^ vp) | pm | vn) | tr;
@@ -82,7 +83,7 @@ function osa32(pattern: string, text: string): number {
     vn = hp & d0;
     pmOld = pm;
   }
-  clearPeq(pattern);
+  clearPeq(pattern, ps, pe);
   return score;
 }
 
@@ -218,13 +219,15 @@ function editDistance(a: string, b: string, transpositions: boolean): number {
     endA -= 1;
     endB -= 1;
   }
+  const m = endA - start;
+  if (m === 0) return endB - start;
+  // The loop runs once per text character: when both fit, the longer is the pattern.
+  if (endB - start <= 32) return transpositions ? osa32(b, start, endB, a, start, endA) : myers32(b, start, endB, a, start, endA);
+  if (m <= 32) return transpositions ? osa32(a, start, endA, b, start, endB) : myers32(a, start, endA, b, start, endB);
   if (start > 0 || endA < a.length) {
     a = a.slice(start, endA);
     b = b.slice(start, endB);
   }
-
-  if (a.length === 0) return b.length;
-  if (a.length <= 32) return transpositions ? osa32(a, b) : myers32(a, b);
   return transpositions ? osaBlocks(a, b) : myersBlocks(a, b);
 }
 
@@ -427,6 +430,65 @@ export function searchDistance(query: string, text: string): number {
   }
   clearPeq(query);
   return best;
+}
+
+/** Masks of the patterns packed by {@link multiSearch}, kept between scans. */
+const multiPeq = new Uint32Array(0x10000);
+let multiOwner = '';
+
+/**
+ * {@link searchDistance} of several patterns at once: they share one 32-bit
+ * word, in one pass over the text (carries and shifts are cut between
+ * patterns, so each behaves as if alone). `null` when they do not fit.
+ * The returned function writes the distance of pattern `k` to `out[k]`.
+ */
+export function multiSearch(patterns: readonly string[]): ((text: string, out: Int32Array) => void) | null {
+  const all = patterns.join('');
+  const n = patterns.length;
+  if (n === 0 || all.length > 32 || patterns.includes('')) return null;
+  const ends: number[] = [];
+  let firsts = 0;
+  let lasts = 0;
+  for (const p of patterns) {
+    firsts |= 1 << (ends.length ? ends[ends.length - 1]! + 1 : 0);
+    ends.push((ends.length ? ends[ends.length - 1]! + 1 : 0) + p.length - 1);
+    lasts |= 1 << ends[ends.length - 1]!;
+  }
+  const score = new Int32Array(n);
+  return (text, out) => {
+    // The table is shared: whoever packed last owns it.
+    if (multiOwner !== all) {
+      for (let i = 0; i < multiOwner.length; i += 1) multiPeq[multiOwner.charCodeAt(i)] = 0;
+      for (let i = 0; i < all.length; i += 1) multiPeq[all.charCodeAt(i)]! |= 1 << i;
+      multiOwner = all;
+    }
+    for (let k = 0; k < n; k += 1) out[k] = score[k] = patterns[k]!.length;
+    let vp = -1;
+    let vn = 0;
+    let d0 = 0;
+    let pmOld = 0;
+    for (let j = 0; j < text.length; j += 1) {
+      const pm = multiPeq[text.charCodeAt(j)]! | 0;
+      const tr = (((~d0 & pm) << 1) & ~firsts) & pmOld;
+      const x = pm & vp;
+      // Addition without carries from one pattern into the next.
+      d0 = (((((x & ~lasts) + (vp & ~lasts)) ^ ((x ^ vp) & lasts)) ^ vp) | pm | vn) | tr;
+      let hp = vn | ~(d0 | vp);
+      let hn = d0 & vp;
+      if ((hp | hn) & lasts) {
+        for (let k = 0; k < n; k += 1) {
+          if ((hp >>> ends[k]!) & 1) score[k]! += 1;
+          else if ((hn >>> ends[k]!) & 1 && --score[k]! < out[k]!) out[k] = score[k]!;
+        }
+      }
+      // Free start: each pattern's top row stays at zero.
+      hp = (hp << 1) & ~firsts;
+      hn = (hn << 1) & ~firsts;
+      vp = hn | ~(d0 | hp);
+      vn = hp & d0;
+      pmOld = pm;
+    }
+  };
 }
 
 /** Damerau (OSA) distance between `query` and the best prefix of `word`. */

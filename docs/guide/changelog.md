@@ -14,6 +14,10 @@ The project follows **semantic versioning**:
 ### Fixed
 - `npx fuzzy-toolkit ai-setup` on Windows: a Cursor rule written by 2.5.0 and checked out with CRLF line ends was taken for a hand-edited file and left as is. It is now updated like on other systems.
 
+### Performance
+- Searches of several words (`partial`, `preset: 'search'`) scan each item once instead of once per word: about 1.2x faster on a two-word query. Scores are unchanged.
+- `levenshtein` and `damerau` no longer copy the texts they compare: faster on short and long texts.
+
 ---
 
 ## v2.6.0

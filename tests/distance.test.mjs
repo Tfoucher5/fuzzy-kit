@@ -92,6 +92,42 @@ test('searchDistance (bit-parallel) agrees with a naive DP and bounds partial ma
   }
 });
 
+test('multiSearch: packed patterns each give their own searchDistance (fuzz)', async () => {
+  const { multiSearch, searchDistance } = await import('../dist/esm/distance.js');
+  assert.equal(multiSearch([]), null);
+  assert.equal(multiSearch(['ab', '']), null);
+  assert.equal(multiSearch(['a'.repeat(20), 'b'.repeat(13)]), null);
+  const out = new Int32Array(8);
+  for (const alphabet of ['ab ', 'abcd ', 'abcdefgh ']) {
+    for (let i = 0; i < 2000; i += 1) {
+      const parts = Array.from({ length: 1 + (i % 5) }, () => randomString(8, alphabet) || 'a');
+      const run = multiSearch(parts);
+      if (!run) continue;
+      // Two texts in a row: the masks stay valid between scans.
+      for (const t of [randomString(40, alphabet), randomString(15, alphabet)]) {
+        run(t, out);
+        parts.forEach((p, k) => assert.equal(out[k], searchDistance(p, t), `${JSON.stringify(parts)}[${k}] in ${t}`));
+      }
+    }
+  }
+  // All 32 bits used: the last pattern ends on the sign bit.
+  const full = ['abcdabcdabcdabcd', 'dcbadcbadcbadcba'];
+  for (let i = 0; i < 500; i += 1) {
+    const t = randomString(50, 'abcd ');
+    multiSearch(full)(t, out);
+    full.forEach((p, k) => assert.equal(out[k], searchDistance(p, t), `${p} in ${t}`));
+  }
+  // Two searches in turn share the mask table.
+  const first = multiSearch(['abc', 'cab']);
+  const second = multiSearch(['zzz']);
+  first('xcabx', out);
+  assert.deepEqual([out[0], out[1]], [1, 0]);
+  second('zz', out);
+  assert.equal(out[0], 1);
+  first('abc', out);
+  assert.deepEqual([out[0], out[1]], [0, 1]);
+});
+
 test('bagDistance is a lower bound of damerau, whatever the word order (fuzz)', async () => {
   const { bagDistance } = await import('../dist/esm/distance.js');
   for (let i = 0; i < 2000; i += 1) {
