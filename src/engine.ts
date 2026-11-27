@@ -4,6 +4,7 @@ import {
   damerau,
   jaroWinkler,
   levenshtein,
+  multiSearch,
   partialDistance,
   prefixDistance,
   searchDistance,
@@ -213,17 +214,9 @@ function partialScore(short: Prepared, long: Prepared, floor: number, substring:
   const startCoverage = 100 * (0.9 + (0.1 * s.length) / l.length);
   const multiWord = short.words.length > 1;
 
-  const wholeBound = 1 - searchDistance(s, l) / s.length;
+  const wholeBound = 1 - wholeDistance(short, l) / s.length;
   let wordsBound = -1;
-  if (multiWord) {
-    let distance = 0;
-    let letters = 0;
-    for (const word of short.words) {
-      distance += searchDistance(word, l);
-      letters += word.length;
-    }
-    wordsBound = 1 - distance / letters;
-  }
+  if (multiWord) wordsBound = 1 - wordsDistance(short, l) / (s.length - short.words.length + 1);
   if (Math.max(wholeBound * startCoverage, wordsBound * coverage) <= floor) return -1;
 
   let best = wholeBound > 0 ? 1 - partialDistance(s, l) / s.length : 0;
@@ -446,13 +439,8 @@ const hint = { whole: -1, words: -1 };
 
 /** Sets {@link hint} for the next comparisons; call `clearSearchHint()` after. */
 export function setSearchHint(query: Prepared, container: Prepared): void {
-  hint.whole = searchDistance(query.text, container.text);
-  hint.words = -1;
-  if (query.words.length > 1) {
-    let distance = 0;
-    for (const word of query.words) distance += searchDistance(word, container.text);
-    hint.words = distance;
-  }
+  hint.whole = wholeDistance(query, container.text);
+  hint.words = query.words.length > 1 ? wordsDistance(query, container.text) : -1;
 }
 
 export function clearSearchHint(): void {
@@ -488,20 +476,46 @@ function canReach(a: Prepared, b: Prepared, options: ResolvedOptions, partial: b
   const startCoverage = 100 * (0.9 + (0.1 * s) / l);
   if (startCoverage < floor) return false;
   const known = short === a ? hint : null;
-  if (
-    (!known || known.whole < 0 || (1 - known.whole / s) * startCoverage >= floor) &&
-    (1 - searchDistance(short.text, long.text) / s) * startCoverage >= floor
-  ) {
-    return true;
-  }
-  if (short.words.length > 1) {
-    const letters = s - short.words.length + 1;
-    if (known && known.words >= 0 && (1 - known.words / letters) * coverage < floor) return false;
-    let distance = 0;
-    for (const word of short.words) distance += searchDistance(word, long.text);
-    if ((1 - distance / (s - short.words.length + 1)) * coverage >= floor) return true;
-  }
-  return false;
+  const letters = s - short.words.length + 1;
+  const wholeHopeless = known !== null && known.whole >= 0 && (1 - known.whole / s) * startCoverage < floor;
+  const wordsHopeless =
+    short.words.length <= 1 || (known !== null && known.words >= 0 && (1 - known.words / letters) * coverage < floor);
+  if (wholeHopeless && wordsHopeless) return false;
+  if (!wholeHopeless && (1 - wholeDistance(short, long.text) / s) * startCoverage >= floor) return true;
+  return !wordsHopeless && (1 - wordsDistance(short, long.text) / letters) * coverage >= floor;
+}
+
+// The query of the search under way, its whole text and each word packed in
+// one bit-parallel pass (multiSearch): the distances of the last text scanned.
+let searchQuery: Prepared | null = null;
+let searchRun: ((text: string, out: Int32Array) => void) | null = null;
+let searchText: string | null = null;
+const searchOut = new Int32Array(33);
+
+/** Packs the query's scans for the next comparisons; `beginSearch(null)` after. */
+export function beginSearch(query: Prepared | null): void {
+  searchQuery = query;
+  searchText = null;
+  searchRun = query && query.words.length > 1 ? multiSearch([query.text, ...query.words]) : null;
+}
+
+function packed(short: Prepared, text: string): Int32Array | null {
+  if (short !== searchQuery || !searchRun) return null;
+  if (searchText !== text) searchRun(text, searchOut), (searchText = text);
+  return searchOut;
+}
+
+function wholeDistance(short: Prepared, text: string): number {
+  const p = packed(short, text);
+  return p ? p[0]! : searchDistance(short.text, text);
+}
+
+/** Sum of the distances of each word of `short` to `text`. */
+function wordsDistance(short: Prepared, text: string): number {
+  const p = packed(short, text);
+  let distance = 0;
+  for (let k = 0; k < short.words.length; k += 1) distance += p ? p[k + 1]! : searchDistance(short.words[k]!, text);
+  return distance;
 }
 
 function lengthBound(x: number, y: number): number {

@@ -134,7 +134,10 @@ export function setup(dir, names, { force = false } = {}) {
     let after;
     if (!existed) after = upsertBlock(target.whole ? CURSOR_HEADER : `${target.title}\n`);
     // Versions up to 2.5.0 wrote the Cursor rule as a whole file, without markers.
-    else if (target.whole && !findBlock(before)) after = before === legacyCursorRule() || force ? upsertBlock(CURSOR_HEADER) : undefined;
+    // Git on Windows may have turned its line ends into CRLF: compare without them.
+    else if (target.whole && !findBlock(before)) {
+      after = before.replace(/\r\n/g, '\n') === legacyCursorRule() || force ? upsertBlock(CURSOR_HEADER) : undefined;
+    }
     else after = upsertBlock(before, SNIPPET, force);
     if (after === undefined) {
       done.push(`kept     ${label} (the fuzzy-toolkit block was edited by hand; --force replaces it)`);

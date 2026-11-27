@@ -6,6 +6,7 @@ import {
   scorePrepared,
   setSearchHint,
   clearSearchHint,
+  beginSearch,
   type Engine,
   type Prepared,
   type ResolvedOptions,
@@ -440,7 +441,24 @@ function rankEntries<T>(
   const prepared = engine.read(toText(query));
   const max = Math.max(0, Math.floor(limit));
   if (max === 0) return [];
+  // Only partial matching scans the query's words: pack them for the whole list.
+  beginSearch(engine.options.partial ? prepared : null);
+  try {
+    return rankPrepared(prepared, entries, engine, threshold, limit, max, withKey);
+  } finally {
+    beginSearch(null);
+  }
+}
 
+function rankPrepared<T>(
+  prepared: Prepared,
+  entries: readonly Entry<T>[],
+  engine: Engine,
+  threshold: number,
+  limit: number,
+  max: number,
+  withKey: boolean,
+): Match<T>[] {
   // Letters of the query that an entry lacks each cost an edit.
   const filter = canFilterLetters(engine) && prepared.text !== '';
   const queryMask = letterMask(prepared.text);
