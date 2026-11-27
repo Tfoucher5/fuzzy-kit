@@ -16,7 +16,10 @@ faster algorithm. You can write issues and pull requests in English or French.
   pack, update it with `npm run languages:coverage`.
   Open a "Language request" issue first if you want help or want to avoid
   duplicate work.
-- **Share a preset.** Publish it on npm as `fuzzy-toolkit-preset-<name>` with
+  `npx fuzzy-toolkit new-pack language <code>` writes a package to start from,
+  with its test.
+- **Share a preset.** `npx fuzzy-toolkit new-pack preset <name>` writes the
+  package. Publish it on npm as `fuzzy-toolkit-preset-<name>` with
   the keyword `fuzzy-toolkit-plugin`. Presets of general interest can also
   be proposed for the core with the "Preset proposal" template.
 - **Propose a feature.** Missing an option, a function, a metric, an

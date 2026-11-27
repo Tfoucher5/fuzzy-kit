@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { search } from '../../../../src/index'
-import { data, type Extension, type Kind } from '../../extensions.data'
+import { data, type Extension, type Kind, type Wanted } from '../../extensions.data'
 
 const query = ref('')
 const kind = ref<Kind | 'all'>('all')
@@ -16,6 +16,9 @@ const shown = computed<Extension[]>(() => {
 
 const builtIn = computed(() => shown.value.filter((e) => e.source === 'built-in'))
 const community = computed(() => shown.value.filter((e) => e.source !== 'built-in'))
+const wanted = computed<Wanted[]>(() => data.wanted.filter((w) => kind.value === 'all' || w.kind === kind.value))
+
+const command = (w: Wanted) => `npx fuzzy-toolkit new-pack ${w.kind} ${w.id}`
 
 function usage(e: Extension): string {
   if (e.source === 'built-in') {
@@ -76,6 +79,24 @@ const LABELS = { 'built-in': 'Built in', reviewed: 'Reviewed', npm: 'On npm' } a
         </footer>
       </article>
     </div>
+    <template v-if="wanted.length">
+      <h2 id="wanted">Wanted</h2>
+      <p class="ext-lead">People asked for these. Pick one: the command writes a package with its tests, and the issue says what the pack must do.</p>
+      <div class="ext-grid">
+        <article v-for="w in wanted" :key="w.url" class="ext-card">
+          <header>
+            <code class="ext-id">{{ w.id }}</code>
+            <span class="ext-kind">{{ w.kind }}</span>
+            <span class="ext-source" :class="w.assignee ? 'taken' : 'reviewed'">{{ w.assignee ? 'Taken' : 'Open' }}</span>
+          </header>
+          <p>{{ w.title }}</p>
+          <pre class="ext-code"><code>{{ command(w) }}</code></pre>
+          <footer>
+            <a :href="w.url" target="_blank" rel="noopener">{{ w.assignee ? 'Being written by @' + w.assignee : 'Take it on the issue' }}</a>
+          </footer>
+        </article>
+      </div>
+    </template>
     <p class="ext-note">Updated {{ data.builtAt }}.</p>
   </div>
 </template>
@@ -97,5 +118,6 @@ const LABELS = { 'built-in': 'Built in', reviewed: 'Reviewed', npm: 'On npm' } a
 .ext-source.built-in, .ext-source.reviewed { background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); }
 .ext-code { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--vp-code-block-bg); font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre; }
 .ext-card footer { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
-.ext-empty, .ext-note { color: var(--vp-c-text-2); font-size: 14px; }
+.ext-empty, .ext-note, .ext-lead { color: var(--vp-c-text-2); font-size: 14px; }
+.ext-source.taken { background: var(--vp-c-default-soft); color: var(--vp-c-text-3); }
 </style>

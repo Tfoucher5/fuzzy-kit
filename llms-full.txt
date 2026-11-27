@@ -387,6 +387,8 @@ npx fuzzy-toolkit dedupe companies.csv -p ./company-names.js --lang fr
 
 ## Writing a language pack
 
+Start with `npx fuzzy-toolkit new-pack language <code>` (or `new-pack preset <name>`): it writes a package ready to publish, with `package.json`, the pack and a test. Fill in the parts marked TODO.
+
 ```js
 import { defineLanguage } from 'fuzzy-toolkit'
 
