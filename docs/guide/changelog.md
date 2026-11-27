@@ -11,6 +11,12 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.7.0
+
+Nothing in 2.7.0 changes a score, a verdict or a default: everything new is a new import or a new command.
+
 ### Added
 - `fuzzy-toolkit/fuse`: the Fuse.js API (`new Fuse(list, options).search(query)`) on top of fuzzy-toolkit. Change the import, keep the code. On song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster. See [what differs](/api/#fuse-js-compatibility).
 - `npx fuzzy-toolkit new-pack language <code>` and `new-pack preset <name>` write a ready-to-publish package for a language pack or a preset, with a test that uses `fuzzy-toolkit/testing`.
@@ -22,6 +28,9 @@ The project follows **semantic versioning**:
 ### Performance
 - Searches of several words (`partial`, `preset: 'search'`) scan each item once instead of once per word: about 1.2x faster on a two-word query. Scores are unchanged.
 - `levenshtein` and `damerau` no longer copy the texts they compare: faster on short and long texts.
+
+### Project
+- CI also runs the package on Bun and Deno.
 
 ---
 
