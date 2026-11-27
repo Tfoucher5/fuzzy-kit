@@ -432,6 +432,65 @@ export function searchDistance(query: string, text: string): number {
   return best;
 }
 
+/** Masks of the patterns packed by {@link multiSearch}, kept between scans. */
+const multiPeq = new Uint32Array(0x10000);
+let multiOwner = '';
+
+/**
+ * {@link searchDistance} of several patterns at once: they share one 32-bit
+ * word, in one pass over the text (carries and shifts are cut between
+ * patterns, so each behaves as if alone). `null` when they do not fit.
+ * The returned function writes the distance of pattern `k` to `out[k]`.
+ */
+export function multiSearch(patterns: readonly string[]): ((text: string, out: Int32Array) => void) | null {
+  const all = patterns.join('');
+  const n = patterns.length;
+  if (n === 0 || all.length > 32 || patterns.includes('')) return null;
+  const ends: number[] = [];
+  let firsts = 0;
+  let lasts = 0;
+  for (const p of patterns) {
+    firsts |= 1 << (ends.length ? ends[ends.length - 1]! + 1 : 0);
+    ends.push((ends.length ? ends[ends.length - 1]! + 1 : 0) + p.length - 1);
+    lasts |= 1 << ends[ends.length - 1]!;
+  }
+  const score = new Int32Array(n);
+  return (text, out) => {
+    // The table is shared: whoever packed last owns it.
+    if (multiOwner !== all) {
+      for (let i = 0; i < multiOwner.length; i += 1) multiPeq[multiOwner.charCodeAt(i)] = 0;
+      for (let i = 0; i < all.length; i += 1) multiPeq[all.charCodeAt(i)]! |= 1 << i;
+      multiOwner = all;
+    }
+    for (let k = 0; k < n; k += 1) out[k] = score[k] = patterns[k]!.length;
+    let vp = -1;
+    let vn = 0;
+    let d0 = 0;
+    let pmOld = 0;
+    for (let j = 0; j < text.length; j += 1) {
+      const pm = multiPeq[text.charCodeAt(j)]! | 0;
+      const tr = (((~d0 & pm) << 1) & ~firsts) & pmOld;
+      const x = pm & vp;
+      // Addition without carries from one pattern into the next.
+      d0 = (((((x & ~lasts) + (vp & ~lasts)) ^ ((x ^ vp) & lasts)) ^ vp) | pm | vn) | tr;
+      let hp = vn | ~(d0 | vp);
+      let hn = d0 & vp;
+      if ((hp | hn) & lasts) {
+        for (let k = 0; k < n; k += 1) {
+          if ((hp >>> ends[k]!) & 1) score[k]! += 1;
+          else if ((hn >>> ends[k]!) & 1 && --score[k]! < out[k]!) out[k] = score[k]!;
+        }
+      }
+      // Free start: each pattern's top row stays at zero.
+      hp = (hp << 1) & ~firsts;
+      hn = (hn << 1) & ~firsts;
+      vp = hn | ~(d0 | hp);
+      vn = hp & d0;
+      pmOld = pm;
+    }
+  };
+}
+
 /** Damerau (OSA) distance between `query` and the best prefix of `word`. */
 export function prefixDistance(query: string, word: string): number {
   const m = query.length;
