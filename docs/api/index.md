@@ -334,6 +334,56 @@ function Search({ songs }) {
 
 `useFuzzySearch(items, query, options)` uses the `search` preset by default, indexes the list once (again only when `items` or the options change) and returns results with `ranges`. An empty query returns every item (`whenEmpty: 'none'` returns nothing). `<Highlight text ranges as?>` wraps matching parts in `<mark>` (or `as`).
 
+## Vue
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+```vue
+<script setup>
+import { ref } from 'vue'
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'
+
+const props = defineProps(['songs'])
+const query = ref('')
+const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<template>
+  <input v-model="query" />
+  <ul><li v-for="r in results" :key="r.index"><Highlight :text="r.text" :ranges="r.ranges" /></li></ul>
+</template>
+```
+
+`useFuzzySearch(items, query, options)` takes refs, getters or plain values and returns a computed ref of results with `ranges`. It works like the React hook: `search` preset by default, the list indexed again only when the items or the options change, `whenEmpty`. `<Highlight :text :ranges as?>` wraps matching parts in `<mark>`. Vue 3.3 or later.
+
+## Svelte
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+```svelte
+<script>
+  import { writable } from 'svelte/store'
+  import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'
+
+  export let songs
+  const query = writable('')
+  const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<input bind:value={$query} />
+<ul>
+  {#each $results as r (r.index)}
+    <li>{#each segments(r.text, r.ranges) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</li>
+  {/each}
+</ul>
+```
+
+`fuzzySearch(items, query, options)` is a store: `items` and `query` can be stores or plain values, and the list is indexed again only when the items change. It uses the store contract only, so it works in Svelte 3, 4 and 5 (with runes, read it with `$results` or `fromStore`), and with any library that has `subscribe`. `segments(text, ranges)` cuts a text into the parts to show, the matching ones flagged.
+
 ## Raw algorithms
 
 No normalization, plain strings in:

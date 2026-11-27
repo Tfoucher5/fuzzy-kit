@@ -23,13 +23,15 @@ const cases = {
   'fuzzy-toolkit/string-similarity': `export * from './dist/esm/compat/string-similarity.js'`,
   'fuzzy-toolkit/fuse': `export { default } from './dist/esm/compat/fuse.js'`,
   'fuzzy-toolkit/react': `export * from './dist/esm/react.js'`,
+  'fuzzy-toolkit/vue': `export * from './dist/esm/vue.js'`,
+  'fuzzy-toolkit/svelte': `export * from './dist/esm/svelte.js'`,
   'one extra language (lang/es)': `export { default } from './dist/esm/lang/es.js'`,
 };
 console.log('import'.padEnd(36), 'min+gzip', check ? '  budget' : '');
 for (const [name, contents] of Object.entries(cases)) {
   const out = await build({
     stdin: { contents, resolveDir: process.cwd(), loader: 'js' },
-    bundle: true, minify: true, write: false, format: 'esm', external: ['react'], logLevel: 'silent',
+    bundle: true, minify: true, write: false, format: 'esm', external: ['react', 'vue'], logLevel: 'silent',
   });
   const size = gzipSync(out.outputFiles[0].contents, { level: 9 }).length;
   const kb = size / 1024;

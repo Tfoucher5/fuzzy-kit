@@ -11,5 +11,7 @@
   "fuzzy-toolkit/string-similarity": 1,
   "fuzzy-toolkit/fuse": 15.6,
   "fuzzy-toolkit/react": 13.6,
+  "fuzzy-toolkit/vue": 13.8,
+  "fuzzy-toolkit/svelte": 13.7,
   "one extra language (lang/es)": 0.8
 }

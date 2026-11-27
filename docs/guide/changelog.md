@@ -27,6 +27,7 @@ The project follows **semantic versioning**:
 - `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames a file's columns to your names. See [Command line](/recipes/cli#rename-columns-to-your-names).
 - `fuzzy-toolkit/fuse` now supports the rest of the Fuse.js API: extended search (`useExtendedSearch`: `=exact`, `'include`, `^prefix`, `suffix$`, `!exclude`, `|` for OR), logical queries (`{ $and }`, `{ $or }`, `{ $path, $val }`), `getFn` (global or on a key) and `sortFn`. They find the same items as Fuse.js on its own examples. See [Fuse.js compatibility](/api/#fuse-js-compatibility).
 
+- `fuzzy-toolkit/vue` and `fuzzy-toolkit/svelte`: `useFuzzySearch` on refs with a `<Highlight>` component for Vue 3.3+, and a `fuzzySearch` store for Svelte 3, 4 and 5, with `segments()` to render the matches. See [Vue](/api/#vue) and [Svelte](/api/#svelte).
 - `findAll(text, items)` finds which items of a list are mentioned in a text, typos included, with their positions: a longer name wins over its parts, and objects can bring aliases through `keys`. Also an MCP tool, `findAll`. See [findAll](/api/#findall).
 
 ### Performance

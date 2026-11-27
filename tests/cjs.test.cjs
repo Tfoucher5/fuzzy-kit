@@ -45,3 +45,13 @@ test('CommonJS: fuse.js drop-in is the class itself', () => {
   assert.equal(Fuse.default, Fuse);
   assert.equal(new Fuse(['Bohemian Rhapsody']).search('bohemain')[0].item, 'Bohemian Rhapsody');
 });
+
+test('CommonJS: Vue and Svelte helpers', () => {
+  const { useFuzzySearch } = require('../dist/cjs/vue.js');
+  const { fuzzySearch, segments } = require('../dist/cjs/svelte.js');
+  assert.equal(useFuzzySearch(['Paris', 'Lyon'], 'lyo').value[0].item, 'Lyon');
+  let found;
+  fuzzySearch(['Paris', 'Lyon'], 'pari').subscribe((v) => (found = v))();
+  assert.equal(found[0].item, 'Paris');
+  assert.deepEqual(segments('ab', [[0, 1]]), [{ text: 'a', match: true }, { text: 'b', match: false }]);
+});

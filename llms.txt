@@ -76,13 +76,15 @@ hamming('karolin', 'kathrin')    // 3
 lcs('ABCBDAB', 'BDCABA')         // 4
 ```
 
-## React and browsers
+## React, Vue, Svelte and browsers
 
 ```tsx
 import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
 const results = useFuzzySearch(items, query, { keys: ['title'], limit: 20 })
 results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
 ```
+
+Vue (2.8.0+): `import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'`, the same hook on refs: `useFuzzySearch(items, queryRef, options).value`. Svelte (2.8.0+): `import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'`, a store: `const results = fuzzySearch(items, queryStore, options)`, then `$results`; `segments(r.text, r.ranges)` gives the parts to wrap in `<mark>`.
 
 CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
 
