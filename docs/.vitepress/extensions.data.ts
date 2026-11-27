@@ -20,8 +20,19 @@ export interface Extension {
   source: 'built-in' | 'reviewed' | 'npm'
 }
 
+/** A pack people asked for, from an open issue: someone can pick it up. */
+export interface Wanted {
+  kind: Kind
+  id: string
+  title: string
+  url: string
+  /** GitHub login of whoever is on it. */
+  assignee?: string
+}
+
 export interface Data {
   extensions: Extension[]
+  wanted: Wanted[]
   npmReachable: boolean
   builtAt: string
 }
@@ -84,16 +95,47 @@ async function fromNpm(): Promise<Extension[] | null> {
   }
 }
 
+const ISSUES = 'https://api.github.com/repos/Tfoucher5/fuzzy-toolkit/issues?state=open&labels=help%20wanted&per_page=100'
+
+/** "Language: Portuguese (pt)" or "Preset: company names", the titles of the request templates. */
+export function wantedFrom(title: string): { kind: Kind; id: string } | null {
+  const lang = /^Language: [^()]*\(([a-z]{2,3}(?:-[a-z0-9]+)*)\)\s*$/i.exec(title)
+  if (lang) return { kind: 'language', id: lang[1].toLowerCase() }
+  const preset = /^Preset: (.+)$/i.exec(title)
+  if (preset) return { kind: 'preset', id: preset[1].trim().toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') }
+  return null
+}
+
+interface ApiIssue { title: string; html_url: string; pull_request?: unknown; assignee?: { login: string } | null }
+
+async function fromIssues(): Promise<Wanted[]> {
+  const headers: Record<string, string> = { accept: 'application/vnd.github+json', 'user-agent': 'fuzzy-toolkit-docs' }
+  // In CI the token only raises the rate limit; the data is public.
+  if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`
+  try {
+    const response = await fetch(ISSUES, { headers, signal: AbortSignal.timeout(10_000) })
+    if (!response.ok) return []
+    const wanted: Wanted[] = []
+    for (const issue of (await response.json()) as ApiIssue[]) {
+      const pack = issue.pull_request ? null : wantedFrom(issue.title)
+      if (pack) wanted.push({ ...pack, title: issue.title.replace(/^(Language|Preset): /i, ''), url: issue.html_url, assignee: issue.assignee?.login })
+    }
+    return wanted.sort((a, b) => a.kind.localeCompare(b.kind) || a.title.localeCompare(b.title))
+  } catch {
+    return []
+  }
+}
+
 export default defineLoader({
   async load(): Promise<Data> {
     const registry = JSON.parse(readFileSync(new URL('../extensions.json', import.meta.url), 'utf8'))
     const reviewed: Extension[] = registry.extensions.map((e: Omit<Extension, 'source'>) => ({ ...e, source: 'reviewed' }))
-    const npm = await fromNpm()
+    const [npm, wanted] = await Promise.all([fromNpm(), fromIssues()])
     const byPackage = new Map<string, Extension>()
     for (const e of npm ?? []) byPackage.set(e.package, e)
     // The registry is reviewed: its description wins, the npm version is kept.
     for (const e of reviewed) byPackage.set(e.package, { ...e, version: byPackage.get(e.package)?.version ?? e.version })
     const community = [...byPackage.values()].sort((a, b) => a.id.localeCompare(b.id))
-    return { extensions: [...BUILT_IN, ...community], npmReachable: npm !== null, builtAt: new Date().toISOString().slice(0, 10) }
+    return { extensions: [...BUILT_IN, ...community], wanted, npmReachable: npm !== null, builtAt: new Date().toISOString().slice(0, 10) }
   },
 })
