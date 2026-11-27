@@ -4,6 +4,8 @@ name: Publish
 # the `release` job creates the tag vX.Y.Z and the GitHub release (notes taken
 # from docs/guide/changelog.md), then `publish` puts it on npm after approval
 # of the `npm` environment. A release made by hand on GitHub also publishes.
+# Then the MCP server is listed in the MCP Registry (server.json, mcpName in
+# package.json), also through OIDC.
 # Authentication: npm trusted publishing (OIDC), no token stored. It is tied
 # to this file name and the `npm` environment: keep both.
 
@@ -116,3 +118,40 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" release-assets/* --clobber
+
+  mcp-registry:
+    name: List the MCP server in the MCP Registry
+    needs: [release, publish]
+    # After npm: the registry checks that the published package names this server (mcpName).
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC login to the registry, no token stored
+    env:
+      TAG: ${{ github.event.release.tag_name || needs.release.outputs.tag }}
+      MCP_PUBLISHER_VERSION: v1.8.21
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+      - uses: sigstore/cosign-installer@881c63bd87e38389154debd8331404ce7ca8a3ab # v4.1.4
+      - name: Download and verify mcp-publisher
+        run: |
+          set -euo pipefail
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          base="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --location --silent --show-error --output "$archive" "$base/$archive"
+          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$base/$archive.sigstore.json"
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+      - name: server.json matches the release
+        run: |
+          test "$(node -p "require('./server.json').version")" = "${TAG#v}"
+          test "$(node -p "require('./server.json').packages[0].version")" = "${TAG#v}"
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish
