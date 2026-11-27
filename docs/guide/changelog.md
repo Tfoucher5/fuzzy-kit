@@ -17,7 +17,12 @@ The project follows **semantic versioning**:
 
 ### Added
 
+- `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
 - `fuzzy-toolkit/fuse` now supports the rest of the Fuse.js API: extended search (`useExtendedSearch`: `=exact`, `'include`, `^prefix`, `suffix$`, `!exclude`, `|` for OR), logical queries (`{ $and }`, `{ $or }`, `{ $path, $val }`), `getFn` (global or on a key) and `sortFn`. They find the same items as Fuse.js on its own examples. See [Fuse.js compatibility](/api/#fuse-js-compatibility).
+
+### Performance
+
+- Search as you type is about 35% faster (8.2 to 5.3 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.
 
 ---
 

@@ -8,6 +8,8 @@ import {
   search,
   similarity,
   diff,
+  mapFields,
+  type FieldMapping,
   defineLanguage,
   definePreset,
   type Change,
@@ -163,3 +165,8 @@ const fullFuse = new Fuse([{ title: 'Dune', author: { name: 'Herbert' } }], {
 });
 fullFuse.search("^du 'ne | =Dune");
 fullFuse.search({ $and: [{ title: 'dune' }, { $path: ['author'], $val: 'herbert' }] });
+
+// mapFields returns a mapping from one list's names to the other's.
+const fields: FieldMapping = mapFields(['Zip'], ['postalCode'], { threshold: 70, synonyms: { sku: ['ref'] } });
+const column: string | undefined = fields.mapping['Zip'];
+const fieldScore: number = fields.matches[0]!.score;

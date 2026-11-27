@@ -7,6 +7,9 @@ import {
   setSearchHint,
   clearSearchHint,
   beginSearch,
+  searching,
+  pairsOfItem,
+  setCandidatePairs,
   type Engine,
   type Prepared,
   type ResolvedOptions,
@@ -176,6 +179,8 @@ interface Entry<T> {
   longest: number;
   /** Largest key weight. */
   heaviest: number;
+  /** Letter pairs of the texts, computed the first time a search needs them; `false` when not kept. */
+  pairs: Int32Array | null | false;
 }
 
 /**
@@ -312,6 +317,8 @@ function buildEntries<T>(
   keys: KeysOption<T> | undefined,
   engine: Engine,
   saved?: SavedIndex['texts'],
+  /** Entries searched many times (an index, the right side of a join) keep their letter pairs. */
+  reused = false,
 ): Entry<T>[] {
   if (!Array.isArray(items)) {
     throw new TypeError('[fuzzy-toolkit] Expected an array of items.');
@@ -348,7 +355,7 @@ function buildEntries<T>(
       }
     }
     const heaviest = weights.length > 0 ? Math.max(...weights) : 1;
-    return { item, index, texts, weights, keys: names, joined, prepared, mask, longest, heaviest };
+    return { item, index, texts, weights, keys: names, joined, prepared, mask, longest, heaviest, pairs: reused ? null : false };
   });
 }
 
@@ -363,6 +370,8 @@ function bestOf<T>(
   // One scan of the joined text bounds the scans of every part of it.
   const container = entry.joined ? entry.prepared[entry.prepared.length - 1]! : null;
   if (container && query.text.length < container.text.length) setSearchHint(query, container);
+  // Kept on the entry, so an index computes them once for every query.
+  if (entry.pairs !== false && searching()) setCandidatePairs((entry.pairs ??= pairsOfItem(entry.prepared)) as Int32Array);
   try {
     for (let i = 0; i < entry.prepared.length; i += 1) {
       const candidate = entry.prepared[i]!;
@@ -379,6 +388,7 @@ function bestOf<T>(
     }
   } finally {
     if (container) clearSearchHint();
+    setCandidatePairs(null);
   }
   return best && best.score >= threshold ? best : null;
 }
@@ -596,7 +606,7 @@ function joinLists<L, R>(
 ): JoinRow<L, R>[] {
   if (!Array.isArray(left)) throw new TypeError('[fuzzy-toolkit] Expected an array of left items.');
   const getTexts = textGetter(options.left);
-  const entries = buildEntries(right, options.right, engine);
+  const entries = buildEntries(right, options.right, engine, undefined, true);
   // Weights above 1 let lower scores through: filter with the lowest score that can still count.
   const maxWeight = Math.max(1, ...entries.flatMap((e) => e.weights));
   const blocker = canBlock(engine, threshold / maxWeight)
@@ -734,7 +744,7 @@ function makeIndex<T>(
       throw new Error('[fuzzy-toolkit] The saved index does not match these items: rebuild it with createIndex().');
     }
   }
-  let entries = buildEntries(items, keys, engine, saved?.texts);
+  let entries = buildEntries(items, keys, engine, saved?.texts, true);
   let snapshot: readonly T[] | null = null;
   const renumber = (): void => {
     entries.forEach((entry, i) => (entry.index = i));
@@ -765,7 +775,7 @@ function makeIndex<T>(
       rank(query, entries, engine, options.threshold ?? engine.options.threshold, 1, options.includeMatches)[0],
     add: (...added) => {
       const start = entries.length;
-      for (const entry of buildEntries(added, keys, engine)) {
+      for (const entry of buildEntries(added, keys, engine, undefined, true)) {
         entry.index += start;
         entries.push(entry);
       }
@@ -786,7 +796,7 @@ function makeIndex<T>(
       entries = entries.map((entry) => {
         if (!predicate(entry.item, entry.index)) return entry;
         count += 1;
-        const [fresh] = buildEntries([entry.item], keys, engine);
+        const [fresh] = buildEntries([entry.item], keys, engine, undefined, true);
         fresh!.index = entry.index;
         return fresh!;
       });
