@@ -13,7 +13,7 @@ The project follows **semantic versioning**:
 
 ### Performance
 
-- Search as you type is about 25% faster (8.2 to 6.2 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. Results are identical.
+- Search as you type is about 35% faster (8.2 to 5.3 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.
 
 ---
 
