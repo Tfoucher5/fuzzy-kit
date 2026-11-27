@@ -477,10 +477,22 @@ function canReach(a: Prepared, b: Prepared, options: ResolvedOptions, partial: b
   if (startCoverage < floor) return false;
   const known = short === a ? hint : null;
   const letters = s - short.words.length + 1;
-  const wholeHopeless = known !== null && known.whole >= 0 && (1 - known.whole / s) * startCoverage < floor;
-  const wordsHopeless =
+  let wholeHopeless = known !== null && known.whole >= 0 && (1 - known.whole / s) * startCoverage < floor;
+  let wordsHopeless =
     short.words.length <= 1 || (known !== null && known.words >= 0 && (1 - known.words / letters) * coverage < floor);
   if (wholeHopeless && wordsHopeless) return false;
+  // Before scanning, the letter pairs of the query that the text lacks bound
+  // the distances from below: one edit breaks at most 3 pairs.
+  if (short === searchQuery) {
+    const mask = candidatePairs ?? markPairs(long.text);
+    if (!wholeHopeless && (1 - brokenPairs(queryPairs[0]!, mask) / s) * startCoverage < floor) wholeHopeless = true;
+    if (!wordsHopeless) {
+      let broken = 0;
+      for (let k = 1; k < queryPairs.length; k += 1) broken += brokenPairs(queryPairs[k]!, mask);
+      if ((1 - broken / letters) * coverage < floor) wordsHopeless = true;
+    }
+    if (wholeHopeless && wordsHopeless) return false;
+  }
   if (!wholeHopeless && (1 - wholeDistance(short, long.text) / s) * startCoverage >= floor) return true;
   return !wordsHopeless && (1 - wordsDistance(short, long.text) / letters) * coverage >= floor;
 }
@@ -495,8 +507,70 @@ const searchOut = new Int32Array(33);
 /** Packs the query's scans for the next comparisons; `beginSearch(null)` after. */
 export function beginSearch(query: Prepared | null): void {
   searchQuery = query;
+  queryPairs = query ? [query.text, ...(query.words.length > 1 ? query.words : [])].map(pairsOf) : [];
   searchText = null;
   searchRun = query && query.words.length > 1 ? multiSearch([query.text, ...query.words]) : null;
+}
+
+// Letter pairs hashed to 128 bits: what the query has (one list for the whole
+// text, then one per word), and what the text being compared has.
+let queryPairs: number[][] = [];
+const textPairs = new Int32Array(4);
+// The pairs of every text of the item being scored, when its list keeps them.
+let candidatePairs: Int32Array | null = null;
+
+const pairOf = (text: string, i: number): number =>
+  Math.imul((text.charCodeAt(i - 1) << 16) | text.charCodeAt(i), -1640531535) >>> 25;
+
+function pairsOf(text: string): number[] {
+  const pairs: number[] = [];
+  for (let i = 1; i < text.length; i += 1) pairs.push(pairOf(text, i));
+  return pairs;
+}
+
+function markPairs(text: string, mask = textPairs.fill(0)): Int32Array {
+  for (let i = 1; i < text.length; i += 1) {
+    const h = pairOf(text, i);
+    mask[h >>> 5]! |= 1 << (h & 31);
+  }
+  return mask;
+}
+
+/** Whether a search is under way: only then are an item's pairs worth keeping. */
+export const searching = (): boolean => searchQuery !== null;
+
+/**
+ * The pairs of all the texts of an item, and of their numbers as written:
+ * a pair missing from all of them is missing from each.
+ */
+export function pairsOfItem(texts: readonly Prepared[]): Int32Array {
+  const mask = new Int32Array(4);
+  for (const p of texts) {
+    markPairs(p.text, mask);
+    if (p.alt) markPairs(p.alt.text, mask);
+  }
+  return mask;
+}
+
+/** The pairs of the item scored next (from {@link pairsOfItem}), or `null` to compute them. */
+export function setCandidatePairs(mask: Int32Array | null): void {
+  candidatePairs = mask;
+}
+
+/**
+ * Edits at least needed to match `pairs` in a text with the pairs `mask`: a pair
+ * it lacks is broken by an edit, and one edit breaks at most 3 pairs in a row
+ * (a transposition).
+ */
+function brokenPairs(pairs: readonly number[], mask: Int32Array): number {
+  let edits = 0;
+  for (let i = 0; i < pairs.length; i += 1) {
+    const h = pairs[i]!;
+    if ((mask[h >>> 5]! >>> (h & 31)) & 1) continue;
+    edits += 1;
+    i += 2;
+  }
+  return edits;
 }
 
 function packed(short: Prepared, text: string): Int32Array | null {
