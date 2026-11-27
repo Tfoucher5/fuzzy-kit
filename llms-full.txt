@@ -75,13 +75,15 @@ hamming('karolin', 'kathrin')    // 3
 lcs('ABCBDAB', 'BDCABA')         // 4
 ```
 
-## React and browsers
+## React, Vue, Svelte and browsers
 
 ```tsx
 import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/react'
 const results = useFuzzySearch(items, query, { keys: ['title'], limit: 20 })
 results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
 ```
+
+Vue (2.8.0+): `import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'`, the same hook on refs: `useFuzzySearch(items, queryRef, options).value`. Svelte (2.8.0+): `import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'`, a store: `const results = fuzzySearch(items, queryStore, options)`, then `$results`; `segments(r.text, r.ranges)` gives the parts to wrap in `<mark>`.
 
 CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
 
@@ -766,6 +768,21 @@ results.map((r) => <li key={r.index}><Highlight text={r.text} ranges={r.ranges} 
 
 See [`useFuzzySearch`](https://tfoucher5.github.io/fuzzy-toolkit/api/#react) for every option.
 
+## With Vue or Svelte
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+
+```ts
+// Vue
+const results = useFuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a ref
+// Svelte
+const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 }) // query is a store: {#each $results as r}
+```
+
+Full examples: [Vue](https://tfoucher5.github.io/fuzzy-toolkit/api/#vue), [Svelte](https://tfoucher5.github.io/fuzzy-toolkit/api/#svelte).
+
 ## Some fields count less
 
 Give a key a weight to rank its matches lower:
@@ -1414,6 +1431,52 @@ function Search({ songs }) {
 ```
 
 `useFuzzySearch(items, query, options)` uses the `search` preset by default, indexes the list once (again only when `items` or the options change) and returns results with `ranges`. An empty query returns every item (`whenEmpty: 'none'` returns nothing). `<Highlight text ranges as?>` wraps matching parts in `<mark>` (or `as`).
+
+## Vue
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+<script setup>
+import { ref } from 'vue'
+import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'
+
+const props = defineProps(['songs'])
+const query = ref('')
+const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<template>
+  <input v-model="query" />
+  <ul><li v-for="r in results" :key="r.index"><Highlight :text="r.text" :ranges="r.ranges" /></li></ul>
+</template>
+```
+
+`useFuzzySearch(items, query, options)` takes refs, getters or plain values and returns a computed ref of results with `ranges`. It works like the React hook: `search` preset by default, the list indexed again only when the items or the options change, `whenEmpty`. `<Highlight :text :ranges as?>` wraps matching parts in `<mark>`. Vue 3.3 or later.
+
+## Svelte
+
+**New in 2.8.0**
+Not on npm yet: it comes with the next release.
+
+<script>
+  import { writable } from 'svelte/store'
+  import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'
+
+  export let songs
+  const query = writable('')
+  const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20 })
+</script>
+
+<input bind:value={$query} />
+<ul>
+  {#each $results as r (r.index)}
+    <li>{#each segments(r.text, r.ranges) as part}{#if part.match}<mark>{part.text}</mark>{:else}{part.text}{/if}{/each}</li>
+  {/each}
+</ul>
+```
+
+`fuzzySearch(items, query, options)` is a store: `items` and `query` can be stores or plain values, and the list is indexed again only when the items change. It uses the store contract only, so it works in Svelte 3, 4 and 5 (with runes, read it with `$results` or `fromStore`), and with any library that has `subscribe`. `segments(text, ranges)` cuts a text into the parts to show, the matching ones flagged.
 
 ## Raw algorithms
 
