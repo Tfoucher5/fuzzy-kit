@@ -1,3 +1,8 @@
+---
+title: "Cleaning data: dedupe, record linkage, column mapping"
+description: "Remove near-duplicates, match two lists of customers or products (record linkage), map messy values and CSV headers to a clean schema in JavaScript."
+---
+
 # Cleaning data
 
 ## Remove near-duplicates

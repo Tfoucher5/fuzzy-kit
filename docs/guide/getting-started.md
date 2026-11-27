@@ -1,3 +1,8 @@
+---
+title: "Getting started: fuzzy string matching in JavaScript"
+description: "Install fuzzy-toolkit, compare two strings, search a list with typos, suggest \"did you mean\", and pick the right function for your use case. Node, Bun, Deno, browsers."
+---
+
 # Getting started
 
 ## Install

@@ -1,3 +1,8 @@
+---
+title: "Languages and presets: Spanish, German, Italian, Dutch and your own"
+description: "Numbers in words, articles, stop words and sounds-alike rules per language, ready-made presets for song titles or search, and how to write and test your own pack."
+---
+
 # Languages and presets
 
 fuzzy-toolkit reads text in **languages** (numbers in words, articles, stop

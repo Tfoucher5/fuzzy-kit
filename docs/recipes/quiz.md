@@ -1,3 +1,8 @@
+---
+title: "Quizzes and blind tests: grading typed answers"
+description: "Accept answers with typos, accents and word order mistakes, say \"almost\" when it is close, and check a title and an artist at once."
+---
+
 # Quizzes and blind tests
 
 `check()` grades a guess against one or several accepted answers.
