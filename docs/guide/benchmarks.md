@@ -29,6 +29,7 @@ Measured with `npm run bench:versus` on public data (Spotify song titles, the 20
 | Fuse.js | 65.3 % | 81.6 ms |
 | fuzzysort | 21.7 % | 0.8 ms |
 | fuzzy-toolkit `createIndex(titles, { preset: 'search' })` | **82.7 %** | 11.0 ms |
+| fuzzy-toolkit/fuse, the same code as Fuse.js | 80.3 % | 11 ms |
 
 fuzzysort is the fastest but only matches letters in order, so a typo loses the result. fuzzy-toolkit finds more than Fuse.js, 7 times faster.
 

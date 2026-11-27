@@ -38,3 +38,10 @@ test('CommonJS: the testing kit', () => {
   assertLanguage(es, { numbers: [['treinta y dos', '32']] });
   assert.throws(() => assertLanguage(es, { numbers: [['dos', '3']] }), /1 problem/);
 });
+
+test('CommonJS: fuse.js drop-in is the class itself', () => {
+  const Fuse = require('../dist/cjs/compat/fuse.js');
+  assert.equal(typeof Fuse, 'function');
+  assert.equal(Fuse.default, Fuse);
+  assert.equal(new Fuse(['Bohemian Rhapsody']).search('bohemain')[0].item, 'Bohemian Rhapsody');
+});

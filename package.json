@@ -85,6 +85,16 @@
         "default": "./dist/cjs/compat/string-similarity.js"
       }
     },
+    "./fuse": {
+      "import": {
+        "types": "./dist/esm/compat/fuse.d.ts",
+        "default": "./dist/esm/compat/fuse.js"
+      },
+      "require": {
+        "types": "./dist/cjs/compat/fuse.d.ts",
+        "default": "./dist/cjs/compat/fuse.js"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react.d.ts",

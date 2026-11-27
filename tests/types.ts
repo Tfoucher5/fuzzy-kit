@@ -141,3 +141,16 @@ similarity('a', 'b', { languages: ['es'] });
 definePreset({ name: 'x', options: { preset: 'music' } });
 // @ts-expect-error phonetic rules are [RegExp, string]
 defineLanguage({ code: 'es', phonetic: [['v', 'b']] });
+
+// fuzzy-toolkit/fuse: the Fuse.js API, typed like it.
+import Fuse, { type FuseResult } from '../src/compat/fuse.js';
+const fuse = new Fuse([{ title: 'Dune', author: { name: 'Herbert' } }], {
+  keys: ['title', ['author', 'name'], { name: 'author.name', weight: 2 }],
+  includeScore: true,
+  threshold: 0.4,
+});
+const found: FuseResult<{ title: string; author: { name: string } }>[] = fuse.search('dune', { limit: 3 });
+const title: string | undefined = found[0]?.item.title;
+void title;
+// @ts-expect-error limit is a number
+fuse.search('dune', { limit: '3' });

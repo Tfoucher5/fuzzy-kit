@@ -20,6 +20,18 @@ stringSimilarity.findBestMatch('healed', ['edward', 'sealed', 'theatre'])
 
 For new code, prefer the main API: it handles case, accents, punctuation, typos, word order, missing spaces and numbers written in words, and scores from 0 to 100.
 
+## Replacing Fuse.js
+
+`fuzzy-toolkit/fuse` has the Fuse.js API, with fuzzy-toolkit doing the matching. Change the import only:
+
+```js
+import Fuse from 'fuzzy-toolkit/fuse' // before: import Fuse from 'fuse.js'
+const fuse = new Fuse(books, { keys: ['title', 'author.name'], includeScore: true })
+fuse.search('jon', { limit: 5 }) // [{ item, refIndex, score }], score 0 = perfect, like Fuse
+```
+
+Not supported: extended/logical search, `getFn`, `sortFn`. `threshold` (0 to 1) maps to `100 * (1 - threshold)`, and the default is 70, not Fuse's 0.6.
+
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
