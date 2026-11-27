@@ -11,6 +11,9 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+- `fuzzy-toolkit/fuse`: the Fuse.js API (`new Fuse(list, options).search(query)`) on top of fuzzy-toolkit. Change the import, keep the code. On song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster. See [what differs](/api/#fuse-js-compatibility).
+
 ### Fixed
 - `npx fuzzy-toolkit ai-setup` on Windows: a Cursor rule written by 2.5.0 and checked out with CRLF line ends was taken for a hand-edited file and left as is. It is now updated like on other systems.
 

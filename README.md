@@ -59,6 +59,14 @@ Scores go from 0 to 100, and the default threshold is 80.
 const stringSimilarity = require('fuzzy-toolkit/string-similarity')
 ```
 
+## Coming from Fuse.js
+
+Change the import, keep the code: `fuzzy-toolkit/fuse` has the Fuse.js API (`new Fuse(list, options).search(query)`), with fuzzy-toolkit doing the matching. On song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster. [What differs](https://tfoucher5.github.io/fuzzy-toolkit/api/#fuse-js-compatibility).
+
+```js
+import Fuse from 'fuzzy-toolkit/fuse'
+```
+
 ## Learn more
 
 | | |
