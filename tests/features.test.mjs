@@ -179,3 +179,17 @@ test('cli: --preset and --lang load extensions from files', () => {
   assert.equal(JSON.parse(run(['compare', 'two', '2', '--lang', `fr,${lang}`, '--json'])).score < 100, true);
   assert.throws(() => run(['compare', 'a', 'b', '-p', lang]), /does not export a preset/);
 });
+
+test('cli: map-fields renames columns to a schema', () => {
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const file = joinPath(dir, 'export.csv');
+  writeFileSync(file, 'Prénom;NOM;E-mail;Zip;Notes\nAda;Lovelace;ada@x.io;75001;hi\n');
+  assert.equal(
+    run(['map-fields', file, '--to', 'firstName,lastName,email,postalCode,phone']),
+    'firstName;lastName;email;postalCode;phone;Notes\nAda;Lovelace;ada@x.io;75001;;hi\n',
+  );
+  const schema = joinPath(dir, 'schema.json');
+  writeFileSync(schema, JSON.stringify({ type: 'object', properties: { email: {}, firstName: {} } }));
+  assert.deepEqual(JSON.parse(run(['map-fields', file, '--to', schema, '--drop', '--json'])), [{ email: 'ada@x.io', firstName: 'Ada' }]);
+  assert.throws(() => execFileSync(process.execPath, [cli, 'map-fields', file], { stdio: 'pipe' }), /needs --to/);
+});

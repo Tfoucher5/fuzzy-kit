@@ -14,6 +14,8 @@ The project follows **semantic versioning**:
 ### Added
 
 - `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
+- `repair(value, schema)` repairs a value, typically a model's JSON output, against its JSON Schema: property names matched, enum values corrected, numbers and booleans written as text converted, extra properties dropped where the schema says so. It returns the repaired copy, the list of changes and what could not be repaired. Also an MCP tool, `repair`. See [repair](/api/#repair).
+- `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames a file's columns to your names. See [Command line](/recipes/cli#rename-columns-to-your-names).
 
 ### Performance
 

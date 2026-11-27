@@ -25,7 +25,7 @@ test('mcp: initialize and list tools', () => {
   assert.deepEqual(handle({ jsonrpc: '2.0', id: 9, method: 'ping' }).result, {});
 
   const { tools } = handle({ jsonrpc: '2.0', id: 1, method: 'tools/list' }).result;
-  assert.deepEqual(tools.map((t) => t.name), ['compare', 'closest', 'search', 'dedupe', 'join', 'check', 'find', 'mapFields']);
+  assert.deepEqual(tools.map((t) => t.name), ['compare', 'closest', 'search', 'dedupe', 'join', 'check', 'find', 'mapFields', 'repair']);
   for (const t of tools) {
     assert.ok(t.description.length > 40, t.name);
     assert.equal(t.inputSchema.type, 'object');

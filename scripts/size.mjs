@@ -17,6 +17,7 @@ const cases = {
   'createMatcher (every method)': `export { createMatcher } from './dist/esm/index.js'`,
   'createIndex / search / highlight': `export { createIndex, search, highlight } from './dist/esm/index.js'`,
   'mapFields': `export { mapFields } from './dist/esm/index.js'`,
+  'repair': `export { repair } from './dist/esm/index.js'`,
   'levenshtein / damerau': `export { levenshtein, damerau } from './dist/esm/index.js'`,
   'fuzzy-toolkit/string-similarity': `export * from './dist/esm/compat/string-similarity.js'`,
   'fuzzy-toolkit/fuse': `export { default } from './dist/esm/compat/fuse.js'`,

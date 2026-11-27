@@ -175,6 +175,32 @@ const { mapping, unmatched, missing } = mapFields(Object.keys(row), ['sku', 'nam
 const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in mapping ? [[mapping[k], v]] : [])))
 ```
 
+## repair
+
+::: tip New in 2.8.0
+Not on npm yet: it comes with the next release.
+:::
+
+```ts
+repair<T>(value: unknown, schema: JsonSchema, options?: RepairOptions): RepairResult<T>
+// RepairOptions: { threshold?: number (enum values, default 70); keyThreshold?: number (property names, default 70); synonyms? }
+// RepairResult: { value: T; changes: { path, kind: 'key' | 'value' | 'type' | 'removed', from, to }[]; unresolved: { path, reason }[] }
+```
+
+Repairs a value against the JSON Schema it should follow, typically what a model returned: property names matched to the schema's (with [`mapFields`](#mapfields)), enum values corrected, numbers and booleans written as text converted, a single item wrapped in an array, and properties removed where `additionalProperties` is `false`. It reads `type`, `properties`, `required`, `additionalProperties`, `items` and `enum`, at any depth. The input is never changed: you get a repaired copy, what was changed, and what could not be repaired, to ask the model again only when needed.
+
+```ts
+const schema = {
+  type: 'object',
+  properties: { email: { type: 'string' }, priority: { enum: ['low', 'medium', 'high'] }, age: { type: 'integer' } },
+  required: ['email', 'title'],
+}
+const { value, changes, unresolved } = repair({ 'Email Address': 'ada@x.io', Priority: 'hight', age: '36' }, schema)
+// value      { email: 'ada@x.io', priority: 'high', age: 36 }
+// changes    [{ path: 'Email Address', kind: 'key', from: 'Email Address', to: 'email' }, ...]
+// unresolved [{ path: 'title', reason: 'required, missing' }]
+```
+
 ## diff
 
 ```ts
