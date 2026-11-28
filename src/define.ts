@@ -4,6 +4,7 @@
 
 import { API_VERSION, dropUndefined, fail, mergeOptions, preset } from './core.js';
 import { presetOf } from './presets.js';
+import { checkOptions } from './warn.js';
 import type { Language, LanguageDefinition, NumberWords, PhoneticRule, PresetDefinition, PresetPack } from './types.js';
 
 const NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -142,6 +143,7 @@ export function definePreset(definition: PresetDefinition): PresetPack {
   const what = `Preset "${name}"`;
   if (typeof options !== 'object' || options === null) fail(what, '"options" must be an object.');
   if ('preset' in options) fail(what, 'use "extends" instead of "options.preset".');
+  checkOptions(options);
   if (
     options.stripPatterns !== undefined &&
     (!Array.isArray(options.stripPatterns) || options.stripPatterns.some((re) => !(re instanceof RegExp)))

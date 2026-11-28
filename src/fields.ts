@@ -33,10 +33,10 @@ export interface MapFieldsOptions {
 const SYNONYMS: Record<string, string[]> = {
   'postal code': ['zip', 'zipcode', 'postcode', 'postalcode', 'cp', 'plz'],
   phone: ['tel', 'telephone', 'mobile', 'cell', 'cellphone', 'phone number', 'telefono', 'telefon'],
-  email: ['e mail', 'mail', 'courriel', 'email address'],
+  email: ['e mail', 'mail', 'courriel', 'email address', 'correo', 'correo electronico'],
   'date of birth': ['dob', 'birthdate', 'birthday', 'birth date', 'date de naissance'],
-  'first name': ['fname', 'firstname', 'given name', 'forename', 'prenom'],
-  'last name': ['lname', 'lastname', 'surname', 'family name', 'nom'],
+  'first name': ['fname', 'firstname', 'given name', 'forename', 'prenom', 'nombre'],
+  'last name': ['lname', 'lastname', 'surname', 'family name', 'nom', 'apellido', 'apellidos'],
   quantity: ['qty', 'quantite', 'cantidad'],
   amount: ['amt', 'montant'],
   address: ['addr', 'adresse', 'street address', 'direccion'],

@@ -224,3 +224,12 @@ test('MCP registry: server.json agrees with package.json', async () => {
   assert.equal(server.packages[0].identifier, pkg.name);
   assert.deepEqual(server.packages[0].packageArguments, [{ type: 'positional', value: 'mcp' }]);
 });
+
+test('warnings: weights and thresholds out of range, typos in a preset', async () => {
+  const { definePreset, mapFields } = await import('../dist/esm/index.js');
+  assert.match(warnings(() => search('emma', [{ b: 'emma' }], { keys: [{ name: 'b', weight: 5 }] }))[0], /weight of key "b" is 5/);
+  assert.match(warnings(() => isMatch('a', 'b', { threshold: 150 }))[0], /outside 0-100/);
+  assert.match(warnings(() => definePreset({ name: 'typo-test', options: { tresholds: 5 } }))[0], /Unknown option "tresholds"/);
+  assert.deepEqual(warnings(() => search('a', [{ b: 'a' }], { keys: [{ name: 'b', weight: 0.5 }] })), []);
+  assert.deepEqual(mapFields(['Nombre', 'Apellido', 'Correo'], ['firstName', 'lastName', 'email']).mapping, { Nombre: 'firstName', Apellido: 'lastName', Correo: 'email' });
+});
