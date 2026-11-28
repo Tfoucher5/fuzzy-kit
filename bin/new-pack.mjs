@@ -219,8 +219,13 @@ export function createPack(kind, id, { dir, cwd = process.cwd() } = {}) {
 export function main(args) {
   const [kind, id, ...rest] = args;
   const at = rest.indexOf('--dir');
-  if (!kind || kind === '--help' || kind === '-h') {
+  if (kind === '--help' || kind === '-h') {
     console.log(HELP);
+    return;
+  }
+  if (!id) {
+    console.error(HELP);
+    process.exitCode = 1;
     return;
   }
   try {
