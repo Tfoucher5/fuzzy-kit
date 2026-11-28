@@ -133,18 +133,59 @@ export function compileEngine(options: MatchOptions = {}): Engine {
 export function getEngine(options?: MatchOptions): Engine {
   if (!options) return (defaultEngine ??= compileEngine());
   let engine = engineCache.get(options);
-  if (!engine) {
-    if (typeof options !== 'object') {
-      throw new TypeError(
-        `[fuzzy-toolkit] Options must be an object, got ${typeof options} ${JSON.stringify(options)}. ` +
-          'For example { threshold: 80 }, or { keys: ["name"] } to match a property of objects.',
-      );
-    }
-    checkOptions(options);
-    engine = compileEngine(options);
+  if (engine) return engine;
+  // A literal written in the call (`similarity(a, b, { threshold: 90 })`) is a new
+  // object each time: find the engine by what the options say instead.
+  const key = typeof options === 'object' ? contentKey(options) : undefined;
+  engine = key === undefined ? undefined : byContent.get(key);
+  if (engine) {
     engineCache.set(options, engine);
+    return engine;
+  }
+  if (typeof options !== 'object') {
+    throw new TypeError(
+      `[fuzzy-toolkit] Options must be an object, got ${typeof options} ${JSON.stringify(options)}. ` +
+        'For example { threshold: 80 }, or { keys: ["name"] } to match a property of objects.',
+    );
+  }
+  checkOptions(options);
+  engine = compileEngine(options);
+  engineCache.set(options, engine);
+  if (key !== undefined) {
+    if (byContent.size >= 256) byContent.clear();
+    byContent.set(key, engine);
   }
   return engine;
+}
+
+const byContent = new Map<string, Engine>();
+const functionIds = new WeakMap<object, number>();
+let functionCount = 0;
+
+/**
+ * Text that two options objects share when they behave the same: plain data as
+ * JSON, RegExps by source and flags, functions by identity. Undefined when an
+ * option holds anything else (a class instance), so it is never confused.
+ */
+function contentKey(options: object): string | undefined {
+  let plain = true;
+  const key = JSON.stringify(options, function (this: unknown, _name, value: unknown) {
+    // NaN and null, or a hole and undefined, print the same but behave apart.
+    if (typeof value === 'number' && !Number.isFinite(value)) plain = false;
+    if (value === undefined && this !== options) plain = false;
+    if (typeof value === 'function') {
+      let id = functionIds.get(value);
+      if (id === undefined) functionIds.set(value, (id = functionCount++));
+      return { '\0fn': id };
+    }
+    if (value instanceof RegExp) return { '\0re': value.source, flags: value.flags };
+    if (value !== null && typeof value === 'object') {
+      const proto = Object.getPrototypeOf(value);
+      if (proto !== Object.prototype && proto !== Array.prototype && proto !== null) plain = false;
+    }
+    return value;
+  });
+  return plain ? key : undefined;
 }
 
 /**
