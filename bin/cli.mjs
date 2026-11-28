@@ -2,7 +2,7 @@
 // TSV, JSON or plain text files. Run `npx fuzzy-toolkit --help`.
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { createMatcher, dedupe, group, join, mapFields, search, standardize } from '../dist/esm/index.js';
 
@@ -14,7 +14,8 @@ Usage
   fuzzy-toolkit standardize <file>             Rewrite a column with the most common spelling
                                                of each value ("paris", "Pariss" -> "Paris")
   fuzzy-toolkit join    <left> <right>         Add to each left row its best match on the right
-  fuzzy-toolkit search  <query> <file>         Rows matching a query, best first
+  fuzzy-toolkit search  <query> <file>         Rows matching a query, best first (for one
+                                               word in longer texts, add -p search)
   fuzzy-toolkit compare <a> <b>                Score two texts and show how they were read
   fuzzy-toolkit map-fields <file> --to <names> Rename the columns to your names: "E-mail",
                                                "Zip" and "Prénom" become email, postalCode...
@@ -47,6 +48,7 @@ Options
   -l, --limit <n>           search: maximum number of results (default 10)
       --json                Write JSON instead of CSV
   -h, --help                Show this help
+  -v, --version             Show the version
 
 Examples
   npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
@@ -57,6 +59,12 @@ Examples
   npx fuzzy-toolkit standardize contacts.csv -k city > clean.csv
   npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
 `;
+
+// A reader that stops early (| head) closes the pipe: stop quietly.
+process.stdout.on('error', (error) => {
+  if (error.code === 'EPIPE') process.exit(0);
+  throw error;
+});
 
 function fail(message) {
   process.stderr.write(`fuzzy-toolkit: ${message}\nRun "fuzzy-toolkit --help" for usage.\n`);
@@ -129,7 +137,7 @@ function readInput(path) {
     const rows = data.map((item) => (item !== null && typeof item === 'object' ? item : { text: String(item) }));
     const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
     const strings = data.every((item) => item === null || typeof item !== 'object');
-    return { format: 'json', rows, columns, strings };
+    return { format: 'json', rows, columns, strings, path };
   }
   const csv = /\.[ct]sv$/i.test(path);
   if (!csv && (/\.txt$/i.test(path) || !/[,;\t]/.test(text.slice(0, text.indexOf('\n') >>> 0)))) {
@@ -142,8 +150,14 @@ function readInput(path) {
   const { rows: table, delimiter } = parseCsv(text);
   const [header = [], ...body] = table;
   const columns = header.map((name, i) => name.trim() || `column${i + 1}`);
+  const duplicates = [...new Set(columns.filter((name, i) => columns.indexOf(name) !== i))];
+  if (duplicates.length) fail(`"${path}" has duplicate column names: ${duplicates.join(', ')}. Rename them so no data is lost.`);
+  const longer = body.filter((cells) => cells.length > columns.length).length;
+  if (longer) {
+    process.stderr.write(`fuzzy-toolkit: warning: ${longer} row${longer === 1 ? '' : 's'} of "${path}" ha${longer === 1 ? 's' : 've'} more cells than the header; the extra cells were left out\n`);
+  }
   const rows = body.map((cells) => Object.fromEntries(columns.map((name, i) => [name, cells[i] ?? ''])));
-  return { format: 'csv', rows, columns, delimiter };
+  return { format: 'csv', rows, columns, delimiter, path };
 }
 
 function write(rows, columns, input, json) {
@@ -163,6 +177,7 @@ function write(rows, columns, input, json) {
 }
 
 function keysFor(input, wanted, label = 'key') {
+  if (!input.columns.length) fail(`"${input.path}" is empty`);
   const keys = wanted?.length ? wanted : [input.columns[0]];
   for (const key of keys) {
     if (key === undefined || !input.columns.includes(key)) {
@@ -195,6 +210,7 @@ const { values, positionals } = (() => {
         limit: { type: 'string', short: 'l' },
         json: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
+        version: { type: 'boolean', short: 'v' },
       },
     });
   } catch (error) {
@@ -203,6 +219,10 @@ const { values, positionals } = (() => {
 })();
 
 const [command, ...args] = positionals;
+if (values.version) {
+  process.stdout.write(`${JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version}\n`);
+  process.exit(0);
+}
 if (values.help || !command) {
   process.stdout.write(HELP);
   process.exit(0);
@@ -221,6 +241,11 @@ async function loadExtension(spec, kind) {
   try {
     module = await import(url);
   } catch (error) {
+    // Not found from here (not a dependency missing inside the package): a typo in the name.
+    if (error.code === 'ERR_MODULE_NOT_FOUND' && !existsSync(path) && error.message.includes(fileURLToPath(import.meta.url))) {
+      const names = kind === 'preset' ? BUILTIN_PRESETS : [...BUILTIN_LANGUAGES, ...PACKED_LANGUAGES];
+      return fail(`unknown ${kind} "${spec}". Built-in: ${names.join(', ')}; or a ${kind} package or file made with define${kind[0].toUpperCase()}${kind.slice(1)}()`);
+    }
     return fail(`cannot load ${kind} "${spec}": ${error.message}`);
   }
   const found = [module.default, ...Object.values(module)].find((v) => v && v.kind === kind);
@@ -304,6 +329,7 @@ try {
       const limit = values.limit === undefined ? 10 : Number(values.limit);
       if (!Number.isInteger(limit) || limit < 1) fail('--limit must be a positive whole number');
       const matches = search(args[0], input.rows, { ...options, keys, limit });
+      if (!matches.length && !values.preset) process.stderr.write('fuzzy-toolkit: no match; for search-as-you-type try -p search\n');
       const rows = matches.map((m) => ({ score: m.score, ...m.item }));
       write(rows, ['score', ...input.columns], input, values.json);
       break;
@@ -360,5 +386,6 @@ try {
       fail(`unknown command "${command}"`);
   }
 } catch (error) {
+  if (error?.code === 'EPIPE') process.exit(0);
   fail(error instanceof Error ? error.message.replace(/^\[fuzzy-toolkit\] /, '') : String(error));
 }
