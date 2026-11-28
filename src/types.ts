@@ -396,6 +396,16 @@ export interface GroupOptions<T> extends MatchOptions {
    * @default 'fuzzy'
    */
   method?: 'fuzzy' | 'fingerprint';
+  /**
+   * With several keys, two items are duplicates only when every key filled
+   * on both sides matches the same key of the other (name with name, city
+   * with city), and at least one is. Empty values never make a match, so
+   * rows with an empty email are not merged. Without it, the best match of
+   * any two texts decides.
+   * @default false
+   * @since 2.10.0
+   */
+  everyKey?: boolean;
 }
 
 /** Same as `O`, but `keys` is required unless items are strings. */

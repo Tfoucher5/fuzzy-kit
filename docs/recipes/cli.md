@@ -60,6 +60,12 @@ npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
 
 `-k` names the column to compare (the first one by default; repeat it to use several). `-i` ignores a word, such as a legal form. The first row of each group of near-duplicates is kept.
 
+With several `-k` columns, add `--every-key` so each column is compared with the same column and empty cells never make duplicates; add `--exact-numbers` when a number tells rows apart (addresses, invoices):
+
+```sh
+npx fuzzy-toolkit dedupe contacts.csv -k name -k city -k email --every-key --exact-numbers -t 90 > clean.csv
+```
+
 To review before deleting, `group` adds a `group` column instead: rows with the same number are duplicates of each other.
 
 ```sh

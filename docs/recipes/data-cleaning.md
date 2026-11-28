@@ -29,6 +29,14 @@ dedupe(['10 Downing Street', '11 Downing Street', '10 downing street'], { exactN
 ```
 :::
 
+### Records with several fields
+
+With several `keys`, any two texts that match make a duplicate: two contacts in the same city, a name that matches a company. To compare each field with the same field, and never merge rows on an empty value, add `everyKey: true` (*since 2.10.0*):
+
+```ts
+dedupe(contacts, { keys: ['name', 'city', 'email'], everyKey: true, threshold: 90 })
+```
+
 ## See the groups
 
 `group()` returns every group, in the original order, so you can review before merging.

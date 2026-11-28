@@ -649,12 +649,41 @@ function textKey(entry: Entry<unknown>): string {
   return key;
 }
 
+/** The non-empty texts of an entry, by key (the joined text left out). */
+function byKey(entry: Entry<unknown>): Map<string, Prepared[]> {
+  const out = new Map<string, Prepared[]>();
+  const count = entry.joined ? entry.prepared.length - 1 : entry.prepared.length;
+  for (let i = 0; i < count; i += 1) {
+    const p = entry.prepared[i]!;
+    if (p.text === '') continue;
+    const name = entry.keys[i] ?? '';
+    const list = out.get(name);
+    if (list) list.push(p);
+    else out.set(name, [p]);
+  }
+  return out;
+}
+
+/** `everyKey`: each key filled on both sides matches its own key, and at least one is. */
+function everyKeyMatches(a: Map<string, Prepared[]>, b: Map<string, Prepared[]>, engine: Engine, threshold: number): boolean {
+  let compared = false;
+  for (const [name, left] of a) {
+    const right = b.get(name);
+    if (!right) continue;
+    compared = true;
+    if (!left.some((x) => right.some((y) => scorePrepared(x, y, engine, undefined, threshold) >= threshold))) return false;
+  }
+  return compared;
+}
+
 function cluster<T>(
   entries: readonly Entry<T>[],
   engine: Engine,
   threshold: number,
   method: 'fuzzy' | 'fingerprint' = 'fuzzy',
+  everyKey = false,
 ): T[][] {
+  if (everyKey && method === 'fuzzy') return clusterEveryKey(entries, engine, threshold);
   if (method === 'fingerprint') {
     const byKey = new Map<string, T[]>();
     for (const entry of entries) {
@@ -708,6 +737,30 @@ function cluster<T>(
       groups.push((home = { leader: entry, members: [entry.item] }));
     }
     seen.set(key, home);
+  }
+  return groups.map((g) => g.members);
+}
+
+function clusterEveryKey<T>(entries: readonly Entry<T>[], engine: Engine, threshold: number): T[][] {
+  const groups: { leader: Map<string, Prepared[]>; members: T[] }[] = [];
+  // Any pair of texts reaching the threshold is needed for every key to: blocking stays exact.
+  const blocker = canBlock(engine, threshold) ? createBlocker(entries.map((e) => e.prepared), threshold) : null;
+  for (const entry of entries) {
+    const texts = byKey(entry);
+    let home: (typeof groups)[number] | undefined;
+    if (texts.size > 0) {
+      const ids = blocker ? blocker.candidates(entry.prepared) : null;
+      const count = ids ? ids.length : groups.length;
+      for (let g = 0; g < count && !home; g += 1) {
+        const group = groups[ids ? ids[g]! : g]!;
+        if (everyKeyMatches(texts, group.leader, engine, threshold)) home = group;
+      }
+    }
+    if (home) home.members.push(entry.item);
+    else {
+      blocker?.add(groups.length, entry.prepared);
+      groups.push({ leader: texts, members: [entry.item] });
+    }
   }
   return groups.map((g) => g.members);
 }
@@ -1107,7 +1160,7 @@ export function dedupe<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOption
 export function group<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOptions<T>>): T[][] {
   const options = args[0] as GroupOptions<T> | undefined;
   const engine = getEngine(options);
-  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold, options?.method);
+  return cluster(buildEntries(items, options?.keys, engine), engine, engine.options.threshold, options?.method, options?.everyKey === true);
 }
 
 /**
