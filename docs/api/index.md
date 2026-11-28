@@ -397,6 +397,30 @@ const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'arti
 
 `fuzzySearch(items, query, options)` is a store: `items` and `query` can be stores or plain values, and the list is indexed again only when the items change. It uses the store contract only, so it works in Svelte 3, 4 and 5 (with runes, read it with `$results` or `fromStore`), and with any library that has `subscribe`. `segments(text, ranges)` cuts a text into the parts to show, the matching ones flagged.
 
+## Web Worker
+
+*Since 2.9.0.*
+
+For lists of hundreds of thousands of items, search in a worker: typing stays smooth whatever the list. The worker file is one line, yours, so every bundler handles it (Vite, webpack, Parcel, esbuild with a plugin):
+
+```ts
+// search-worker.js
+import 'fuzzy-toolkit/worker/serve'
+```
+
+```ts
+import { createWorkerIndex } from 'fuzzy-toolkit/worker'
+
+const worker = new Worker(new URL('./search-worker.js', import.meta.url), { type: 'module' })
+const index = createWorkerIndex(worker, products, { keys: ['name', 'brand'], preset: 'search' })
+
+const results = await index.search(query, { limit: 20, includeMatches: true }) // the original items, as with createIndex
+index.setItems(updatedProducts) // same options
+index.terminate()
+```
+
+The items and options are copied to the worker once, so `keys` must be names or paths, not a function. Results are the same as `createIndex(items, options).search(query, options)` on the page. The page itself loads 0.5 kB: the matching code is only in the worker. Outside browsers, `serve(port)` from `fuzzy-toolkit/worker/serve` answers on any `MessagePort`, such as Node's `worker_threads`.
+
 ## Raw algorithms
 
 No normalization, plain strings in:

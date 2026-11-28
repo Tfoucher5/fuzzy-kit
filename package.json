@@ -58,7 +58,9 @@
     "vue",
     "svelte",
     "vue-composable",
-    "svelte-store"
+    "svelte-store",
+    "web-worker",
+    "worker"
   ],
   "license": "MIT",
   "author": "Theo Foucher",
@@ -138,6 +140,26 @@
       "require": {
         "types": "./dist/cjs/svelte.d.ts",
         "default": "./dist/cjs/svelte.js"
+      }
+    },
+    "./worker": {
+      "import": {
+        "types": "./dist/esm/worker.d.ts",
+        "default": "./dist/esm/worker.js"
+      },
+      "require": {
+        "types": "./dist/cjs/worker.d.ts",
+        "default": "./dist/cjs/worker.js"
+      }
+    },
+    "./worker/serve": {
+      "import": {
+        "types": "./dist/esm/worker-serve.d.ts",
+        "default": "./dist/esm/worker-serve.js"
+      },
+      "require": {
+        "types": "./dist/cjs/worker-serve.d.ts",
+        "default": "./dist/cjs/worker-serve.js"
       }
     },
     "./lang/en": {

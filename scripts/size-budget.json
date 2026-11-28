@@ -14,5 +14,7 @@
   "fuzzy-toolkit/react": 13.6,
   "fuzzy-toolkit/vue": 13.8,
   "fuzzy-toolkit/svelte": 13.7,
+  "fuzzy-toolkit/worker": 0.6,
+  "fuzzy-toolkit/worker/serve": 13.5,
   "one extra language (lang/es)": 0.8
 }

@@ -204,3 +204,11 @@ const cutParts: { text: string; match: boolean }[] = cut('Bohemian', [[0, 5]]);
 // standardize: strings in, strings out.
 import { standardize } from '../src/index.js';
 const standard: string[] = standardize(['Paris', 'paris'], { threshold: 85 });
+
+// Web Worker index.
+import { createWorkerIndex } from '../src/worker.js';
+import { serve } from '../src/worker-serve.js';
+declare const someWorker: { postMessage(m: unknown): void; addEventListener(t: 'message', l: (e: { data: unknown }) => void): void };
+const remoteIndex = createWorkerIndex(someWorker, [{ name: 'Paris' }], { keys: ['name'], preset: 'search' });
+const remoteName: Promise<string | undefined> = remoteIndex.search('pari', { limit: 5 }).then((r) => r[0]?.item.name);
+serve(someWorker);
