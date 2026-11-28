@@ -11,6 +11,38 @@ Dedupe a customer export, match two spreadsheets, or try a score, without writin
 npx fuzzy-toolkit --help
 ```
 
+## Clean a messy export, end to end
+
+*`map-fields` since 2.8.0, `standardize` since 2.9.0.*
+
+Commands read from standard input with `-`, so they chain. This export has French headers, cities and companies typed three ways, and the same people twice:
+
+```text
+Prénom;NOM;E-mail;Ville;Société
+Ada;Lovelace;ada@x.io;Paris;ACME Inc
+ada;lovelace;ada@x.io;paris;Acme
+Alan;Turing;alan@y.io;Londres;Globex Ltd
+Grace;Hopper;grace@z.io;Pariss;acme inc.
+Alan;Turing;alan@y.io;londres;Globex
+```
+
+Rename the columns, give each city and company one spelling, then keep one row per email:
+
+```sh
+npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,city,company \
+  | npx fuzzy-toolkit standardize - -k city -k company -i inc -i ltd \
+  | npx fuzzy-toolkit dedupe - -k email > clean.csv
+```
+
+```text
+firstName;lastName;email;city;company
+Ada;Lovelace;ada@x.io;Paris;ACME Inc
+Alan;Turing;alan@y.io;Londres;Globex Ltd
+Grace;Hopper;grace@z.io;Paris;ACME Inc
+```
+
+The separator of the file (here `;`, as Excel writes it in French) is kept. What each step changed goes to the terminal, not to the file.
+
 ## Input and output
 
 - **CSV**, with commas, semicolons (Excel in French) or tabs, detected from the first line. The first line holds column names.
