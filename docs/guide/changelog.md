@@ -16,6 +16,11 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Added
+
+- `segments(text, ranges)` is exported from `fuzzy-toolkit` too (it was only in `/vue` and `/svelte`): it cuts a text into the parts to render from the `ranges` of a result, in any framework.
+- The [Playground](/playground) has `findAll` and `repair` tabs.
+
 ### Performance
 
 - `dedupe` and `group` are about 1.7 times faster on large lists (20,000 song titles: 9.2 to 5.4 s): before scoring a candidate, the letters one text has and the other lacks give a lower bound of the edits needed. Results are identical.

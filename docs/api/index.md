@@ -167,6 +167,12 @@ highlight('Stairway to Heaven - Led Zeppelin', 'zep stair')
 //  { text: 'Zep', match: true }, { text: 'pelin', match: false }]
 ```
 
+Already have the `ranges` of a result (`includeMatches`, `findAll`)? `segments(text, ranges)` cuts the text the same way, ready to render *(since 2.9.0)*:
+
+```ts
+segments('Bohemian Rhapsody', [[0, 5]]) // [{ text: 'Bohem', match: true }, { text: 'ian Rhapsody', match: false }]
+```
+
 ## dedupe / group
 
 ```ts
