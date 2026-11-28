@@ -16,6 +16,12 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.9.0
+
+Scores, verdicts and defaults are unchanged. Four bugs are fixed, one of them in `repair` with untrusted input: update if you use it.
+
 ### Added
 
 - `standardize(values)` replaces each value by the most common spelling among its near-duplicates ("paris", "Pariss" → "Paris"), to clean a column in one call. Also `npx fuzzy-toolkit standardize file.csv -k column` and an MCP tool. See [standardize](/api/#standardize).
