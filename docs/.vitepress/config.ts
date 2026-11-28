@@ -100,6 +100,7 @@ export default defineConfig({
           { text: 'Extensions directory', link: '/extensions' },
           { text: 'How it works', link: '/guide/how-it-works' },
           { text: 'Compared with other libraries', link: '/guide/benchmarks' },
+          { text: 'Coming from another library', link: '/guide/coming-from' },
           { text: 'Upgrading from v1', link: '/guide/migration' },
           { text: 'Changelog', link: '/guide/changelog' }
         ]
