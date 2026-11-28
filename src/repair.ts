@@ -39,7 +39,8 @@ export interface RepairOptions {
   synonyms?: MapFieldsOptions['synonyms'];
 }
 
-const BOOLEANS: Record<string, boolean> = { true: true, yes: true, y: true, on: true, '1': true, false: false, no: false, n: false, off: false, '0': false };
+// A Map, not an object: "constructor" or "__proto__" must not read as a boolean.
+const BOOLEANS = new Map<string, boolean>([['true', true], ['yes', true], ['y', true], ['on', true], ['1', true], ['false', false], ['no', false], ['n', false], ['off', false], ['0', false]]);
 // Each part can only start one way, so a long string of digits cannot backtrack.
 const NUMBER = /^\s*-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?\s*$/i;
 
@@ -80,10 +81,11 @@ function convert(value: unknown, types: readonly string[]): { to: unknown } | un
   for (const type of types) {
     if ((type === 'number' || type === 'integer') && typeof value === 'string' && NUMBER.test(value)) {
       const n = Number(value);
-      if (type === 'number' || Number.isInteger(n)) return { to: n };
+      // "1e400" is not a number JSON can hold.
+      if (Number.isFinite(n) && (type === 'number' || Number.isInteger(n))) return { to: n };
     }
     if (type === 'boolean' && typeof value === 'string') {
-      const b = BOOLEANS[value.trim().toLowerCase()];
+      const b = BOOLEANS.get(value.trim().toLowerCase());
       if (b !== undefined) return { to: b };
     }
     if (type === 'string' && (typeof value === 'number' || typeof value === 'boolean')) return { to: String(value) };

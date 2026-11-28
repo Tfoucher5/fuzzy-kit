@@ -163,3 +163,15 @@ test('fuse: unsupported options are warned about', () => {
   }
   assert.match(warnings.join('\n'), /useTokenSearch/);
 });
+
+test('fuse: limit with shouldSort false keeps the first matches of the list; limit 0 gives none, like fuse.js', () => {
+  const list = ['applx', 'apple', 'appla'];
+  for (const options of [{ shouldSort: false }, {}]) {
+    for (const limit of [0, 1, 2]) {
+      const ours = new Fuse(list, options).search('apple', { limit }).map((r) => r.refIndex);
+      const theirs = new RealFuse(list, options).search('apple', { limit }).map((r) => r.refIndex);
+      if (options.shouldSort === false || limit === 0) assert.deepEqual(ours, theirs, JSON.stringify({ options, limit }));
+      else assert.equal(ours.length, theirs.length);
+    }
+  }
+});
