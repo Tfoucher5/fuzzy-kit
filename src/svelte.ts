@@ -71,7 +71,9 @@ export function fuzzySearch<T>(
   };
 
   return {
-    subscribe(run) {
+    subscribe(callback) {
+      // Each subscription is its own entry, even with the same callback twice.
+      const run = (value: Match<T>[]): void => callback(value);
       listeners.add(run);
       if (listeners.size === 1) {
         // The first subscriber starts listening to the inputs, like derived(): the

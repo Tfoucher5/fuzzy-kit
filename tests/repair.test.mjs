@@ -52,3 +52,15 @@ test('repair: options', () => {
   assert.deepEqual(repair({ ref: 'A1' }, { properties: { sku: {} } }, { synonyms: { sku: ['ref'] } }).value, { sku: 'A1' });
   assert.deepEqual(repair({ colour: 'red' }, { properties: { color: {} } }, { keyThreshold: 95 }).value, { colour: 'red' });
 });
+
+test('repair: words that are object properties are not booleans; huge numbers stay text', () => {
+  const schema = { type: 'object', properties: { ok: { type: 'boolean' }, n: { type: 'number' } } };
+  for (const word of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+    const { value, changes } = repair({ ok: word }, schema);
+    assert.equal(value.ok, word, word);
+    assert.deepEqual(changes, []);
+  }
+  assert.equal(repair({ n: '1e400' }, schema).value.n, '1e400');
+  assert.equal(repair({ n: '-1e400' }, schema).value.n, '-1e400');
+  assert.equal(repair({ n: '1e3' }, schema).value.n, 1000);
+});

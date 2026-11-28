@@ -100,3 +100,19 @@ test('segments: also exported from the main entry point', async () => {
   const main = await import('../dist/esm/index.js');
   assert.equal(main.segments, segments);
 });
+
+test('svelte: the same callback subscribed twice is two subscriptions', () => {
+  let open = 0;
+  const query = { subscribe: (run) => (open++, run('a'), () => open--) };
+  const store = fuzzySearch(['a', 'b'], query);
+  const seen = [];
+  const run = (value) => seen.push(value);
+  const stop1 = store.subscribe(run);
+  const stop2 = store.subscribe(run);
+  assert.equal(open, 1, 'the inputs are listened to once');
+  assert.equal(seen.length, 2);
+  stop1();
+  assert.equal(open, 1, 'still listening for the second one');
+  stop2();
+  assert.equal(open, 0, 'nothing left open');
+});

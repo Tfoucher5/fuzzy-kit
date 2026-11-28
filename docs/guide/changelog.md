@@ -23,6 +23,13 @@ The project follows **semantic versioning**:
 - `segments(text, ranges)` is exported from `fuzzy-toolkit` too (it was only in `/vue` and `/svelte`): it cuts a text into the parts to render from the `ranges` of a result, in any framework.
 - The [Playground](/playground) has `findAll` and `repair` tabs.
 
+### Fixed
+
+- `repair`: a value of "constructor" or "__proto__" where the schema expects a boolean, was turned into a function or into `Object.prototype`. It is now left as it is. Untrusted model output could reach a shared object this way: update if you pass it to `repair`.
+- `repair`: a number too large for JSON ("1e400") is no longer converted to `Infinity`.
+- `fuzzy-toolkit/fuse`: with `shouldSort: false`, `limit` now keeps the first matches in the list, and `limit: 0` returns none, as in Fuse.js.
+- `fuzzy-toolkit/svelte`: subscribing the same callback twice no longer leaves a subscription to the inputs open after both unsubscribe.
+
 ### Performance
 
 - `dedupe` and `group` are about 1.7 times faster on large lists (20,000 song titles: 9.2 to 5.4 s): before scoring a candidate, the letters one text has and the other lacks give a lower bound of the edits needed. Results are identical.

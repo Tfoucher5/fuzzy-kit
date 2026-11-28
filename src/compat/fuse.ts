@@ -343,12 +343,15 @@ export class Fuse<T> {
   /** Items matching `query`, best first. A query object is a logical query (`{ $and: [...] }`). */
   search(query: string | Expression, options: FuseSearchOptions = {}): FuseResult<T>[] {
     const { includeScore, includeMatches, shouldSort, useExtendedSearch, sortFn } = this.options;
-    const limit = options.limit !== undefined && options.limit > 0 ? options.limit : undefined;
+    // Like Fuse: any limit from 0 cuts the results, after sorting.
+    const limit = typeof options.limit === 'number' && options.limit > -1 ? Math.floor(options.limit) : undefined;
     const withMatches = !!includeMatches;
     let hits: [number, Hit][];
     if (typeof query === 'string' && !useExtendedSearch) {
       // Plain search: fuzzy-toolkit's ranking, limited while searching.
-      const matches = this.index.search(query, { limit: sortFn ? undefined : limit, includeMatches: withMatches });
+      // The index keeps the best ones; unsorted, Fuse keeps the first ones in the list.
+      const early = sortFn || shouldSort === false ? undefined : limit;
+      const matches = this.index.search(query, { limit: early, includeMatches: withMatches });
       hits = matches.map((m) => [m.index, { score: m.score, matches: this.matchesOf(m) }]);
     } else {
       if (typeof query !== 'string' && (query === null || typeof query !== 'object')) {
