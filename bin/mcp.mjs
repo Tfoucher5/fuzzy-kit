@@ -135,11 +135,15 @@ const TOOLS = [
     'dedupe',
     'Remove near-duplicates',
     'Finds near-duplicates in a list ("Jean Dupont" / "Dupont Jean" / "jean dupond") and returns the list without them, keeping the first of each, plus the groups that were merged so you can review them.',
-    { items: TEXT_LIST('The list to clean: strings, or objects with "keys".'), keys: KEYS },
+    {
+      items: TEXT_LIST('The list to clean: strings, or objects with "keys".'),
+      keys: KEYS,
+      everyKey: { type: 'boolean', description: 'With several keys, rows are duplicates only when each key filled on both sides matches the same key (name with name, city with city), and empty values never match. Use it for records (CRM, contacts). Default false.' },
+    },
     ['items'],
     (args) => {
       const keys = keysFor(args.items, args.keys);
-      const groups = group(args.items, { ...optionsFrom(args), keys });
+      const groups = group(args.items, { ...optionsFrom(args), keys, everyKey: args.everyKey === true });
       return {
         unique: groups.map((g) => g[0]),
         removed: args.items.length - groups.length,

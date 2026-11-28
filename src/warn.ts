@@ -20,7 +20,7 @@ const KNOWN_OPTIONS = new Set([
   'caseSensitive', 'accentSensitive', 'punctuation', 'strip', 'ignoreWords', 'replace', 'numbers', 'languages',
   'stopwords', 'stripPatterns',
   // Per-function options
-  'closeThreshold', 'limit', 'keys', 'includeMatches', 'method', 'left', 'right', 'unique',
+  'closeThreshold', 'limit', 'keys', 'includeMatches', 'method', 'left', 'right', 'unique', 'everyKey',
 ]);
 
 /** Names other libraries use (Fuse.js, fuzzball, rapidfuzz...), with what to write here. */

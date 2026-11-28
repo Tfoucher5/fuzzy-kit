@@ -45,6 +45,8 @@ Options
                             package or file made with defineLanguage()
       --phonetic            Also match texts that sound the same
       --exact-numbers       Never match texts whose numbers differ ("10 Main St", "11 Main St")
+      --every-key           dedupe, group: with several -k, each column must match its own
+                            column, and empty cells never match
   -i, --ignore <word>       Word to ignore (repeatable), e.g. -i inc -i ltd
   -l, --limit <n>           search: maximum number of results (default 10)
       --json                Write JSON instead of CSV
@@ -208,6 +210,7 @@ const { values, positionals } = (() => {
         lang: { type: 'string', multiple: true },
         phonetic: { type: 'boolean' },
         'exact-numbers': { type: 'boolean' },
+        'every-key': { type: 'boolean' },
         ignore: { type: 'string', short: 'i', multiple: true },
         limit: { type: 'string', short: 'l' },
         json: { type: 'boolean' },
@@ -297,9 +300,9 @@ try {
       const input = readInput(args[0]);
       const keys = keysFor(input, values.key);
       if (command === 'dedupe') {
-        write(dedupe(input.rows, { ...options, keys }), input.columns, input, values.json);
+        write(dedupe(input.rows, { ...options, keys, everyKey: values['every-key'] }), input.columns, input, values.json);
       } else {
-        const groups = group(input.rows, { ...options, keys });
+        const groups = group(input.rows, { ...options, keys, everyKey: values['every-key'] });
         const id = new Map();
         groups.forEach((members, i) => members.forEach((row) => id.set(row, i + 1)));
         const rows = input.rows.map((row) => ({ group: id.get(row), ...row }));

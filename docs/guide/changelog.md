@@ -21,6 +21,7 @@ Scores and defaults are unchanged. Two results change because they were wrong; s
 ### Added
 
 - `exactNumbers: true`: texts match only when they hold the same numbers in the same order, so `10 Downing Street` and `11 Downing Street`, `Apollo 11` and `Apollo 13` or two dates stay apart. For cleaning addresses, product models, invoices. Also `--exact-numbers` on the command line and an `exactNumbers` argument of the MCP tools. See [Options](/guide/options#matching).
+- `everyKey: true` for `dedupe` and `group`: with several keys, each key filled on both sides must match the same key of the other item, and empty values never match. Without it, two contacts in the same city, or rows with an empty email, are merged. Also `--every-key` on the command line and an `everyKey` argument of the MCP `dedupe` tool. See [dedupe](/api/#dedupe-group).
 - `fuzzy-toolkit --version`.
 - `createWorkerIndex` takes a Node `worker_threads` Worker as it is.
 

@@ -180,6 +180,21 @@ dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 ```
 
+The first item of each group is kept. `method: 'fingerprint'` groups by [fingerprint](#fingerprint), instantly.
+
+With several `keys`, two items are near-duplicates as soon as any two of their texts match, even from different keys. For records, add `everyKey: true` (*since 2.10.0*): each key filled on both sides must match the same key of the other item, and empty values never match.
+
+```ts
+const contacts = [
+  { name: 'Jean Dupont', city: 'Paris', email: '' },
+  { name: 'Société Générale', city: 'Paris', email: '' },
+  { name: 'jean dupond', city: 'paris', email: '' },
+]
+dedupe(contacts, { keys: ['name', 'city'] }).length                  // 1: the shared city is enough
+dedupe(contacts, { keys: ['name', 'city'], everyKey: true }).length  // 2
+dedupe(contacts, { keys: 'email', everyKey: true }).length           // 3: empty emails are not duplicates
+```
+
 ## standardize
 
 *Since 2.9.0.*
