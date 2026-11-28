@@ -212,3 +212,9 @@ declare const someWorker: { postMessage(m: unknown): void; addEventListener(t: '
 const remoteIndex = createWorkerIndex(someWorker, [{ name: 'Paris' }], { keys: ['name'], preset: 'search' });
 const remoteName: Promise<string | undefined> = remoteIndex.search('pari', { limit: 5 }).then((r) => r[0]?.item.name);
 serve(someWorker);
+
+// Dotted paths deeper than the checked depth are accepted: they work at runtime.
+declare const deep: { a: { b: { c: { d: { e: string; n: number } } } } }[];
+search('x', deep, { keys: ['a.b.c.d.e', 'a.b.c.d.e.f.g'] });
+// @ts-expect-error the checked levels still reject unknown properties
+search('x', deep, { keys: ['a.b.x.d.e'] });
