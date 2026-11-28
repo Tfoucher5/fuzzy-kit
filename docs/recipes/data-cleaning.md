@@ -15,8 +15,19 @@ import { dedupe } from 'fuzzy-toolkit'
 dedupe(['Hey Jude', 'hey jude - Remastered 2015', 'Let It Be'], { preset: 'music' })
 // ['Hey Jude', 'Let It Be']
 
-dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'] })
+dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'], threshold: 90 })
 ```
+
+The default threshold, 80, is made to compare two values. To remove duplicates from a large list, start at 90: distinct names that share most of their words (`Iron Peak Pharmaceuticals`, `Prime Peak Pharmaceuticals`) match at 80.
+
+::: warning Numbers
+A number counts like any other character, so `10 Downing Street` and `11 Downing Street`, or `iPhone 14` and `iPhone 15`, are near-duplicates. When a number tells records apart (addresses, models, invoices, dates), add `exactNumbers: true` (*since 2.10.0*):
+
+```ts
+dedupe(['10 Downing Street', '11 Downing Street', '10 downing street'], { exactNumbers: true })
+// ['10 Downing Street', '11 Downing Street']
+```
+:::
 
 ## See the groups
 

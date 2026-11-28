@@ -38,6 +38,7 @@ A built-in preset does not change within a major version: what it sets in 2.x st
 | `acronyms` | `false` (`true` with the `search` preset) | A single word may be the initials of the other text: `nyc` = `New York City`, one typo allowed from 3 letters on. Scores 90, or 80 with a typo. In lists, only the query can be the acronym. |
 | `substring` | `false` | Like `partial`, and a match may also start inside a word: `phone` finds `iPhone 15` and `Smartphone`, `ville` finds `Belleville`. Turns `partial` on. A match from the start of a word still ranks first (inside a word counts 95 %). For search-as-you-type over product names, file names, codes. |
 | `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
+| `exactNumbers` | `false` | Texts match only when they hold the same numbers in the same order: `10 Downing Street` and `11 Downing Street`, `Apollo 11` and `Apollo 13`, `2024-01-05` and `2024-05-01` score 0. Numbers in words count as digits. For addresses, product models, invoices, dates. *Since 2.10.0.* |
 | `algorithm` | `'smart'` | See [How it works](/guide/how-it-works#algorithms). |
 
 ## Normalization
@@ -71,7 +72,10 @@ A rule never empties a text: `(Intro)` stays `intro`.
 | --- | --- |
 | 95+ | Same text, maybe one typo in a long one |
 | 85 | A typo or two, good for strict answers |
-| **80** | Default: forgiving but rarely wrong |
+| 90 | Removing duplicates: names that share most of their words (`Iron Peak Pharmaceuticals`, `Prime Peak Pharmaceuticals`) still match at 80 |
+| **80** | Default: forgiving, good to compare two values or match two lists |
 | 70 | Loose, good for search |
+
+A number is a character like any other: `10 Downing Street` and `11 Downing Street` score above 90. When a number tells records apart, turn on `exactNumbers`.
 
 Short texts move fast: one typo in a 4-letter word already costs 25 points. Use `check()`'s `close` verdict to be kind without accepting wrong answers.

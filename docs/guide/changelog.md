@@ -16,6 +16,29 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+Scores and defaults are unchanged. Two results change because they were wrong; see **Behavior change**.
+
+### Added
+
+- `exactNumbers: true`: texts match only when they hold the same numbers in the same order, so `10 Downing Street` and `11 Downing Street`, `Apollo 11` and `Apollo 13` or two dates stay apart. For cleaning addresses, product models, invoices. Also `--exact-numbers` on the command line and an `exactNumbers` argument of the MCP tools. See [Options](/guide/options#matching).
+- `fuzzy-toolkit --version`.
+- `createWorkerIndex` takes a Node `worker_threads` Worker as it is.
+
+### Behavior change
+
+- `repair`: a value of the wrong type that cannot be converted (`"abc"` for an integer, `null`, a text where an object is expected) is now listed in `unresolved` (`expected integer, got "abc"`), as the docs said. It was left out, so `if (unresolved.length) askAgain()` accepted invalid data. `required` is now checked on objects whose schema has no `properties`. To ignore type errors as before: `unresolved.filter((u) => !u.reason.startsWith('expected '))`.
+- `fuzzy-toolkit/react`, `/vue` and `/svelte`: with an empty query, each result now has the `text` (and `key`) of its item instead of `''`, so `<Highlight text={r.text}>` shows the list. Scores and order are unchanged.
+
+### Fixed
+
+- Command line: a CSV file with two columns of the same name stops with an error instead of writing one column's values in both. An empty file says so. Rows with more cells than the header are reported on stderr. `| head` no longer prints a stack trace. An unknown preset or language lists the valid names. `new-pack` without a name exits with an error. A `search` without results and without `-p` suggests `-p search` on stderr.
+- A list with holes (`['a', , 'b']`) no longer crashes `search`, `closest`, `createIndex` or `dedupe`: a hole is an `undefined` item.
+- `useFuzzySearch` (React) accepts an `undefined` query, like the Vue and Svelte helpers.
+
+### Performance
+
+- Options written in each call (`similarity(a, b, { ignoreWords })`) no longer compile again every time: equal options share one compiled engine. About 6 times faster in a loop (200,000 calls with `ignoreWords`: 6.1 to 1 s). Results are identical.
+
 ---
 
 ## v2.9.0
