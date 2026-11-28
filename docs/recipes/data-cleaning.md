@@ -54,6 +54,21 @@ const rows = join(orders, customers, { left: 'customerName', right: 'name', uniq
 const unmatched = rows.filter((row) => !row.match)
 ```
 
+## One spelling per value
+
+*Since 2.9.0.*
+
+A column typed by hand has several spellings of the same thing. `standardize` keeps the most common one of each group:
+
+```ts
+import { standardize } from 'fuzzy-toolkit'
+
+const cities = standardize(rows.map((r) => r.city)) // "paris", "PARIS " and "Pariss" become "Paris"
+rows.forEach((row, i) => (row.city = cities[i]))
+```
+
+From the terminal: `npx fuzzy-toolkit standardize contacts.csv -k city > clean.csv`.
+
 ## Map columns to your schema
 
 *Since 2.8.0.*

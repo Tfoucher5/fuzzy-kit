@@ -4,13 +4,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createMatcher, dedupe, group, join, mapFields, search } from '../dist/esm/index.js';
+import { createMatcher, dedupe, group, join, mapFields, search, standardize } from '../dist/esm/index.js';
 
 const HELP = `fuzzy-toolkit: fuzzy matching from the command line
 
 Usage
   fuzzy-toolkit dedupe  <file>                 Remove near-duplicate rows
   fuzzy-toolkit group   <file>                 Add a "group" column numbering near-duplicates
+  fuzzy-toolkit standardize <file>             Rewrite a column with the most common spelling
+                                               of each value ("paris", "Pariss" -> "Paris")
   fuzzy-toolkit join    <left> <right>         Add to each left row its best match on the right
   fuzzy-toolkit search  <query> <file>         Rows matching a query, best first
   fuzzy-toolkit compare <a> <b>                Score two texts and show how they were read
@@ -52,6 +54,7 @@ Examples
   npx fuzzy-toolkit search "bohemian rapsody" songs.csv -k title -k artist
   npx fuzzy-toolkit compare "The Beatles" "beatles" -p music
   npx fuzzy-toolkit dedupe companies.csv -p ./company-names.js --lang fr
+  npx fuzzy-toolkit standardize contacts.csv -k city > clean.csv
   npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
 `;
 
@@ -303,6 +306,26 @@ try {
       const matches = search(args[0], input.rows, { ...options, keys, limit });
       const rows = matches.map((m) => ({ score: m.score, ...m.item }));
       write(rows, ['score', ...input.columns], input, values.json);
+      break;
+    }
+    case 'standardize': {
+      if (args.length !== 1) fail('standardize needs one file');
+      const input = readInput(args[0]);
+      const keys = keysFor(input, values.key);
+      const rows = input.rows.map((row) => ({ ...row }));
+      for (const key of keys) {
+        const before = input.rows.map((row) => String(row[key] ?? ''));
+        const after = standardize(before, options);
+        let changed = 0;
+        after.forEach((value, i) => {
+          if (value !== before[i]) changed += 1;
+          rows[i][key] = value;
+        });
+        // The summary goes to stderr, so the output stays a clean file.
+        process.stderr.write(`${key}: ${changed} value${changed === 1 ? '' : 's'} changed
+`);
+      }
+      write(rows, input.columns, input, values.json);
       break;
     }
     case 'map-fields': {

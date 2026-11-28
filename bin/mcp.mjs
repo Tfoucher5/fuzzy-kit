@@ -6,7 +6,7 @@
 // Messages are JSON-RPC 2.0, one per line. Everything runs in memory: the
 // tools read no file and open no connection.
 import { readFileSync } from 'node:fs';
-import { check, checkAll, closest, compare, find, findAll, group, join, mapFields, repair, search } from '../dist/esm/index.js';
+import { check, checkAll, closest, compare, find, findAll, group, join, mapFields, repair, search, standardize } from '../dist/esm/index.js';
 import de from '../dist/esm/lang/de.js';
 import es from '../dist/esm/lang/es.js';
 import it from '../dist/esm/lang/it.js';
@@ -20,7 +20,7 @@ const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const INSTRUCTIONS = `Fuzzy string matching tools: they forgive typos, accents, case, punctuation, word order, missing spaces and numbers written in words ("two" = "2").
 Scores go from 0 (nothing in common) to 100 (identical once normalized); the default match threshold is 80.
 Use the "music" preset for song titles and artists, "search" for search-as-you-type and prefixes, "strict" for codes and references.
-To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find, findAll, mapFields, repair).`;
+To write code instead, install the library: npm install fuzzy-toolkit (same functions: compare, closest, search, dedupe, join, check, find, findAll, mapFields, repair, standardize).`;
 
 /* ---------------------------------------------------------------------- */
 /* Tools                                                                   */
@@ -144,6 +144,28 @@ const TOOLS = [
         removed: args.items.length - groups.length,
         duplicateGroups: groups.filter((g) => g.length > 1),
       };
+    },
+  ),
+  tool(
+    'standardize',
+    'Standardize spellings',
+    'Replaces each value of a list (a spreadsheet column: cities, companies, product names) by the most common spelling among its near-duplicates: "paris", "PARIS " and "Pariss" become "Paris". Returns the cleaned values in the same order, and each change with how many values it affected.',
+    { values: { type: 'array', items: { type: 'string' }, description: 'The values to clean, such as one column.' } },
+    ['values'],
+    (args) => {
+      const cleaned = standardize(args.values, optionsFrom(args));
+      const counts = new Map();
+      cleaned.forEach((to, i) => {
+        const from = args.values[i];
+        if (from === to) return;
+        const key = JSON.stringify([from, to]);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      });
+      const changes = [...counts].map(([key, count]) => {
+        const [from, to] = JSON.parse(key);
+        return { from, to, count };
+      });
+      return { values: cleaned, changes };
     },
   ),
   tool(

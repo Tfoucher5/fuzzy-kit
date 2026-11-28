@@ -16,6 +16,7 @@ const cases = {
   'check / checkAll (quiz)': `export { check, checkAll } from './dist/esm/index.js'`,
   'createMatcher (every method)': `export { createMatcher } from './dist/esm/index.js'`,
   'createIndex / search / highlight': `export { createIndex, search, highlight } from './dist/esm/index.js'`,
+  'standardize': `export { standardize } from './dist/esm/index.js'`,
   'findAll': `export { findAll } from './dist/esm/index.js'`,
   'mapFields': `export { mapFields } from './dist/esm/index.js'`,
   'repair': `export { repair } from './dist/esm/index.js'`,

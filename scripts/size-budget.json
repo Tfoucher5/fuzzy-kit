@@ -1,9 +1,10 @@
 {
-  "everything": 20.5,
+  "everything": 20.7,
   "similarity / isMatch": 10,
   "check / checkAll (quiz)": 10.6,
   "createMatcher (every method)": 14.9,
   "createIndex / search / highlight": 13.3,
+  "standardize": 12,
   "findAll": 11.6,
   "mapFields": 10.9,
   "repair": 14.6,

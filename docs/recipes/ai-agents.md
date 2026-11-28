@@ -17,6 +17,7 @@ fuzzy-toolkit is built to be used by AI coding assistants and agents as much as 
 | `closest` | "Did you mean…?": the candidates closest to a misspelled query |
 | `search` | Items of a list matching a query, best first (strings or objects with `keys`) |
 | `dedupe` | A list without its near-duplicates, plus the groups that were merged |
+| `standardize` | A column of values with one spelling per near-duplicate ("paris", "Pariss" → "Paris") |
 | `join` | Each item of a list paired with its best match in another |
 | `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms). It is the engine's verdict with the options given, not your app's: an app usually adds its own rules. |
 | `find` | Occurrences of a name inside a longer text, with positions |

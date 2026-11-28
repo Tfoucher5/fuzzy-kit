@@ -193,3 +193,10 @@ test('cli: map-fields renames columns to a schema', () => {
   assert.deepEqual(JSON.parse(run(['map-fields', file, '--to', schema, '--drop', '--json'])), [{ email: 'ada@x.io', firstName: 'Ada' }]);
   assert.throws(() => execFileSync(process.execPath, [cli, 'map-fields', file], { stdio: 'pipe' }), /needs --to/);
 });
+
+test('cli: standardize rewrites a column with the most common spelling', () => {
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const file = joinPath(dir, 'contacts.csv');
+  writeFileSync(file, 'name,city\nAda,Paris\nAlan,paris\nGrace,Pariss\nLinus,Lyon\nMarie,Paris\n');
+  assert.equal(run(['standardize', file, '-k', 'city']), 'name,city\nAda,Paris\nAlan,Paris\nGrace,Paris\nLinus,Lyon\nMarie,Paris\n');
+});

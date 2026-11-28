@@ -180,6 +180,23 @@ dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 ```
 
+## standardize
+
+*Since 2.9.0.*
+
+```ts
+standardize(values: readonly string[], options?: GroupOptions): string[]
+```
+
+Replaces each value by the most common spelling among its near-duplicates (the first one seen on a tie), in a new array of the same length: a spreadsheet column cleaned in one call, like "cluster and merge" in OpenRefine. The groups are those of [`group`](#dedupe-group), with the same options.
+
+```ts
+standardize(['Paris', 'paris', 'Pariss', 'Lyon', 'Paris', 'lyon '])
+// ['Paris', 'Paris', 'Paris', 'Lyon', 'Paris', 'Lyon']
+
+standardize(companies, { ignoreWords: ['inc', 'ltd'] }) // "ACME Inc", "Acme" and "acme inc." become one spelling
+```
+
 ## mapFields
 
 *Since 2.8.0.*

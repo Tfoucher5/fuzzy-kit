@@ -42,6 +42,18 @@ npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key na
 
 Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
 
+## One spelling per value
+
+*Since 2.9.0.*
+
+`standardize` rewrites a column with the most common spelling of each value: "paris", "PARIS" and "Pariss" become "Paris". Repeat `-k` for several columns; how many values changed goes to the terminal.
+
+```sh
+npx fuzzy-toolkit standardize contacts.csv -k city -k company > clean.csv
+# city: 41 values changed
+# company: 7 values changed
+```
+
 ## Rename columns to your names
 
 *Since 2.8.0.*
