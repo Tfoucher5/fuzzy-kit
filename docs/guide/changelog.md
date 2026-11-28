@@ -16,6 +16,10 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+### Performance
+
+- `dedupe` and `group` are about 1.7 times faster on large lists (20,000 song titles: 9.2 to 5.4 s): before scoring a candidate, the letters one text has and the other lacks give a lower bound of the edits needed. Results are identical.
+
 ---
 
 ## v2.8.1
