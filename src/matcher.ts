@@ -274,7 +274,7 @@ function textGetter<T>(keys: KeysOption<T> | undefined): (item: T) => ItemTexts 
     typeof key === 'string' ? { name: key, weight: 1 } : { name: key.name, weight: key.weight ?? 1 },
   ).map((field) => ({ ...field, read: reader(field.name) }));
   for (const { name, weight } of fields) {
-    if (!(weight >= 0 && weight <= 1)) warnOnce(`The weight of key "${name}" is ${weight}: weights go from 0 to 1 (1 by default, lower to rank a key lower).`);
+    if (!(weight >= 0 && weight <= 1)) warnOnce(`The weight of key "${name}" is ${weight}: use 0 to 1.`);
   }
   return (item) => {
     const out: ItemTexts = { texts: [], weights: [], keys: [] };

@@ -7,14 +7,14 @@
   "standardize": 12.5,
   "findAll": 11.8,
   "mapFields": 11.2,
-  "repair": 14.9,
+  "repair": 15,
   "levenshtein / damerau": 1.5,
   "fuzzy-toolkit/string-similarity": 1,
   "fuzzy-toolkit/fuse": 15.9,
-  "fuzzy-toolkit/react": 13.8,
-  "fuzzy-toolkit/vue": 13.9,
+  "fuzzy-toolkit/react": 13.9,
+  "fuzzy-toolkit/vue": 14,
   "fuzzy-toolkit/svelte": 13.9,
   "fuzzy-toolkit/worker": 0.6,
-  "fuzzy-toolkit/worker/serve": 13.7,
+  "fuzzy-toolkit/worker/serve": 13.8,
   "one extra language (lang/es)": 0.8
 }

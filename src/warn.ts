@@ -83,7 +83,7 @@ export function checkOptions(options: object): void {
   }
   const threshold = (options as { threshold?: unknown }).threshold;
   if (typeof threshold === 'number' && (threshold < 0 || threshold > 100)) {
-    warnOnce(`threshold ${threshold} is outside 0-100: scores go from 0 to 100, so ${threshold < 0 ? 'everything matches' : 'nothing matches'}.`);
+    warnOnce(`threshold ${threshold} is outside 0-100.`);
   }
   if (typeof threshold === 'number' && threshold > 0 && threshold < 1) {
     warnOnce(
