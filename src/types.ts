@@ -306,11 +306,11 @@ type Item<V> = NonNullable<V> extends readonly (infer U)[] ? NonNullable<U> : No
 
 /**
  * Names of the properties of `T` that hold text, including nested ones as
- * dotted paths (`'artist.name'`, up to 3 levels). Arrays along the path are
- * read item by item.
+ * dotted paths (`'artist.name'`). Arrays along the path are read item by
+ * item. Paths are checked 4 levels deep; any deeper path is accepted as is.
  */
 export type TextKey<T, D extends number = 3> = [D] extends [never]
-  ? never
+  ? string
   : {
       [K in keyof T & string]-?: IsText<T[K]> extends true
         ? K

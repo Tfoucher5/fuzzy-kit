@@ -46,6 +46,14 @@ test('CommonJS: fuse.js drop-in is the class itself', () => {
   assert.equal(new Fuse(['Bohemian Rhapsody']).search('bohemain')[0].item, 'Bohemian Rhapsody');
 });
 
+test('CommonJS: the types match the runtime shape (import Fuse = require)', () => {
+  const ts = require('typescript');
+  const file = require('node:path').join(__dirname, 'fixtures/cjs-types.cts');
+  const program = ts.createProgram([file], { module: ts.ModuleKind.Node16, moduleResolution: ts.ModuleResolutionKind.Node16, strict: true, noEmit: true, types: [] });
+  const errors = ts.getPreEmitDiagnostics(program).map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'));
+  assert.deepEqual(errors, []);
+});
+
 test('CommonJS: Vue and Svelte helpers', () => {
   const { useFuzzySearch } = require('../dist/cjs/vue.js');
   const { fuzzySearch, segments } = require('../dist/cjs/svelte.js');
