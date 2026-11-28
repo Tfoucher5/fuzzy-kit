@@ -27,7 +27,7 @@ For new code, prefer the main API: it handles case, accents, punctuation, typos,
 ```js
 import Fuse from 'fuzzy-toolkit/fuse' // before: import Fuse from 'fuse.js'
 const fuse = new Fuse(books, { keys: ['title', 'author.name'], includeScore: true })
-fuse.search('jon', { limit: 5 }) // [{ item, refIndex, score }], score 0 = perfect, like Fuse
+fuse.search('scalzy', { limit: 5 }) // [{ item, refIndex, score }], score 0 = perfect, like Fuse
 ```
 
 Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), `getFn` and `sortFn` work as in Fuse (2.8.0+). Not supported: token search. `threshold` (0 to 1) maps to `100 * (1 - threshold)`, and the default is 70, not Fuse's 0.6.
@@ -40,7 +40,7 @@ import { similarity, isMatch, closest, search, createIndex, loadIndex, highlight
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
 closest('javascrpt', ['java', 'javascript', 'typescript'])?.item // 'javascript' ("did you mean")
-search('iphone', products, { keys: ['name', 'brand.name'], limit: 10 }) // [{ item, score, index, text }]
+search('iphone', products, { keys: ['name', 'brand.name'], preset: 'search', limit: 10 }) // [{ item, score, index, text }]; preset 'search' for a word inside longer names
 search('bohem', songs, { keys: 'title', preset: 'search', includeMatches: true }) // + key, ranges to highlight
 const index = createIndex(items, { keys: ['title'], preset: 'search' }) // reuse for search-as-you-type
 index.search('quer', { limit: 5 }); index.search('nyc') /* acronyms */; index.add(item); index.remove((i) => i.id === 1)
@@ -50,6 +50,7 @@ find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, e
 findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which items are mentioned: [{ item, index, key, text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
+dedupe(addresses, { threshold: 90, exactNumbers: true }) // dedupe: start at 90; exactNumbers (2.10.0+) keeps '10 Main St' and '11 Main St' apart
 standardize(['Paris', 'paris', 'Pariss', 'Lyon'])       // (2.9.0+) ['Paris', 'Paris', 'Paris', 'Lyon']: most common spelling per group
 fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
@@ -60,7 +61,7 @@ mapFields(['First Name', 'Zip', 'Phone #'], ['firstName', 'postalCode', 'phoneNu
 repair(modelOutput, jsonSchema) // (2.8.0+) { value, changes, unresolved }: keys renamed to the schema's, enum typos fixed ('hight' -> 'high'), '36' -> 36, extra keys dropped if additionalProperties is false
 ```
 
-Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
+Options (all optional): `threshold` (0-100, default 80), `preset` ('music' | 'search' | 'strict'), `algorithm` ('smart' default, 'levenshtein', 'damerau', 'jaroWinkler', 'tokenSort', 'tokenSet'), `partial` (the shorter text matches part of the longer one, from the start of a word), `substring` (like partial, also from inside a word: 'phone' finds 'iPhone'; opt-in), `acronyms` (initials), `exactNumbers` (texts with different numbers never match; for addresses, models, dates), `phonetic` (sounds-alike, EN/FR), `includeMatches` (ranges to highlight), `ignoreWordOrder`, `ignoreSpaces`, `caseSensitive`, `accentSensitive`, `punctuation`, `ignoreWords`, `replace`, `numbers`, `strip`, `languages` (['en','fr'] default; Spanish, German, Italian, Dutch: `import es from 'fuzzy-toolkit/lang/es'` (also /de, /it, /nl) then `languages: [es]`; or packs from `defineLanguage()`), `stopwords`, `stripPatterns` (RegExp[]). `preset` also accepts a pack from `definePreset({ name, extends?, options })`, the way to share settings for a kind of data (addresses, company names...). To test a pack or preset: `import { assertLanguage, assertPreset } from 'fuzzy-toolkit/testing'`, then `assertLanguage(pack, { numbers: [['vinte e um','21']], articles, stopwords, sounds, distinct })` throws one error listing every failing case. For objects, `keys` is required: property names, dotted paths (`'artist.name'`), weighted keys (`{ name: 'artist', weight: 0.8 }`) or a function.
 
 ## Raw metrics (no normalization)
 
@@ -115,6 +116,8 @@ Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 - `closest()` returns a `Match` (`{ item, score, index, text }`) or `undefined`: use `closest(q, list)?.item` to get the value.
 - Items that are objects need `keys`: `search(q, users, { keys: ['name', 'email'] })`. Without it, the call throws.
 - Options are the third argument and always an object: `search(q, items, { keys: 'name', limit: 5 })`, not `search(q, items, 'name')`.
+- Without a preset, `search` compares whole texts: a one-word query in longer names (`'iphone'` for `'iPhone 15 Pro'`) needs `preset: 'search'`.
+- For `dedupe`, the default threshold 80 merges names that share most words; use 90. Numbers count as ordinary characters (`'Apollo 11'` matches `'Apollo 13'`): add `exactNumbers: true` when they tell records apart.
 - Searching the same list many times (search-as-you-type): build `createIndex(items, options)` once and call `index.search(q)`.
 - Option names differ from Fuse.js: no `includeScore` (every match has a score), `caseSensitive` instead of `isCaseSensitive`, `threshold` 0-100 (higher = stricter) instead of Fuse's 0-1 (lower = stricter).
 
@@ -266,6 +269,7 @@ A built-in preset does not change within a major version: what it sets in 2.x st
 | `acronyms` | `false` (`true` with the `search` preset) | A single word may be the initials of the other text: `nyc` = `New York City`, one typo allowed from 3 letters on. Scores 90, or 80 with a typo. In lists, only the query can be the acronym. |
 | `substring` | `false` | Like `partial`, and a match may also start inside a word: `phone` finds `iPhone 15` and `Smartphone`, `ville` finds `Belleville`. Turns `partial` on. A match from the start of a word still ranks first (inside a word counts 95 %). For search-as-you-type over product names, file names, codes. |
 | `phonetic` | `false` | Texts that sound the same match too, in English and French: `beyonsay` = `Beyoncé`, `nite` = `night`, `fone` = `phone`, `kwin` = `Queen`. A match on sound alone scores 95 at most, and words of fewer than 3 sounds are left alone. |
+| `exactNumbers` | `false` | Texts match only when they hold the same numbers in the same order: `10 Downing Street` and `11 Downing Street`, `Apollo 11` and `Apollo 13`, `2024-01-05` and `2024-05-01` score 0. Numbers in words count as digits. For addresses, product models, invoices, dates. *Since 2.10.0.* |
 | `algorithm` | `'smart'` | See [How it works](https://tfoucher5.github.io/fuzzy-toolkit/guide/how-it-works#algorithms). |
 
 ## Normalization
@@ -299,8 +303,11 @@ A rule never empties a text: `(Intro)` stays `intro`.
 | --- | --- |
 | 95+ | Same text, maybe one typo in a long one |
 | 85 | A typo or two, good for strict answers |
-| **80** | Default: forgiving but rarely wrong |
+| 90 | Removing duplicates: names that share most of their words (`Iron Peak Pharmaceuticals`, `Prime Peak Pharmaceuticals`) still match at 80 |
+| **80** | Default: forgiving, good to compare two values or match two lists |
 | 70 | Loose, good for search |
+
+A number is a character like any other: `10 Downing Street` and `11 Downing Street` score above 90. When a number tells records apart, turn on `exactNumbers`.
 
 Short texts move fast: one typo in a 4-letter word already costs 25 points. Use `check()`'s `close` verdict to be kind without accepting wrong answers.
 
@@ -893,10 +900,19 @@ import { dedupe } from 'fuzzy-toolkit'
 dedupe(['Hey Jude', 'hey jude - Remastered 2015', 'Let It Be'], { preset: 'music' })
 // ['Hey Jude', 'Let It Be']
 
-dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'] })
+dedupe(companies, { keys: 'name', ignoreWords: ['sarl', 'sas', 'inc', 'ltd'], threshold: 90 })
 ```
 
-## See the groups
+The default threshold, 80, is made to compare two values. To remove duplicates from a large list, start at 90: distinct names that share most of their words (`Iron Peak Pharmaceuticals`, `Prime Peak Pharmaceuticals`) match at 80.
+
+**Numbers**
+A number counts like any other character, so `10 Downing Street` and `11 Downing Street`, or `iPhone 14` and `iPhone 15`, are near-duplicates. When a number tells records apart (addresses, models, invoices, dates), add `exactNumbers: true` (*since 2.10.0*):
+
+```ts
+dedupe(['10 Downing Street', '11 Downing Street', '10 downing street'], { exactNumbers: true })
+// ['10 Downing Street', '11 Downing Street']
+```
+
 
 `group()` returns every group, in the original order, so you can review before merging.
 
