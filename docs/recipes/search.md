@@ -102,6 +102,12 @@ const results = fuzzySearch(songs, query, { keys: ['title', 'artist'], limit: 20
 
 Full examples: [Vue](/api/#vue), [Svelte](/api/#svelte).
 
+## Very large lists
+
+*Since 2.9.0.*
+
+An index answers in a few milliseconds on tens of thousands of items. Beyond a few hundred thousand, move it to a Web Worker with [`fuzzy-toolkit/worker`](/api/#web-worker): the same results, and the page never waits.
+
 ## Some fields count less
 
 Give a key a weight to rank its matches lower:

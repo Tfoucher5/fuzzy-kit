@@ -26,6 +26,8 @@ const cases = {
   'fuzzy-toolkit/react': `export * from './dist/esm/react.js'`,
   'fuzzy-toolkit/vue': `export * from './dist/esm/vue.js'`,
   'fuzzy-toolkit/svelte': `export * from './dist/esm/svelte.js'`,
+  'fuzzy-toolkit/worker': `export * from './dist/esm/worker.js'`,
+  'fuzzy-toolkit/worker/serve': `export * from './dist/esm/worker-serve.js'`,
   'one extra language (lang/es)': `export { default } from './dist/esm/lang/es.js'`,
 };
 console.log('import'.padEnd(36), 'min+gzip', check ? '  budget' : '');

@@ -87,6 +87,8 @@ results.map((r) => <Highlight key={r.index} text={r.text} ranges={r.ranges} />)
 
 Vue (2.8.0+): `import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'`, the same hook on refs: `useFuzzySearch(items, queryRef, options).value`. Svelte (2.8.0+): `import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'`, a store: `const results = fuzzySearch(items, queryStore, options)`, then `$results`; `segments(r.text, r.ranges)` gives the parts to wrap in `<mark>`.
 
+Web Worker (2.9.0+), for very large lists: a worker file with `import 'fuzzy-toolkit/worker/serve'`, then `const index = createWorkerIndex(new Worker(new URL('./search-worker.js', import.meta.url), { type: 'module' }), items, { keys: ['name'], preset: 'search' })` from `fuzzy-toolkit/worker` and `await index.search(query, { limit })`. Keys must be names or paths, not functions.
+
 CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` exposes `fuzzyToolkit`.
 
 ## Command line
