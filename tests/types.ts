@@ -196,3 +196,7 @@ const vueFirst: string | undefined = vueResults.value[0]?.item.title;
 void VueHighlight;
 const svelteResults = fuzzySearch(['Dune', 'Emma'], { subscribe: (run: (v: string) => void) => (run('dun'), () => {}) }, { limit: 3 });
 const stopSvelte: () => void = svelteResults.subscribe((matches) => matches.map((m) => segments(m.text, m.ranges)));
+
+// segments is also exported from the main entry point.
+import { segments as cut } from '../src/index.js';
+const cutParts: { text: string; match: boolean }[] = cut('Bohemian', [[0, 5]]);

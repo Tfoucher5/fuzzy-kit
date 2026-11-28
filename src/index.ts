@@ -23,6 +23,7 @@ export { API_VERSION } from './core.js';
 export { defineLanguage, definePreset } from './define.js';
 export { diff } from './diff.js';
 export { mapFields } from './fields.js';
+export { segments } from './segments.js';
 export type { FieldMapping, FieldMatch, MapFieldsOptions } from './fields.js';
 export { repair } from './repair.js';
 export type { JsonSchema, Repair, RepairOptions, RepairResult } from './repair.js';

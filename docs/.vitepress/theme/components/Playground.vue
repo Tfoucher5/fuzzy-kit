@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { compare, check, createIndex, find, highlight, type Preset } from '../../../../src/index'
+import { compare, check, createIndex, find, findAll, highlight, repair, segments, type Preset } from '../../../../src/index'
 
-type Tab = 'check' | 'search' | 'find'
+type Tab = 'check' | 'search' | 'find' | 'findAll' | 'repair'
+const TABS: Record<Tab, string> = {
+  check: 'check() a guess',
+  search: 'search() as you type',
+  find: 'find() in a message',
+  findAll: 'findAll() of a list',
+  repair: 'repair() AI output',
+}
 const tab = ref<Tab>('check')
 
 // --- check ---------------------------------------------------------------
@@ -40,15 +47,45 @@ const target = ref('Bohemian Rhapsody')
 const found = computed(() => find(message.value, target.value))
 const pieces = computed(() => highlight(message.value, target.value))
 
+// --- findAll -------------------------------------------------------------
+const order = ref('Hi, I would like 2 iphone 15, one macbok air and the airpod pro please')
+const catalog = ref(['iPhone 15', 'iPhone 15 Pro', 'MacBook Air', 'MacBook Pro', 'AirPods Pro', 'iPad'].join('\n'))
+const mentioned = computed(() => {
+  const items = catalog.value.split('\n').map((line) => line.trim()).filter(Boolean)
+  const results = findAll(order.value, items)
+  return { results, parts: segments(order.value, results.map((r) => [r.start, r.end] as [number, number])) }
+})
+
+// --- repair --------------------------------------------------------------
+const output = ref(JSON.stringify({ "Full Name": "Ada Lovelace", "Email Address": "ada@example.com", priority: "hight", age: "36", tags: "featur" }, null, 2))
+const schema = ref(JSON.stringify({
+  type: 'object',
+  properties: {
+    fullName: { type: 'string' },
+    email: { type: 'string' },
+    priority: { enum: ['low', 'medium', 'high'] },
+    age: { type: 'integer' },
+    tags: { type: 'array', items: { enum: ['bug', 'feature', 'docs'] } },
+  },
+  required: ['fullName', 'email', 'title'],
+}, null, 2))
+const repaired = computed(() => {
+  try {
+    return { ok: true as const, ...repair(JSON.parse(output.value), JSON.parse(schema.value)) }
+  } catch (error) {
+    return { ok: false as const, error: (error as Error).message }
+  }
+})
+
 const verdictLabel = { correct: 'Correct', close: 'Almost!', wrong: 'Wrong' } as const
 </script>
 
 <template>
   <div class="pg">
     <div class="pg-tabs" role="tablist">
-      <button v-for="t in (['check', 'search', 'find'] as const)" :key="t" role="tab"
+      <button v-for="(label, t) in TABS" :key="t" role="tab"
         :aria-selected="tab === t" :class="{ active: tab === t }" @click="tab = t">
-        {{ t === 'check' ? 'check() a guess' : t === 'search' ? 'search() as you type' : 'find() in a message' }}
+        {{ label }}
       </button>
     </div>
 
@@ -87,6 +124,35 @@ const verdictLabel = { correct: 'Correct', close: 'Almost!', wrong: 'Wrong' } as
       <p class="pg-note">{{ searched.ms.toFixed(2) }} ms, in your browser</p>
     </div>
 
+    <div v-else-if="tab === 'findAll'" class="pg-body">
+      <label>Message <textarea v-model="order" rows="2" /></label>
+      <label>Known names, one per line <textarea v-model="catalog" rows="5" /></label>
+      <p class="pg-text">
+        <template v-for="(s, i) in mentioned.parts" :key="i">
+          <mark v-if="s.match">{{ s.text }}</mark><template v-else>{{ s.text }}</template>
+        </template>
+      </p>
+      <ul class="pg-list">
+        <li v-for="r in mentioned.results" :key="r.start"><span>"{{ r.text }}" is <strong>{{ r.item }}</strong></span><span class="pg-score">{{ r.score }}</span></li>
+        <li v-if="!mentioned.results.length" class="pg-empty">Nothing from the list</li>
+      </ul>
+    </div>
+
+    <div v-else-if="tab === 'repair'" class="pg-body">
+      <div class="pg-cols">
+        <label>What the model returned <textarea v-model="output" rows="9" spellcheck="false" class="pg-mono" /></label>
+        <label>JSON Schema <textarea v-model="schema" rows="9" spellcheck="false" class="pg-mono" /></label>
+      </div>
+      <template v-if="repaired.ok">
+        <pre class="pg-code">{{ JSON.stringify(repaired.value, null, 2) }}</pre>
+        <ul class="pg-list">
+          <li v-for="(c, i) in repaired.changes" :key="i"><span><code>{{ c.path || '(value)' }}</code> {{ c.kind }}: {{ JSON.stringify(c.from) }} → {{ c.kind === 'removed' ? 'removed' : JSON.stringify(c.to) }}</span></li>
+          <li v-for="(u, i) in repaired.unresolved" :key="'u' + i" class="pg-empty"><span><code>{{ u.path }}</code> {{ u.reason }}</span></li>
+        </ul>
+      </template>
+      <p v-else class="pg-note">Not valid JSON yet: {{ repaired.error }}</p>
+    </div>
+
     <div v-else class="pg-body">
       <label>Chat message <textarea v-model="message" rows="2" /></label>
       <label>Look for <input v-model="target" /></label>
@@ -118,7 +184,9 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--vp-c-brand-
 .pg-bar { flex: 1; height: 10px; border-radius: 99px; background: var(--vp-c-divider); overflow: hidden; }
 .pg-bar > div { height: 100%; transition: width 0.2s; }
 .pg-note { font-size: 13px; color: var(--vp-c-text-2); margin: 0; }
-.pg-code { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--vp-code-block-bg); font-size: 13px; overflow-x: auto; }
+.pg-code { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--vp-code-block-bg); color: var(--vp-code-block-color); font-size: 13px; overflow-x: auto; }
+.pg-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.pg-mono { font-family: var(--vp-font-family-mono); font-size: 13px; }
 .pg-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
 .pg-list li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; border-radius: 8px; background: var(--vp-c-bg); margin: 0; }
 .pg-score { font-variant-numeric: tabular-nums; color: var(--vp-c-text-2); }

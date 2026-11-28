@@ -95,3 +95,8 @@ test('svelte: fuzzySearch is a store that follows its inputs', () => {
   fuzzySearch(rx, 'nice').subscribe((v) => (fromRx = v))();
   assert.equal(fromRx[0].item, 'Nice');
 });
+
+test('segments: also exported from the main entry point', async () => {
+  const main = await import('../dist/esm/index.js');
+  assert.equal(main.segments, segments);
+});
