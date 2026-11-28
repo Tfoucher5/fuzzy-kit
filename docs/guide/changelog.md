@@ -28,11 +28,13 @@ Scores and defaults are unchanged. Two results change because they were wrong; s
 ### Behavior change
 
 - `repair`: a value of the wrong type that cannot be converted (`"abc"` for an integer, `null`, a text where an object is expected) is now listed in `unresolved` (`expected integer, got "abc"`), as the docs said. It was left out, so `if (unresolved.length) askAgain()` accepted invalid data. `required` is now checked on objects whose schema has no `properties`. To ignore type errors as before: `unresolved.filter((u) => !u.reason.startsWith('expected '))`.
+- `mapFields` and `repair` read the Spanish names `nombre`, `apellido(s)` and `correo` (first name, last name, email), as the docs promised: those headers were left unmatched.
 - `fuzzy-toolkit/react`, `/vue` and `/svelte`: with an empty query, each result now has the `text` (and `key`) of its item instead of `''`, so `<Highlight text={r.text}>` shows the list. Scores and order are unchanged.
 
 ### Fixed
 
 - Command line: a CSV file with two columns of the same name stops with an error instead of writing one column's values in both. An empty file says so. Rows with more cells than the header are reported on stderr. `| head` no longer prints a stack trace. An unknown preset or language lists the valid names. `new-pack` without a name exits with an error. A `search` without results and without `-p` suggests `-p search` on stderr.
+- Warnings (on the console, once): a key `weight` outside 0 to 1 (a weight of 5 gave scores of 500), a `threshold` outside 0 to 100, and an unknown option in `definePreset()` (`treshold`). Results are unchanged.
 - A list with holes (`['a', , 'b']`) no longer crashes `search`, `closest`, `createIndex` or `dedupe`: a hole is an `undefined` item.
 - `useFuzzySearch` (React) accepts an `undefined` query, like the Vue and Svelte helpers.
 - Types: subpaths (`fuzzy-toolkit/fuse`, `/react`...) are found with `moduleResolution: node10`, `import Fuse = require('fuzzy-toolkit/fuse')` type-checks, and dotted keys deeper than 4 levels are accepted (they worked at run time). Type changes only.
