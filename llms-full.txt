@@ -51,6 +51,7 @@ findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which item
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
 dedupe(addresses, { threshold: 90, exactNumbers: true }) // dedupe: start at 90; exactNumbers (2.10.0+) keeps '10 Main St' and '11 Main St' apart
+dedupe(contacts, { keys: ['name', 'city', 'email'], everyKey: true }) // (2.10.0+) records: each key vs the same key, empty values never match
 standardize(['Paris', 'paris', 'Pariss', 'Lyon'])       // (2.9.0+) ['Paris', 'Paris', 'Paris', 'Lyon']: most common spelling per group
 fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
@@ -914,6 +915,14 @@ dedupe(['10 Downing Street', '11 Downing Street', '10 downing street'], { exactN
 ```
 
 
+With several `keys`, any two texts that match make a duplicate: two contacts in the same city, a name that matches a company. To compare each field with the same field, and never merge rows on an empty value, add `everyKey: true` (*since 2.10.0*):
+
+```ts
+dedupe(contacts, { keys: ['name', 'city', 'email'], everyKey: true, threshold: 90 })
+```
+
+## See the groups
+
 `group()` returns every group, in the original order, so you can review before merging.
 
 ```ts
@@ -1047,6 +1056,12 @@ npx fuzzy-toolkit dedupe customers.csv -k name -i sarl -i sas > clean.csv
 ```
 
 `-k` names the column to compare (the first one by default; repeat it to use several). `-i` ignores a word, such as a legal form. The first row of each group of near-duplicates is kept.
+
+With several `-k` columns, add `--every-key` so each column is compared with the same column and empty cells never make duplicates; add `--exact-numbers` when a number tells rows apart (addresses, invoices):
+
+```sh
+npx fuzzy-toolkit dedupe contacts.csv -k name -k city -k email --every-key --exact-numbers -t 90 > clean.csv
+```
 
 To review before deleting, `group` adds a `group` column instead: rows with the same number are duplicates of each other.
 
@@ -1405,6 +1420,21 @@ segments('Bohemian Rhapsody', [[0, 5]]) // [{ text: 'Bohem', match: true }, { te
 ```ts
 dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
+```
+
+The first item of each group is kept. `method: 'fingerprint'` groups by [fingerprint](#fingerprint), instantly.
+
+With several `keys`, two items are near-duplicates as soon as any two of their texts match, even from different keys. For records, add `everyKey: true` (*since 2.10.0*): each key filled on both sides must match the same key of the other item, and empty values never match.
+
+```ts
+const contacts = [
+  { name: 'Jean Dupont', city: 'Paris', email: '' },
+  { name: 'Société Générale', city: 'Paris', email: '' },
+  { name: 'jean dupond', city: 'paris', email: '' },
+]
+dedupe(contacts, { keys: ['name', 'city'] }).length                  // 1: the shared city is enough
+dedupe(contacts, { keys: ['name', 'city'], everyKey: true }).length  // 2
+dedupe(contacts, { keys: 'email', everyKey: true }).length           // 3: empty emails are not duplicates
 ```
 
 ## standardize

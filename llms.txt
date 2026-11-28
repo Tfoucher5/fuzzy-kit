@@ -51,6 +51,7 @@ findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which item
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
 dedupe(addresses, { threshold: 90, exactNumbers: true }) // dedupe: start at 90; exactNumbers (2.10.0+) keeps '10 Main St' and '11 Main St' apart
+dedupe(contacts, { keys: ['name', 'city', 'email'], everyKey: true }) // (2.10.0+) records: each key vs the same key, empty values never match
 standardize(['Paris', 'paris', 'Pariss', 'Lyon'])       // (2.9.0+) ['Paris', 'Paris', 'Paris', 'Lyon']: most common spelling per group
 fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
