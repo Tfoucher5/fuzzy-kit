@@ -25,9 +25,7 @@ Positions refer to the original text, so `message.slice(start, end)` is exactly 
 
 ## Every known name at once
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 `findAll()` looks for all the items of a list in one pass and says which part of the text goes with which item. A longer name wins over its parts: "hotel californa" is Hotel California, not Hotel and California.
 

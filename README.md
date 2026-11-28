@@ -46,7 +46,7 @@ Scores go from 0 to 100, and the default threshold is 80.
 
 - **Right by default.** On 3,000 simulated blind-test guesses, 97.6% of right answers were accepted and 0% of wrong ones.
 - **One function per job.** Grade answers (`check`), search as you type (`createIndex`), suggest corrections (`closest`), spot names in a message (`find`, `findAll`), clean data (`dedupe`, `join`), map CSV headers to your schema (`mapFields`), repair what a model returned (`repair`), show what was misspelled (`diff`).
-- **Finds more, waits less.** On song titles with typos it finds more than Fuse.js, 7 times faster ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)).
+- **Finds more, waits less.** On song titles with typos it finds more than Fuse.js, 13 times faster ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)).
 - **Speaks 6 languages.** Numbers in words, articles and sounds in English, French, Spanish, German, Italian and Dutch, plus your own packs.
 - **Small and typed.** About 10 kB (min+gzip) for the usual imports, no dependencies, ESM and CommonJS, Node 18+, Bun, Deno and every browser. Every option autocompletes.
 - **More than a library.** React, Vue and Svelte helpers, a command line tool for CSV files, and an MCP server for AI agents.
@@ -61,7 +61,7 @@ const stringSimilarity = require('fuzzy-toolkit/string-similarity')
 
 ## Coming from Fuse.js
 
-Change the import, keep the code: `fuzzy-toolkit/fuse` has the Fuse.js API (`new Fuse(list, options).search(query)`), with fuzzy-toolkit doing the matching. On song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster. [What differs](https://tfoucher5.github.io/fuzzy-toolkit/api/#fuse-js-compatibility).
+Change the import, keep the code: `fuzzy-toolkit/fuse` has the Fuse.js API (`new Fuse(list, options).search(query)`), with fuzzy-toolkit doing the matching. On song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 15 times faster. [What differs](https://tfoucher5.github.io/fuzzy-toolkit/api/#fuse-js-compatibility).
 
 ```js
 import Fuse from 'fuzzy-toolkit/fuse'
@@ -80,7 +80,7 @@ import Fuse from 'fuzzy-toolkit/fuse'
 ## FAQ
 
 **What can replace `string-similarity`?**
-`fuzzy-toolkit/string-similarity`: same `compareTwoStrings` and `findBestMatch`, same results, 2 to 3 times faster.
+`fuzzy-toolkit/string-similarity`: same `compareTwoStrings` and `findBestMatch`, same results, 2 to 4 times faster.
 
 **fuzzy-toolkit or Fuse.js?**
 fuzzy-toolkit finds more results with typos and is faster with a reusable index, and it also grades answers, dedupes, joins lists and finds names in a text. Scores go from 0 to 100, higher is closer.

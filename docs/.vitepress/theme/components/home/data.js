@@ -30,8 +30,8 @@ export const words = [
 ]
 
 export const stats = [
-  { n: 7, unit: '×', label: 'faster than Fuse.js on search as you type, and it finds more' },
-  { n: 33, unit: '×', label: 'faster than string-similarity for "did you mean"' },
+  { n: 13, unit: '×', label: 'faster than Fuse.js on search as you type, and it finds more' },
+  { n: 22, unit: '×', label: 'faster than string-similarity for "did you mean"' },
   { n: 98, unit: '%', label: 'of lines covered by tests, plus fuzz tests' },
   { n: 6, unit: '', label: 'languages for numbers in words, articles and sounds' },
 ]
@@ -40,22 +40,22 @@ export const benchmarks = [
   {
     key: 'search',
     label: 'Search as you type',
-    sub: '300 typed queries with a typo, over 23,450 song titles. fuzzy-toolkit finds more than Fuse.js, 7 times faster.',
+    sub: '300 typed queries with a typo, over 23,450 song titles. fuzzy-toolkit finds more than Fuse.js, 13 times faster.',
     metric: 'Wanted title found in the top 10',
     rows: [
-      { name: 'fuzzy-toolkit', value: 82.7, time: '11.0 ms / query', me: true },
-      { name: 'Fuse.js', value: 65.3, time: '81.6 ms / query' },
+      { name: 'fuzzy-toolkit', value: 82.7, time: '4.4 ms / query', me: true },
+      { name: 'Fuse.js', value: 65.3, time: '60.6 ms / query' },
       { name: 'fuzzysort', value: 21.7, time: '0.8 ms / query' },
     ],
   },
   {
     key: 'dym',
     label: 'Did you mean',
-    sub: '500 misspelled words against the 20,000 most common English words. The right word, 33 times faster.',
+    sub: '500 misspelled words against the 20,000 most common English words. The right word, 22 times faster.',
     metric: 'Right word suggested',
     rows: [
-      { name: 'fuzzy-toolkit', value: 93.4, time: '0.21 s', me: true },
-      { name: 'string-similarity', value: 39.0, time: '6.9 s' },
+      { name: 'fuzzy-toolkit', value: 93.4, time: '0.22 s', me: true },
+      { name: 'string-similarity', value: 39.0, time: '4.8 s' },
     ],
   },
   {
@@ -64,8 +64,8 @@ export const benchmarks = [
     sub: '150 city names typed as their initials (nyc), among 151,186 cities.',
     metric: 'City found in the top 10',
     rows: [
-      { name: 'fuzzy-toolkit', value: 82.0, time: '19 ms / query', me: true },
-      { name: 'match-sorter', value: 59.3, time: '104 ms / query' },
+      { name: 'fuzzy-toolkit', value: 82.0, time: '11.8 ms / query', me: true },
+      { name: 'match-sorter', value: 59.3, time: '85.1 ms / query' },
     ],
   },
 ]

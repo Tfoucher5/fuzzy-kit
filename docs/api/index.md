@@ -138,9 +138,7 @@ find("je crois que c'est bohemian rapsody", 'Bohemian Rhapsody')
 
 ## findAll
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 ```ts
 findAll<T>(text: string, items: readonly T[], options?: MatchOptions & { keys? }): FoundItem<T>[]
@@ -178,9 +176,7 @@ group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 
 ## mapFields
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 ```ts
 mapFields(from: readonly string[], to: readonly string[], options?: MapFieldsOptions): FieldMapping
@@ -201,9 +197,7 @@ const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in m
 
 ## repair
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 ```ts
 repair<T>(value: unknown, schema: JsonSchema, options?: RepairOptions): RepairResult<T>
@@ -336,9 +330,7 @@ function Search({ songs }) {
 
 ## Vue
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 ```vue
 <script setup>
@@ -360,9 +352,7 @@ const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'arti
 
 ## Svelte
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 ```svelte
 <script>
@@ -425,11 +415,9 @@ findBestMatch('healed', ['edward', 'sealed', 'theatre'])
 
 ## Fuse.js compatibility
 
-::: tip New in 2.8.0
-Extended search, logical queries, `getFn` and `sortFn` are not on npm yet: they come with the next release. In 2.7.0 they are ignored with a warning.
-:::
+*Since 2.8.0: extended search, logical queries, `getFn` and `sortFn`. In 2.7.0 they are ignored with a warning.*
 
-`fuzzy-toolkit/fuse` has the Fuse.js API: change the import, keep the code. The results come from fuzzy-toolkit: on song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 7 times faster ([benchmarks](/guide/benchmarks)).
+`fuzzy-toolkit/fuse` has the Fuse.js API: change the import, keep the code. The results come from fuzzy-toolkit: on song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 15 times faster ([benchmarks](/guide/benchmarks)).
 
 ```ts
 import Fuse from 'fuzzy-toolkit/fuse' // was: import Fuse from 'fuse.js'

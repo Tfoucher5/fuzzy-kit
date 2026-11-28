@@ -16,27 +16,34 @@ The project follows **semantic versioning**:
 
 ## Unreleased
 
+---
+
+## v2.8.0
+
+Scores, verdicts and defaults are unchanged. The one behavior change is in `fuzzy-toolkit/fuse`, for code that sets options 2.7.0 ignored.
+
 ### Behavior change
 
 - `fuzzy-toolkit/fuse`: `useExtendedSearch: true` and `sortFn` used to be ignored with a warning; they now apply, as in Fuse.js, and a logical query no longer throws. To keep the old results, leave out `useExtendedSearch` and `sortFn`. Plain searches are unchanged.
 
 ### Added
 
-- `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
-- `repair(value, schema)` repairs a value, typically a model's JSON output, against its JSON Schema: property names matched, enum values corrected, numbers and booleans written as text converted, extra properties dropped where the schema says so. It returns the repaired copy, the list of changes and what could not be repaired. Also an MCP tool, `repair`. See [repair](/api/#repair).
-- `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames a file's columns to your names. See [Command line](/recipes/cli#rename-columns-to-your-names).
-- `fuzzy-toolkit/fuse` now supports the rest of the Fuse.js API: extended search (`useExtendedSearch`: `=exact`, `'include`, `^prefix`, `suffix$`, `!exclude`, `|` for OR), logical queries (`{ $and }`, `{ $or }`, `{ $path, $val }`), `getFn` (global or on a key) and `sortFn`. They find the same items as Fuse.js on its own examples. See [Fuse.js compatibility](/api/#fuse-js-compatibility).
-
-- `fuzzy-toolkit/vue` and `fuzzy-toolkit/svelte`: `useFuzzySearch` on refs with a `<Highlight>` component for Vue 3.3+, and a `fuzzySearch` store for Svelte 3, 4 and 5, with `segments()` to render the matches. See [Vue](/api/#vue) and [Svelte](/api/#svelte).
 - `findAll(text, items)` finds which items of a list are mentioned in a text, typos included, with their positions: a longer name wins over its parts, and objects can bring aliases through `keys`. Also an MCP tool, `findAll`. See [findAll](/api/#findall).
+- `repair(value, schema)` repairs a value, typically a model's JSON output, against its JSON Schema: property names matched, enum values corrected, numbers and booleans written as text converted, extra properties dropped where the schema says so. It returns the repaired copy, the list of changes and what could not be repaired. Also an MCP tool, `repair`. See [repair](/api/#repair).
+- `mapFields(from, to)` pairs field names with a schema, one to one: CSV headers with your columns, the keys an AI or an API returned with the ones you expect. Reads camelCase, snake_case and kebab-case, knows common synonyms in English, French and Spanish (zip and postal code, dob and date of birth, qty and quantity), and takes your own in `synonyms`. Also an MCP tool, `mapFields`. See [mapFields](/api/#mapfields).
+- `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames a file's columns to your names. See [Command line](/recipes/cli#rename-columns-to-your-names).
+- `fuzzy-toolkit/vue` and `fuzzy-toolkit/svelte`: `useFuzzySearch` on refs with a `<Highlight>` component for Vue 3.3+, and a `fuzzySearch` store for Svelte 3, 4 and 5, with `segments()` to render the matches. See [Vue](/api/#vue) and [Svelte](/api/#svelte).
+- `fuzzy-toolkit/fuse` now supports the rest of the Fuse.js API: extended search (`useExtendedSearch`: `=exact`, `'include`, `^prefix`, `suffix$`, `!exclude`, `|` for OR), logical queries (`{ $and }`, `{ $or }`, `{ $path, $val }`), `getFn` (global or on a key) and `sortFn`. They find the same items as Fuse.js on its own examples. See [Fuse.js compatibility](/api/#fuse-js-compatibility).
 
 ### Performance
 
-- Search as you type is about 35% faster (8.2 to 5.3 ms per query over 23,432 song titles): before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.
+- Search as you type is about 35% faster than in 2.7.0 (measured side by side on one machine), now 4.4 ms per query over 23,450 song titles on a GitHub runner, 13 times faster than Fuse.js: before scanning a title, the letter pairs of the query it lacks give a lower bound of the edits needed, and titles that cannot reach the threshold are skipped. An index keeps each title's pairs for the next queries. Results are identical.
 
 ### Project
 
 - The MCP server is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) at each release (`io.github.tfoucher5/fuzzy-toolkit`), so MCP clients can find it.
+- Benchmarks run on a GitHub runner (the Benchmarks workflow), so anyone can reproduce the published numbers.
+- The documentation pages each describe themselves to search engines, with a sitemap.
 
 ---
 
