@@ -1,0 +1,33 @@
+name: Benchmarks
+
+# Speed and accuracy against other libraries (bench/versus.mjs), on a
+# standard GitHub runner: the numbers of docs/guide/benchmarks.md come from
+# here, so anyone can rerun them. Run it from the Actions tab.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  versus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Cache datasets
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: bench/.data
+          key: bench-data-${{ hashFiles('bench/real-data.mjs') }}
+      - name: Against other libraries
+        run: npm run bench:versus | tee versus.txt
+      - name: Summary
+        run: |
+          { echo '```'; cat versus.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
