@@ -668,6 +668,9 @@ function cluster<T>(
   const blocker = canBlock(engine, threshold) ? createBlocker(entries.map((e) => e.prepared), threshold) : null;
   // Items that read the same land where the first of them did.
   const seen = new Map<string, (typeof groups)[number]>();
+  // Edits a pair may need and still reach the threshold, per character of the longer text.
+  const slack = 1 - (threshold - 0.01) / 100;
+  const plain = (e: Entry<T>): boolean => e.prepared.length === 1 && e.prepared[0]!.alt === undefined;
   for (const entry of entries) {
     const key = textKey(entry);
     let home: (typeof groups)[number] | undefined = seen.get(key);
@@ -677,8 +680,17 @@ function cluster<T>(
     }
     const ids = blocker ? blocker.candidates(entry.prepared) : null;
     const count = ids ? ids.length : groups.length;
+    const one = blocker !== null && plain(entry);
     outer: for (let g = 0; g < count; g += 1) {
       const group = groups[ids ? ids[g]! : g]!;
+      // Each letter one text has and the other lacks costs an edit, whatever
+      // the strategy (they all compare the same letters): one test rules out
+      // most candidates before scoring. Exact for one text each, as blocking is.
+      if (one && plain(group.leader)) {
+        const lead = group.leader;
+        const missing = Math.max(popcount(entry.mask & ~lead.mask), popcount(lead.mask & ~entry.mask));
+        if (missing > slack * Math.max(entry.longest, lead.longest) + 1e-9) continue;
+      }
       for (const a of entry.prepared) {
         for (const b of group.leader.prepared) {
           if (maxPossibleScore(a, b, engine.options) + 0.01 < threshold) continue;
