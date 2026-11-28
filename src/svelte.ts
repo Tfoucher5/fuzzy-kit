@@ -4,7 +4,7 @@
  * Svelte is imported.
  * @module
  */
-import { createIndex } from './matcher.js';
+import { createIndex, everything } from './matcher.js';
 import { segments } from './segments.js';
 import type { Index } from './matcher.js';
 import type { ListOptions, Match } from './types.js';
@@ -62,8 +62,7 @@ export function fuzzySearch<T>(
   const update = (): void => {
     if (!index) return;
     if (text.trim() === '') {
-      const all = whenEmpty === 'none' ? [] : index.items.map((item, i) => ({ item, score: 100, index: i, text: '', ranges: [] }) as Match<T>);
-      current = limit === undefined ? all : all.slice(0, Math.max(0, limit));
+      current = whenEmpty === 'none' ? [] : everything(index, limit);
     } else {
       current = index.search(text, { limit, includeMatches: true });
     }

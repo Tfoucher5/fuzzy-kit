@@ -27,7 +27,9 @@ const ALGORITHMS: readonly Algorithm[] = [
 ];
 
 /** Options with every default filled in. */
-export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset' | 'languages'>> {
+export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset' | 'languages' | 'exactNumbers'>> {
+  /** Present only when turned on, so saved indexes of other options keep their key. */
+  exactNumbers?: true;
   /** Name of the preset used, built-in or not. */
   preset: string | undefined;
   /** Language packs in use; `undefined` means the default (English and French). */
@@ -97,6 +99,7 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     replace: Object.freeze({ ...merged.replace }),
     stopwords: merged.stopwords ?? false,
     stripPatterns: Object.freeze([...(merged.stripPatterns ?? [])]),
+    ...(merged.exactNumbers === true ? { exactNumbers: true as const } : {}),
   });
 }
 
@@ -133,18 +136,53 @@ export function compileEngine(options: MatchOptions = {}): Engine {
 export function getEngine(options?: MatchOptions): Engine {
   if (!options) return (defaultEngine ??= compileEngine());
   let engine = engineCache.get(options);
+  if (engine) return engine;
+  if (typeof options !== 'object') {
+    throw new TypeError(
+      `[fuzzy-toolkit] Options must be an object, got ${typeof options} ${JSON.stringify(options)}. ` +
+        'For example { threshold: 80 }, or { keys: ["name"] } to match a property of objects.',
+    );
+  }
+  // A literal written in the call (`similarity(a, b, { threshold: 90 })`) is a new
+  // object each time: find the engine by what the options say instead.
+  const key = contentKey(options);
+  engine = key === undefined ? undefined : byContent.get(key);
   if (!engine) {
-    if (typeof options !== 'object') {
-      throw new TypeError(
-        `[fuzzy-toolkit] Options must be an object, got ${typeof options} ${JSON.stringify(options)}. ` +
-          'For example { threshold: 80 }, or { keys: ["name"] } to match a property of objects.',
-      );
-    }
     checkOptions(options);
     engine = compileEngine(options);
-    engineCache.set(options, engine);
+    if (key !== undefined) {
+      if (byContent.size >= 256) byContent.clear();
+      byContent.set(key, engine);
+    }
   }
+  engineCache.set(options, engine);
   return engine;
+}
+
+const byContent = new Map<string, Engine>();
+const functionIds = new WeakMap<object, number>();
+const PLAIN: unknown[] = [Object.prototype, Array.prototype, null];
+let functionCount = 0;
+
+/**
+ * Text that two options objects share when they behave the same: plain data as
+ * JSON, RegExps by source and flags, functions by identity. Undefined when an
+ * option holds anything else, so different options are never confused.
+ */
+function contentKey(options: object): string | undefined {
+  let plain = true;
+  const key = JSON.stringify(options, function (this: unknown, _name, value: unknown) {
+    if (typeof value === 'function') {
+      let id = functionIds.get(value);
+      if (id === undefined) functionIds.set(value, (id = functionCount++));
+      return `\0${id}`;
+    }
+    if (value instanceof RegExp) return `\0${value}`;
+    // NaN prints as null and a nested undefined disappears: both behave apart.
+    if (value === undefined ? this !== options : typeof value === 'number' ? !Number.isFinite(value) : value !== null && typeof value === 'object' && !PLAIN.includes(Object.getPrototypeOf(value))) plain = false;
+    return value;
+  });
+  return plain ? key : undefined;
 }
 
 /**
@@ -268,6 +306,8 @@ const SUBSTRING_WEIGHT = 0.95;
 type Scores = Comparison['scores'];
 
 /** Scores two prepared texts. Fills `scores` with each strategy's result. */
+const numbersIn = (text: string): string => text.replace(/D+/g, ' ').trim();
+
 export function scorePrepared(
   a: Prepared,
   b: Prepared,
@@ -276,6 +316,7 @@ export function scorePrepared(
   floor = 0,
   queryFirst = false,
 ): number {
+  if (engine.options.exactNumbers && numbersIn(a.text) !== numbersIn(b.text)) return 0;
   const score = scoreOne(a, b, engine, scores, floor, queryFirst);
   if ((!a.alt && !b.alt) || score === 100) return score;
   // Also compare the numbers as written; the search hint is about `a` and `b` only.

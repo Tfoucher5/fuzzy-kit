@@ -77,6 +77,24 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "string-similarity": ["dist/esm/compat/string-similarity.d.ts"],
+      "fuse": ["dist/cjs/compat/fuse.d.ts"],
+      "react": ["dist/esm/react.d.ts"],
+      "vue": ["dist/esm/vue.d.ts"],
+      "svelte": ["dist/esm/svelte.d.ts"],
+      "worker": ["dist/esm/worker.d.ts"],
+      "worker/serve": ["dist/esm/worker-serve.d.ts"],
+      "lang/en": ["dist/esm/lang/en.d.ts"],
+      "lang/fr": ["dist/esm/lang/fr.d.ts"],
+      "lang/es": ["dist/esm/lang/es.d.ts"],
+      "lang/de": ["dist/esm/lang/de.d.ts"],
+      "lang/it": ["dist/esm/lang/it.d.ts"],
+      "lang/nl": ["dist/esm/lang/nl.d.ts"],
+      "testing": ["dist/esm/testing.d.ts"]
+    }
+  },
   "bin": {
     "fuzzy-toolkit": "./bin/fuzzy-toolkit.mjs",
     "guess-rater": "./bin/fuzzy-toolkit.mjs"

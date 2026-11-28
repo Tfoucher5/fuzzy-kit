@@ -281,6 +281,17 @@ export interface MatchOptions extends NormalizeOptions {
   acronyms?: boolean;
 
   /**
+   * Texts match only when they hold the same numbers in the same order, so
+   * `10 Downing Street` and `11 Downing Street`, `Apollo 11` and `Apollo 13`,
+   * or `2024-01-05` and `2024-05-01` score 0. Use it to clean data where a
+   * number tells records apart: addresses, product models, invoices, dates.
+   * Numbers written in words count as digits (`two` = `2`).
+   * @default false
+   * @since 2.10.0
+   */
+  exactNumbers?: boolean;
+
+  /**
    * `smart` only: like `partial`, and a match may also start in the middle of
    * a word: `phone` finds `iPhone 15`, `ville` finds `Villeneuve` and
    * `Belleville`. Turns `partial` on. A match from the start of a word still
@@ -306,11 +317,11 @@ type Item<V> = NonNullable<V> extends readonly (infer U)[] ? NonNullable<U> : No
 
 /**
  * Names of the properties of `T` that hold text, including nested ones as
- * dotted paths (`'artist.name'`, up to 3 levels). Arrays along the path are
- * read item by item.
+ * dotted paths (`'artist.name'`). Arrays along the path are read item by
+ * item. Paths are checked 4 levels deep; any deeper path is accepted as is.
  */
 export type TextKey<T, D extends number = 3> = [D] extends [never]
-  ? never
+  ? string
   : {
       [K in keyof T & string]-?: IsText<T[K]> extends true
         ? K

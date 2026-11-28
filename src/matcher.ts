@@ -328,7 +328,8 @@ function buildEntries<T>(
   // When matching parts, all texts of an item also count together, so
   // "zep stair" finds { title: 'Stairway to Heaven', artist: 'Led Zeppelin' }.
   const joinTexts = engine.options.partial;
-  return items.map((item, index) => {
+  // Array.from, not map: a hole in the list is an undefined item, not a hole in the entries.
+  return Array.from(items, (item, index) => {
     const { texts, weights, keys: names } = getTexts(item);
     if (joinTexts && texts.length > 1) {
       texts.push(texts.join(' '));
@@ -762,7 +763,7 @@ function makeIndex<T>(
     entries.forEach((entry, i) => (entry.index = i));
     snapshot = null;
   };
-  return {
+  const index: Index<T> = {
     get size() {
       return entries.length;
     },
@@ -816,6 +817,26 @@ function makeIndex<T>(
       return count;
     },
   };
+  listings.set(index, () => entries);
+  return index;
+}
+
+const listings = new WeakMap<object, () => readonly Entry<unknown>[]>();
+
+/**
+ * Every item of an index as a match of score 100, with the text of its first
+ * key: what the UI helpers show before anything is typed.
+ */
+export function everything<T>(index: Index<T>, limit = Infinity): Match<T>[] {
+  const entries = listings.get(index)!() as readonly Entry<T>[];
+  return entries.slice(0, Math.max(0, limit)).map((entry) => ({
+    item: entry.item,
+    score: 100,
+    index: entry.index,
+    text: entry.texts[0] ?? '',
+    key: entry.keys[0],
+    ranges: [],
+  }));
 }
 
 function matcherFrom(engine: Engine): Matcher {

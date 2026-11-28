@@ -49,6 +49,7 @@ const OPTIONS = {
   substring: { type: 'boolean', description: 'Also match from inside a word ("phone" finds "iPhone", "ville" finds "Belleville"), for search. Default false.' },
   phonetic: { type: 'boolean', description: 'Also match texts that sound the same ("Filip" / "Philippe"). Default false.' },
   ignoreWords: { type: 'array', items: { type: 'string' }, description: 'Whole words to ignore, e.g. ["inc", "ltd", "sarl"].' },
+  exactNumbers: { type: 'boolean', description: 'Never match texts whose numbers differ ("10 Main St" / "11 Main St", "Apollo 11" / "Apollo 13", dates). Use it for addresses, models, invoices. Default false.' },
   languages: {
     type: 'array',
     items: { type: 'string', enum: ['en', 'fr', 'es', 'de', 'it', 'nl'] },

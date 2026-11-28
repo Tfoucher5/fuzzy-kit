@@ -116,3 +116,16 @@ test('svelte: the same callback subscribed twice is two subscriptions', () => {
   stop2();
   assert.equal(open, 0, 'nothing left open');
 });
+
+test('ui helpers: an empty query lists every item with its text', async () => {
+  const { useFuzzySearch } = await import('../dist/esm/vue.js');
+  const { fuzzySearch } = await import('../dist/esm/svelte.js');
+  const { ref } = await import('vue');
+  const items = [{ title: 'Hey Jude' }, { title: 'Let It Be' }];
+  const vue = useFuzzySearch(ref(items), ref(''), { keys: ['title'], limit: 1 }).value;
+  assert.deepEqual(vue.map((r) => [r.text, r.key, r.score]), [['Hey Jude', 'title', 100]]);
+  let seen;
+  const stop = fuzzySearch(['apple', 'pear'], '').subscribe((v) => (seen = v));
+  stop();
+  assert.deepEqual(seen.map((r) => r.text), ['apple', 'pear']);
+});

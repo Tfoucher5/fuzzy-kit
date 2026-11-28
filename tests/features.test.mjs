@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join as joinPath } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -199,4 +199,78 @@ test('cli: standardize rewrites a column with the most common spelling', () => {
   const file = joinPath(dir, 'contacts.csv');
   writeFileSync(file, 'name,city\nAda,Paris\nAlan,paris\nGrace,Pariss\nLinus,Lyon\nMarie,Paris\n');
   assert.equal(run(['standardize', file, '-k', 'city']), 'name,city\nAda,Paris\nAlan,Paris\nGrace,Paris\nLinus,Lyon\nMarie,Paris\n');
+});
+
+const runAll = (args, input) => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', input });
+
+test('cli: bad input fails clearly instead of corrupting data', () => {
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const dup = joinPath(dir, 'dup.csv');
+  writeFileSync(dup, 'name,name,city\nx,y,z\n');
+  let r = runAll(['dedupe', dup]);
+  assert.equal(r.status, 1);
+  assert.equal(r.stdout, '');
+  assert.match(r.stderr, /has duplicate column names: name\. Rename them/);
+
+  const long = joinPath(dir, 'long.csv');
+  writeFileSync(long, 'name,city\na,b,c\nd,e\nf,g,h,i\n');
+  r = runAll(['dedupe', long]);
+  assert.equal(r.status, 0);
+  assert.equal(r.stdout, 'name,city\na,b\nd,e\nf,g\n');
+  assert.match(r.stderr, /warning: 2 rows of ".*long\.csv" have more cells than the header; the extra cells were left out\n$/);
+
+  const empty = joinPath(dir, 'empty.csv');
+  writeFileSync(empty, '');
+  r = runAll(['dedupe', empty]);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /"[^"]*empty\.csv" is empty/);
+  assert.doesNotMatch(r.stderr, /undefined/);
+});
+
+test('cli: --version, unknown preset or language, search hint', () => {
+  const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(run(['--version']), `${version}\n`);
+  assert.equal(run(['-v']), `${version}\n`);
+
+  let r = runAll(['compare', 'a', 'b', '-p', 'nope']);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /unknown preset "nope"\. Built-in: music, search, strict;/);
+  assert.doesNotMatch(r.stderr, /cli\.mjs|imported from/);
+  r = runAll(['compare', 'a', 'b', '--lang', 'nope']);
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /unknown language "nope"\. Built-in: en, fr, es, de, it, nl;/);
+
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const songs = joinPath(dir, 'songs.csv');
+  writeFileSync(songs, 'title\nBohemian Rhapsody\nLet It Be\n');
+  r = runAll(['search', 'bohemian', songs]);
+  assert.equal(r.stdout, 'score,title\n');
+  assert.equal(r.stderr, 'fuzzy-toolkit: no match; for search-as-you-type try -p search\n');
+  r = runAll(['search', 'bohemian', songs, '-p', 'search']);
+  assert.equal(r.stdout, 'score,title\n94.71,Bohemian Rhapsody\n');
+  assert.equal(r.stderr, '');
+  assert.match(run(['--help']), /add -p search/);
+});
+
+test('cli: new-pack without a name exits 1 with the usage', () => {
+  for (const args of [['new-pack'], ['new-pack', 'language']]) {
+    const r = runAll(args);
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /Usage/);
+    assert.doesNotMatch(r.stderr, /undefined/);
+  }
+  assert.equal(runAll(['new-pack', '--help']).status, 0);
+});
+
+test('cli: a reader that closes the pipe early (| head) is no error', async () => {
+  const dir = mkdtempSync(joinPath(tmpdir(), 'fuzzy-toolkit-'));
+  const big = joinPath(dir, 'big.csv');
+  writeFileSync(big, `name\n${Array.from({ length: 20000 }, (_, i) => `name${i}`).join('\n')}\n`);
+  const child = spawn(process.execPath, [cli, 'group', big, '-k', 'name']);
+  let stderr = '';
+  child.stderr.on('data', (chunk) => (stderr += chunk));
+  child.stdout.once('data', () => child.stdout.destroy());
+  const status = await new Promise((done) => child.on('close', done));
+  assert.equal(stderr, '');
+  assert.equal(status, 0);
 });
