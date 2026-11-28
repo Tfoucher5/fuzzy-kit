@@ -21,7 +21,8 @@ Fuzzy string matching for JavaScript and TypeScript: typos, accents, word order,
 <a href="https://tfoucher5.github.io/fuzzy-toolkit/guide/getting-started">Getting started</a> ·
 <a href="https://tfoucher5.github.io/fuzzy-toolkit/playground">Playground</a> ·
 <a href="https://tfoucher5.github.io/fuzzy-toolkit/api/">API</a> ·
-<a href="https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks">Benchmarks</a>
+<a href="https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks">Benchmarks</a> ·
+<a href="https://tfoucher5.github.io/fuzzy-toolkit/guide/coming-from">Coming from another library</a>
 </p>
 
 ---

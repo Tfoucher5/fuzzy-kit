@@ -120,5 +120,6 @@ Claude Code: `claude mcp add fuzzy-toolkit -- npx -y fuzzy-toolkit mcp`
 - [README](https://github.com/Tfoucher5/fuzzy-toolkit#readme)
 - [Documentation](https://tfoucher5.github.io/fuzzy-toolkit/)
 - [API reference](https://tfoucher5.github.io/fuzzy-toolkit/api/)
+- [Coming from Fuse.js, fuzzysort, match-sorter, string-similarity or leven](https://tfoucher5.github.io/fuzzy-toolkit/guide/coming-from): every call side by side
 - [Full documentation in one file](https://tfoucher5.github.io/fuzzy-toolkit/llms-full.txt) (also `llms-full.txt` in the package)
 - [npm](https://www.npmjs.com/package/fuzzy-toolkit)
