@@ -26,7 +26,7 @@ export interface RepairResult<T = unknown> {
   value: T;
   /** What was changed, in order. */
   changes: Repair[];
-  /** What could not be repaired: a required property missing, a value matching no enum value. */
+  /** What could not be repaired: a required property missing, a value matching no enum value, a value of the wrong type that could not be converted (reason `expected <type>, got <value>`). */
   unresolved: { path: string; reason: string }[];
 }
 
@@ -114,6 +114,12 @@ export function repair<T = unknown>(value: unknown, schema: JsonSchema, options:
   const unresolved: { path: string; reason: string }[] = [];
   const choose = { threshold: options.threshold ?? 70 };
 
+  const missing = (out: Record<string, unknown>, rule: JsonSchema, path: string): void => {
+    for (const name of rule.required ?? []) {
+      if (!Object.prototype.hasOwnProperty.call(out, name)) unresolved.push({ path: join(path, name), reason: 'required, missing' });
+    }
+  };
+
   const fix = (input: unknown, rule: JsonSchema | undefined, path: string): unknown => {
     if (!rule || typeof rule !== 'object') return input;
     let current = input;
@@ -123,6 +129,8 @@ export function repair<T = unknown>(value: unknown, schema: JsonSchema, options:
       if (converted) {
         changes.push({ path, kind: 'type', from: current, to: converted.to });
         current = converted.to;
+      } else {
+        unresolved.push({ path, reason: `expected ${types.join(' or ')}, got ${JSON.stringify(current) ?? typeof current}` });
       }
     }
 
@@ -165,11 +173,10 @@ export function repair<T = unknown>(value: unknown, schema: JsonSchema, options:
         }
       }
       const out = Object.fromEntries(entries);
-      for (const name of rule.required ?? []) {
-        if (!Object.prototype.hasOwnProperty.call(out, name)) unresolved.push({ path: join(path, name), reason: 'required, missing' });
-      }
+      missing(out, rule, path);
       return out;
     }
+    if (isRecord(current)) missing(current, rule, path);
     return current;
   };
 

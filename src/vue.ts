@@ -4,7 +4,7 @@
  * @module
  */
 import { computed, defineComponent, h, toValue, type ComputedRef, type MaybeRefOrGetter, type PropType } from 'vue';
-import { createIndex } from './matcher.js';
+import { createIndex, everything } from './matcher.js';
 import { segments } from './segments.js';
 import type { ListOptions, Match } from './types.js';
 
@@ -43,11 +43,7 @@ export function useFuzzySearch<T>(
   return computed(() => {
     const { whenEmpty = 'all', limit } = settings.value;
     const text = toValue(query) ?? '';
-    if (text.trim() === '') {
-      if (whenEmpty === 'none') return [];
-      const all = index.value.items.map((item, i) => ({ item, score: 100, index: i, text: '', ranges: [] }) as Match<T>);
-      return limit === undefined ? all : all.slice(0, Math.max(0, limit));
-    }
+    if (text.trim() === '') return whenEmpty === 'none' ? [] : everything(index.value, limit);
     return index.value.search(text, { limit, includeMatches: true }) as Match<T>[];
   });
 }

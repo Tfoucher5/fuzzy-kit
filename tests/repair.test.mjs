@@ -34,7 +34,11 @@ test('repair: leaves what is right, reports what it cannot fix', () => {
   const { value, unresolved } = repair({ email: 'a', title: 't', priority: 'urgent', age: '3.5' }, schema);
   assert.equal(value.priority, 'urgent');
   assert.equal(value.age, '3.5');
-  assert.deepEqual(unresolved.map((u) => u.path), ['priority']);
+  // '3.5' is not an integer and cannot become one: reported, not passed off as fixed.
+  assert.deepEqual(unresolved.map((u) => u.path), ['priority', 'age']);
+  assert.equal(unresolved[1].reason, 'expected integer, got "3.5"');
+  assert.deepEqual(repair('hello', schema).unresolved.map((u) => u.reason), ['expected object, got "hello"']);
+  assert.deepEqual(repair({ x: 1 }, { type: 'object', required: ['a'] }).unresolved, [{ path: 'a', reason: 'required, missing' }]);
   // Odd inputs and schemas.
   assert.deepEqual(repair('42', { type: 'number' }).value, 42);
   assert.deepEqual(repair(['1', 'x'], { type: 'array', items: { type: 'number' } }).value, [1, 'x']);

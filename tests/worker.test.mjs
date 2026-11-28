@@ -60,3 +60,13 @@ test('worker: errors in the worker come back as rejections', async () => {
     index.terminate();
   }
 });
+
+test('worker: takes a Node worker_threads Worker as it is', async () => {
+  const index = createWorkerIndex(new Worker(new URL('./fixtures/serve-worker.mjs', import.meta.url)), songs, options);
+  try {
+    assert.equal((await index.search('bohem', { limit: 1 }))[0].item, songs[0]);
+  } finally {
+    index.terminate();
+  }
+  assert.throws(() => createWorkerIndex({ postMessage() {} }, songs, options), /needs a Worker/);
+});

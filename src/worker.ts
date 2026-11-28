@@ -16,11 +16,16 @@
  */
 import type { ListOptions, Match } from './types.js';
 
-/** What the worker side needs: `postMessage`, and a way to listen. Any Web Worker or `MessagePort` fits. */
+/**
+ * What the worker side needs: `postMessage`, and a way to listen. Any Web
+ * Worker or `MessagePort` fits, and so does a Node `worker_threads` Worker
+ * (`on('message')`).
+ */
 export interface WorkerLike {
   postMessage(message: unknown): void;
-  addEventListener(type: 'message', listener: (event: { data: unknown }) => void): void;
-  terminate?(): void;
+  addEventListener?(type: 'message', listener: (event: { data: unknown }) => void): void;
+  on?(type: 'message', listener: (data: unknown) => void): unknown;
+  terminate?(): unknown;
 }
 
 /** Options of {@link WorkerIndex.search}. */
@@ -60,14 +65,17 @@ export function createWorkerIndex<T>(worker: WorkerLike, items: readonly T[], op
   let list = items;
   let next = 0;
   const pending = new Map<number, { resolve: (m: Match<T>[]) => void; reject: (e: Error) => void; items: readonly T[] }>();
-  worker.addEventListener('message', (event) => {
-    const data = event.data as { id: number; results?: WorkerMatch[]; error?: string };
+  const receive = (message: unknown): void => {
+    const data = message as { id: number; results?: WorkerMatch[]; error?: string };
     const call = pending.get(data?.id);
     if (!call) return;
     pending.delete(data.id);
     if (data.error !== undefined) call.reject(new Error(data.error));
     else call.resolve((data.results ?? []).map((m) => ({ ...m, item: call.items[m.index]! })));
-  });
+  };
+  if (typeof worker.addEventListener === 'function') worker.addEventListener('message', (event) => receive(event.data));
+  else if (typeof worker.on === 'function') worker.on('message', receive);
+  else throw new TypeError('[fuzzy-toolkit] createWorkerIndex needs a Worker: an object with postMessage and addEventListener (or on).');
   worker.postMessage({ type: 'init', items: list, options });
   return {
     search(query, searchOptions = {}) {

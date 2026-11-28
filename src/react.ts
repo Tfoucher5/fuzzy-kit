@@ -4,7 +4,7 @@
  * @module
  */
 import { createElement, Fragment, useMemo, type ReactElement, type ReactNode } from 'react';
-import { createIndex } from './matcher.js';
+import { createIndex, everything } from './matcher.js';
 import type { ListOptions, Match } from './types.js';
 
 /** Options of {@link useFuzzySearch}. */
@@ -43,11 +43,7 @@ export function useFuzzySearch<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const index = useMemo(() => createIndex(items, { preset: 'search', ...rest } as never), [items, key]);
   return useMemo(() => {
-    if (query.trim() === '') {
-      if (whenEmpty === 'none') return [];
-      const all = index.items.map((item, i) => ({ item, score: 100, index: i, text: '', ranges: [] }) as Match<T>);
-      return limit === undefined ? all : all.slice(0, Math.max(0, limit));
-    }
+    if ((query ?? '').trim() === '') return whenEmpty === 'none' ? [] : everything(index, limit);
     return index.search(query, { limit, includeMatches: true });
   }, [index, query, whenEmpty, limit]);
 }
