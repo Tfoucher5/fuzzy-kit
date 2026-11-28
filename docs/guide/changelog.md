@@ -18,6 +18,7 @@ The project follows **semantic versioning**:
 
 ### Added
 
+- `standardize(values)` replaces each value by the most common spelling among its near-duplicates ("paris", "Pariss" → "Paris"), to clean a column in one call. Also `npx fuzzy-toolkit standardize file.csv -k column` and an MCP tool. See [standardize](/api/#standardize).
 - `segments(text, ranges)` is exported from `fuzzy-toolkit` too (it was only in `/vue` and `/svelte`): it cuts a text into the parts to render from the `ranges` of a result, in any framework.
 - The [Playground](/playground) has `findAll` and `repair` tabs.
 

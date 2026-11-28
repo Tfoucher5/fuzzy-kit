@@ -16,6 +16,7 @@ export {
   loadIndex,
   search,
   similarity,
+  standardize,
 } from './matcher.js';
 export type { FoundItem, Index, SavedIndex, ItemsArgs, JoinArgs, Matcher, MatcherCheckOptions, MatcherListOptions } from './matcher.js';
 export { normalize } from './normalize.js';

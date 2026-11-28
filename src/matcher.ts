@@ -1090,6 +1090,28 @@ export function group<T>(items: readonly T[], ...args: ItemsArgs<T, GroupOptions
 }
 
 /**
+ * Replaces each value by the most common spelling among its near-duplicates,
+ * the first one seen on a tie: a column of a spreadsheet cleaned in one call
+ * ("cluster and merge"). Returns a new array of the same length.
+ *
+ * @example
+ * standardize(['Paris', 'paris', 'Pariss', 'Lyon', 'Paris', 'lyon '])
+ * // ['Paris', 'Paris', 'Paris', 'Lyon', 'Paris', 'Lyon']
+ */
+export function standardize(values: readonly string[], options?: GroupOptions<string>): string[] {
+  const texts = Array.from(values ?? [], toText);
+  const spelling = new Map<string, string>();
+  for (const members of group(texts, options)) {
+    const count = new Map<string, number>();
+    for (const m of members) count.set(m, (count.get(m) ?? 0) + 1);
+    let best = members[0]!;
+    for (const m of members) if (count.get(m)! > count.get(best)!) best = m;
+    for (const m of members) spelling.set(m, best);
+  }
+  return texts.map((t) => spelling.get(t) ?? t);
+}
+
+/**
  * A key that is the same for texts with the same words once normalized, in
  * any order, repeats ignored: `"Doe, John"` and `"john DOE"` both give
  * `"doe john"`. Group by it to dedupe huge lists instantly (no typos though),

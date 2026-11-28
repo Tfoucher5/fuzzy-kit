@@ -200,3 +200,7 @@ const stopSvelte: () => void = svelteResults.subscribe((matches) => matches.map(
 // segments is also exported from the main entry point.
 import { segments as cut } from '../src/index.js';
 const cutParts: { text: string; match: boolean }[] = cut('Bohemian', [[0, 5]]);
+
+// standardize: strings in, strings out.
+import { standardize } from '../src/index.js';
+const standard: string[] = standardize(['Paris', 'paris'], { threshold: 85 });

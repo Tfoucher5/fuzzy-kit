@@ -35,7 +35,7 @@ Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, loadIndex, highlight, find, findAll, fingerprint, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, loadIndex, highlight, find, findAll, fingerprint, dedupe, standardize, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -50,6 +50,7 @@ find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, e
 findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which items are mentioned: [{ item, index, key, text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
+standardize(['Paris', 'paris', 'Pariss', 'Lyon'])       // (2.9.0+) ['Paris', 'Paris', 'Paris', 'Lyon']: most common spelling per group
 fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
 join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
@@ -90,11 +91,11 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## Command line
 
-`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output). `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames columns to your names.
+`npx fuzzy-toolkit dedupe|group|standardize|join|search|compare` on CSV, JSON or text files (`--json` for JSON output). `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames columns to your names.
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `standardize`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
