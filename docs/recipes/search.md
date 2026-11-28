@@ -89,9 +89,7 @@ See [`useFuzzySearch`](/api/#react) for every option.
 
 ## With Vue or Svelte
 
-::: tip New in 2.8.0
-Not on npm yet: it comes with the next release.
-:::
+*Since 2.8.0.*
 
 `fuzzy-toolkit/vue` has the same `useFuzzySearch`, on refs, and a `<Highlight>` component. `fuzzy-toolkit/svelte` has a `fuzzySearch` store and `segments()` to render the matches:
 

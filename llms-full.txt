@@ -801,9 +801,9 @@ See [`useFuzzySearch`](https://tfoucher5.github.io/fuzzy-toolkit/api/#react) for
 
 ## With Vue or Svelte
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+`fuzzy-toolkit/vue` has the same `useFuzzySearch`, on refs, and a `<Highlight>` component. `fuzzy-toolkit/svelte` has a `fuzzySearch` store and `segments()` to render the matches:
 
 ```ts
 // Vue
@@ -877,9 +877,9 @@ Positions refer to the original text, so `message.slice(start, end)` is exactly 
 
 ## Every known name at once
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+`findAll()` looks for all the items of a list in one pass and says which part of the text goes with which item. A longer name wins over its parts: "hotel californa" is Hotel California, not Hotel and California.
 
 ```ts
 import { findAll } from 'fuzzy-toolkit'
@@ -969,9 +969,9 @@ const unmatched = rows.filter((row) => !row.match)
 
 ## Map columns to your schema
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
-**CSV export never names its columns like your code does. `mapFields` pairs them, reading camelCase, snake_case and synonyms (zip and postal code, dob and date of birth, prénom and first name), and tells you what it could not place:**
+*Since 2.8.0.*
+
+A CSV export never names its columns like your code does. `mapFields` pairs them, reading camelCase, snake_case and synonyms (zip and postal code, dob and date of birth, prénom and first name), and tells you what it could not place:
 
 ```ts
 import { mapFields } from 'fuzzy-toolkit'
@@ -1041,9 +1041,9 @@ Each row of `orders.csv` gets the columns of its best match in `customers.csv`, 
 
 ## Rename columns to your names
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
-**CSV export never names its columns like your code does. `map-fields` renames them, reading camelCase, snake_case and synonyms (zip and postal code, prénom and first name), and puts them in your order:**
+*Since 2.8.0.*
+
+A CSV export never names its columns like your code does. `map-fields` renames them, reading camelCase, snake_case and synonyms (zip and postal code, prénom and first name), and puts them in your order:
 
 ```sh
 npx fuzzy-toolkit map-fields export.csv --to firstName,lastName,email,postalCode > clean.csv
@@ -1137,9 +1137,9 @@ Then ask, for example: *"Here are two customer lists, match them"*, *"Remove the
 
 ## Fix what a model returns
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
-**drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`, `"36"` instead of `36`. Repair the output against the schema instead of paying for another call:**
+*Since 2.8.0.*
+
+Models drift from the schema you asked for: `"Email Address"` instead of `email`, `"hight"` instead of `"high"`, `"36"` instead of `36`. Repair the output against the schema instead of paying for another call:
 
 ```ts
 import { repair } from 'fuzzy-toolkit'
@@ -1334,9 +1334,9 @@ find("je crois que c'est bohemian rapsody", 'Bohemian Rhapsody')
 
 ## findAll
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+```ts
 findAll<T>(text: string, items: readonly T[], options?: MatchOptions & { keys? }): FoundItem<T>[]
 // FoundItem: Found & { item: T; index: number; key?: string }
 ```
@@ -1372,9 +1372,9 @@ group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
 
 ## mapFields
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+```ts
 mapFields(from: readonly string[], to: readonly string[], options?: MapFieldsOptions): FieldMapping
 // MapFieldsOptions: { threshold?: number (default 70); synonyms?: Record<string, string[]> }
 // FieldMapping: { mapping: Record<string, string>; matches: { from, to, score }[]; unmatched: string[]; missing: string[] }
@@ -1393,9 +1393,9 @@ const clean = Object.fromEntries(Object.entries(row).flatMap(([k, v]) => (k in m
 
 ## repair
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+```ts
 repair<T>(value: unknown, schema: JsonSchema, options?: RepairOptions): RepairResult<T>
 // RepairOptions: { threshold?: number (enum values, default 70); keyThreshold?: number (property names, default 70); synonyms? }
 // RepairResult: { value: T; changes: { path, kind: 'key' | 'value' | 'type' | 'removed', from, to }[]; unresolved: { path, reason }[] }
@@ -1526,9 +1526,9 @@ function Search({ songs }) {
 
 ## Vue
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+```vue
 <script setup>
 import { ref } from 'vue'
 import { useFuzzySearch, Highlight } from 'fuzzy-toolkit/vue'
@@ -1548,9 +1548,9 @@ const results = useFuzzySearch(() => props.songs, query, { keys: ['title', 'arti
 
 ## Svelte
 
-**New in 2.8.0**
-Not on npm yet: it comes with the next release.
+*Since 2.8.0.*
 
+```svelte
 <script>
   import { writable } from 'svelte/store'
   import { fuzzySearch, segments } from 'fuzzy-toolkit/svelte'
@@ -1611,9 +1611,9 @@ findBestMatch('healed', ['edward', 'sealed', 'theatre'])
 
 ## Fuse.js compatibility
 
-**New in 2.8.0**
-Extended search, logical queries, `getFn` and `sortFn` are not on npm yet: they come with the next release. In 2.7.0 they are ignored with a warning.
+*Since 2.8.0: extended search, logical queries, `getFn` and `sortFn`. In 2.7.0 they are ignored with a warning.*
 
+`fuzzy-toolkit/fuse` has the Fuse.js API: change the import, keep the code. The results come from fuzzy-toolkit: on song titles typed with a typo, the same code finds 80 % of them instead of 65 %, 15 times faster ([benchmarks](https://tfoucher5.github.io/fuzzy-toolkit/guide/benchmarks)).
 
 ```ts
 import Fuse from 'fuzzy-toolkit/fuse' // was: import Fuse from 'fuse.js'

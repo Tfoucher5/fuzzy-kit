@@ -5,7 +5,7 @@ description: "Speed and accuracy of fuzzy-toolkit against Fuse.js, fuzzysort, ma
 
 # Compared with other libraries
 
-Measured with `npm run bench:versus` on public data (Spotify song titles, the 20,000 most common English words, 151,000 world cities), Node 22, median of 7 runs. Every library gets the same inputs. Run it yourself: the numbers move a little from one machine to another.
+Measured with `npm run bench:versus` on public data (Spotify song titles, the 20,000 most common English words, 151,000 world cities), Node 22 on a standard GitHub runner (ubuntu-latest), median of 7 runs. Every library gets the same inputs. Run it yourself, or start the Benchmarks workflow of the repository: the numbers move a little from one machine to another, the ratios much less.
 
 ## string-similarity
 
@@ -13,8 +13,8 @@ Measured with `npm run bench:versus` on public data (Spotify song titles, the 20
 
 | Task | string-similarity | fuzzy-toolkit | |
 | --- | --- | --- | --- |
-| `compareTwoStrings`, 20,000 title pairs | 45 ms | 22 ms | **2× faster** |
-| `findBestMatch`, 1,000 queries × 2,000 titles | 4.0 s | 1.2 s | **3.2× faster** |
+| `compareTwoStrings`, 20,000 title pairs | 35.8 ms | 17.9 ms | **2× faster** |
+| `findBestMatch`, 1,000 queries × 2,000 titles | 3.1 s | 0.84 s | **3.7× faster** |
 
 ## "Did you mean…?"
 
@@ -22,8 +22,8 @@ Measured with `npm run bench:versus` on public data (Spotify song titles, the 20
 
 | | Right word | Time |
 | --- | --- | --- |
-| string-similarity `findBestMatch` | 39.0 % | 6.9 s |
-| fuzzy-toolkit `createIndex(words).closest()` | **93.4 %** | **0.21 s** (33× faster) |
+| string-similarity `findBestMatch` | 39.0 % | 4.8 s |
+| fuzzy-toolkit `createIndex(words).closest()` | **93.4 %** | **0.22 s** (22× faster) |
 
 ## Search as you type
 
@@ -31,12 +31,12 @@ Measured with `npm run bench:versus` on public data (Spotify song titles, the 20
 
 | | Wanted title found | Time per query |
 | --- | --- | --- |
-| Fuse.js | 65.3 % | 81.6 ms |
-| fuzzysort | 21.7 % | 0.8 ms |
-| fuzzy-toolkit `createIndex(titles, { preset: 'search' })` | **82.7 %** | 11.0 ms |
-| fuzzy-toolkit/fuse, the same code as Fuse.js | 80.3 % | 11 ms |
+| Fuse.js | 65.3 % | 60.6 ms |
+| fuzzysort | 21.7 % | 0.6 ms |
+| fuzzy-toolkit `createIndex(titles, { preset: 'search' })` | **82.7 %** | **4.4 ms** |
+| fuzzy-toolkit/fuse, the same code as Fuse.js | 80.3 % | 4.0 ms |
 
-fuzzysort is the fastest but only matches letters in order, so a typo loses the result. fuzzy-toolkit finds more than Fuse.js, 7 times faster.
+fuzzysort is the fastest but only matches letters in order, so a typo loses the result. fuzzy-toolkit finds more than Fuse.js, 13 times faster.
 
 ## Acronyms
 
@@ -44,28 +44,28 @@ fuzzysort is the fastest but only matches letters in order, so a typo loses the 
 
 | | Found | Time per query |
 | --- | --- | --- |
-| match-sorter | 59.3 % | 104 ms |
-| fuzzy-toolkit `createIndex(cities, { preset: 'search' })` | **82.0 %** | **19 ms** |
+| match-sorter | 59.3 % | 85.1 ms |
+| fuzzy-toolkit `createIndex(cities, { preset: 'search' })` | **82.0 %** | **11.8 ms** |
 
 ## Levenshtein distance
 
 | Pairs | fastest-levenshtein | fuzzy-toolkit `levenshtein` |
 | --- | --- | --- |
-| 20,000 titles + 20,000 words | 24.7 ms | **15.0 ms** (1.6×) |
-| 2,000 sentences of 100-400 characters, with typos | 25.1 ms | **11.9 ms** (2.1×) |
+| 20,000 titles + 20,000 words | 11.0 ms | **5.4 ms** (2×) |
+| 2,000 sentences of 100-400 characters, with typos | 19.1 ms | **4.9 ms** (3.9×) |
 
-`damerau` (swapped letters count once) costs about the same: 12.4 ms on the sentences.
+`damerau` (swapped letters count once) costs about the same: 5.6 ms on the sentences.
 
 ## Dedupe
 
 | | Time |
 | --- | --- |
-| `dedupe()`, 5,000 song titles, typos included | 1.1-1.4 s (4.5 s in v2.1) |
-| `dedupe(..., { method: 'fingerprint' })`, 20,000 titles | 113 ms |
+| `dedupe()`, 5,000 song titles, typos included | 0.85 s |
+| `dedupe(..., { method: 'fingerprint' })`, 20,000 titles | 61 ms |
 
 ## Saved index
 
-151,186 cities: `createIndex` takes 318 ms, `loadIndex` from JSON 155 ms. Fuse.js builds its (lighter) index in 31 ms, but searches it 5 to 10 times slower.
+151,186 cities: `createIndex` takes 175 ms, `loadIndex` from JSON 86 ms. Fuse.js builds its (lighter) index in 23 ms, but searches it 7 to 14 times slower.
 
 ## Size
 
@@ -75,11 +75,16 @@ Minified and gzipped, with `npm run size`:
 | --- | --- |
 | `levenshtein`, `damerau` | 1.3 kB |
 | `fuzzy-toolkit/string-similarity` | 0.8 kB |
-| `similarity`, `isMatch` | 9.5 kB |
-| `check`, `checkAll` | 10.2 kB |
-| `createIndex`, `search`, `highlight` | 12.4 kB |
-| `createMatcher` (every method) | 13.9 kB |
-| everything | 17.0 kB |
+| `similarity`, `isMatch` | 10.0 kB |
+| `check`, `checkAll` | 10.6 kB |
+| `mapFields` | 10.8 kB |
+| `findAll` | 11.5 kB |
+| `createIndex`, `search`, `highlight` | 13.2 kB |
+| `fuzzy-toolkit/react`, `/vue`, `/svelte` | 13.5 kB |
+| `repair` | 14.6 kB |
+| `createMatcher` (every method) | 14.8 kB |
+| `fuzzy-toolkit/fuse` | 15.5 kB |
+| everything | 20.3 kB |
 | one extra language (`lang/es`) | +0.6 kB |
 
 The package is marked `"sideEffects": false`, so bundlers keep only what you import. A matcher from `createMatcher` is one object with every method, so it always carries all of them: import the functions you call when size matters.
