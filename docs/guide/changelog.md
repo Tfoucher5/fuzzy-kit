@@ -34,9 +34,11 @@ Scores and defaults are unchanged. Two results change because they were wrong; s
 - Command line: a CSV file with two columns of the same name stops with an error instead of writing one column's values in both. An empty file says so. Rows with more cells than the header are reported on stderr. `| head` no longer prints a stack trace. An unknown preset or language lists the valid names. `new-pack` without a name exits with an error. A `search` without results and without `-p` suggests `-p search` on stderr.
 - A list with holes (`['a', , 'b']`) no longer crashes `search`, `closest`, `createIndex` or `dedupe`: a hole is an `undefined` item.
 - `useFuzzySearch` (React) accepts an `undefined` query, like the Vue and Svelte helpers.
+- Types: subpaths (`fuzzy-toolkit/fuse`, `/react`...) are found with `moduleResolution: node10`, `import Fuse = require('fuzzy-toolkit/fuse')` type-checks, and dotted keys deeper than 4 levels are accepted (they worked at run time). Type changes only.
 
 ### Performance
 
+- Size: these fixes and `exactNumbers` add about 0.2 kB to the usual imports (`similarity` 10.2 kB, `search` 13.5 kB min+gzip).
 - Options written in each call (`similarity(a, b, { ignoreWords })`) no longer compile again every time: equal options share one compiled engine. About 6 times faster in a loop (200,000 calls with `ignoreWords`: 6.1 to 1 s). Results are identical.
 
 ---
