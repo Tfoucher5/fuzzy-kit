@@ -35,7 +35,7 @@ Extended search (`useExtendedSearch`), logical queries (`{ $and }`, `{ $or }`), 
 ## Main API (import from 'fuzzy-toolkit')
 
 ```ts
-import { similarity, isMatch, closest, search, createIndex, loadIndex, highlight, find, findAll, fingerprint, dedupe, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
+import { similarity, isMatch, closest, search, createIndex, loadIndex, highlight, find, findAll, fingerprint, dedupe, standardize, group, join, check, checkAll, diff, normalize, compare, createMatcher, mapFields, repair } from 'fuzzy-toolkit'
 
 similarity('stairway to heven', 'Stairway to Heaven')  // 94.44 (0 to 100)
 isMatch('Molière', 'moliere')                            // true (threshold 80 by default)
@@ -50,6 +50,7 @@ find("it's bohemian rapsody by queen", 'Bohemian Rhapsody') // [{ text, start, e
 findAll(message, products, { keys: ['name', 'aliases'] }) // (2.8.0+) which items are mentioned: [{ item, index, key, text, start, end, score }]
 dedupe(['Hey Jude', 'hey jude!', 'Let It Be'])           // ['Hey Jude', 'Let It Be']
 dedupe(hugeList, { method: 'fingerprint' })              // instant: same words in any order
+standardize(['Paris', 'paris', 'Pariss', 'Lyon'])       // (2.9.0+) ['Paris', 'Paris', 'Paris', 'Lyon']: most common spelling per group
 fingerprint('Doe, John')                                 // 'doe john'
 group(names, { keys: 'name' })                           // [[dupes...], ...]
 join(orders, customers, { left: 'customer', right: 'name', unique: true }) // [{ item, index, match }]
@@ -90,11 +91,11 @@ CDN: `<script src="https://cdn.jsdelivr.net/npm/fuzzy-toolkit"></script>` expose
 
 ## Command line
 
-`npx fuzzy-toolkit dedupe|group|join|search|compare` on CSV, JSON or text files (`--json` for JSON output). `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames columns to your names.
+`npx fuzzy-toolkit dedupe|group|standardize|join|search|compare` on CSV, JSON or text files (`--json` for JSON output). `npx fuzzy-toolkit map-fields export.csv --to firstName,email,postalCode` renames columns to your names.
 
 ## MCP server for AI agents
 
-`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
+`npx fuzzy-toolkit mcp` starts a local MCP server (stdio, no dependency) with the tools `compare`, `closest`, `search`, `dedupe`, `standardize`, `join`, `check`, `find`, `findAll`, `mapFields` and `repair`.
 
 ```json
 { "mcpServers": { "fuzzy-toolkit": { "command": "npx", "args": ["-y", "fuzzy-toolkit", "mcp"] } } }
@@ -923,6 +924,21 @@ const rows = join(orders, customers, { left: 'customerName', right: 'name', uniq
 const unmatched = rows.filter((row) => !row.match)
 ```
 
+## One spelling per value
+
+*Since 2.9.0.*
+
+A column typed by hand has several spellings of the same thing. `standardize` keeps the most common one of each group:
+
+```ts
+import { standardize } from 'fuzzy-toolkit'
+
+const cities = standardize(rows.map((r) => r.city)) // "paris", "PARIS " and "Pariss" become "Paris"
+rows.forEach((row, i) => (row.city = cities[i]))
+```
+
+From the terminal: `npx fuzzy-toolkit standardize contacts.csv -k city > clean.csv`.
+
 ## Map columns to your schema
 
 *Since 2.8.0.*
@@ -990,6 +1006,18 @@ npx fuzzy-toolkit join orders.csv customers.csv --left-key client --right-key na
 
 Each row of `orders.csv` gets the columns of its best match in `customers.csv`, plus a `score` column. Rows with no match keep empty columns. `--unique` uses each customer at most once. Right columns with the same name as a left column are prefixed with `right_`.
 
+## One spelling per value
+
+*Since 2.9.0.*
+
+`standardize` rewrites a column with the most common spelling of each value: "paris", "PARIS" and "Pariss" become "Paris". Repeat `-k` for several columns; how many values changed goes to the terminal.
+
+```sh
+npx fuzzy-toolkit standardize contacts.csv -k city -k company > clean.csv
+# city: 41 values changed
+# company: 7 values changed
+```
+
 ## Rename columns to your names
 
 *Since 2.8.0.*
@@ -1043,6 +1071,7 @@ fuzzy-toolkit is built to be used by AI coding assistants and agents as much as 
 | `closest` | "Did you mean…?": the candidates closest to a misspelled query |
 | `search` | Items of a list matching a query, best first (strings or objects with `keys`) |
 | `dedupe` | A list without its near-duplicates, plus the groups that were merged |
+| `standardize` | A column of values with one spelling per near-duplicate ("paris", "Pariss" → "Paris") |
 | `join` | Each item of a list paired with its best match in another |
 | `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms). It is the engine's verdict with the options given, not your app's: an app usually adds its own rules. |
 | `find` | Occurrences of a name inside a longer text, with positions |
@@ -1320,6 +1349,23 @@ segments('Bohemian Rhapsody', [[0, 5]]) // [{ text: 'Bohem', match: true }, { te
 ```ts
 dedupe<T>(items: readonly T[], options?: GroupOptions<T>): T[]
 group<T>(items: readonly T[], options?: GroupOptions<T>): T[][]
+```
+
+## standardize
+
+*Since 2.9.0.*
+
+```ts
+standardize(values: readonly string[], options?: GroupOptions): string[]
+```
+
+Replaces each value by the most common spelling among its near-duplicates (the first one seen on a tie), in a new array of the same length: a spreadsheet column cleaned in one call, like "cluster and merge" in OpenRefine. The groups are those of [`group`](#dedupe-group), with the same options.
+
+```ts
+standardize(['Paris', 'paris', 'Pariss', 'Lyon', 'Paris', 'lyon '])
+// ['Paris', 'Paris', 'Paris', 'Lyon', 'Paris', 'Lyon']
+
+standardize(companies, { ignoreWords: ['inc', 'ltd'] }) // "ACME Inc", "Acme" and "acme inc." become one spelling
 ```
 
 ## mapFields
