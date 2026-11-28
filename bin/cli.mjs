@@ -44,6 +44,7 @@ Options
       --lang <code>         Language (repeatable): en, fr, es, de, it, nl, or a language pack
                             package or file made with defineLanguage()
       --phonetic            Also match texts that sound the same
+      --exact-numbers       Never match texts whose numbers differ ("10 Main St", "11 Main St")
   -i, --ignore <word>       Word to ignore (repeatable), e.g. -i inc -i ltd
   -l, --limit <n>           search: maximum number of results (default 10)
       --json                Write JSON instead of CSV
@@ -206,6 +207,7 @@ const { values, positionals } = (() => {
         preset: { type: 'string', short: 'p' },
         lang: { type: 'string', multiple: true },
         phonetic: { type: 'boolean' },
+        'exact-numbers': { type: 'boolean' },
         ignore: { type: 'string', short: 'i', multiple: true },
         limit: { type: 'string', short: 'l' },
         json: { type: 'boolean' },
@@ -264,6 +266,7 @@ if (values.lang) {
   }
 }
 if (values.phonetic) options.phonetic = true;
+if (values['exact-numbers']) options.exactNumbers = true;
 if (values.ignore) options.ignoreWords = values.ignore;
 if (values.threshold !== undefined) {
   const t = Number(values.threshold);

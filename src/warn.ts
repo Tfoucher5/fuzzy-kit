@@ -15,6 +15,7 @@ export function warnOnce(message: string): void {
 const KNOWN_OPTIONS = new Set([
   // MatchOptions
   'preset', 'threshold', 'algorithm', 'ignoreWordOrder', 'ignoreSpaces', 'partial', 'phonetic', 'acronyms', 'substring',
+  'exactNumbers',
   // NormalizeOptions
   'caseSensitive', 'accentSensitive', 'punctuation', 'strip', 'ignoreWords', 'replace', 'numbers', 'languages',
   'stopwords', 'stripPatterns',

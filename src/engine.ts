@@ -27,7 +27,9 @@ const ALGORITHMS: readonly Algorithm[] = [
 ];
 
 /** Options with every default filled in. */
-export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset' | 'languages'>> {
+export interface ResolvedOptions extends Required<Omit<MatchOptions, 'preset' | 'languages' | 'exactNumbers'>> {
+  /** Present only when turned on, so saved indexes of other options keep their key. */
+  exactNumbers?: true;
   /** Name of the preset used, built-in or not. */
   preset: string | undefined;
   /** Language packs in use; `undefined` means the default (English and French). */
@@ -97,6 +99,7 @@ export function resolveOptions(options: MatchOptions = {}): ResolvedOptions {
     replace: Object.freeze({ ...merged.replace }),
     stopwords: merged.stopwords ?? false,
     stripPatterns: Object.freeze([...(merged.stripPatterns ?? [])]),
+    ...(merged.exactNumbers === true ? { exactNumbers: true as const } : {}),
   });
 }
 
@@ -303,6 +306,8 @@ const SUBSTRING_WEIGHT = 0.95;
 type Scores = Comparison['scores'];
 
 /** Scores two prepared texts. Fills `scores` with each strategy's result. */
+const numbersIn = (text: string): string => text.replace(/D+/g, ' ').trim();
+
 export function scorePrepared(
   a: Prepared,
   b: Prepared,
@@ -311,6 +316,7 @@ export function scorePrepared(
   floor = 0,
   queryFirst = false,
 ): number {
+  if (engine.options.exactNumbers && numbersIn(a.text) !== numbersIn(b.text)) return 0;
   const score = scoreOne(a, b, engine, scores, floor, queryFirst);
   if ((!a.alt && !b.alt) || score === 100) return score;
   // Also compare the numbers as written; the search hint is about `a` and `b` only.
