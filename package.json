@@ -1,7 +1,7 @@
 {
   "name": "fuzzy-toolkit",
-  "version": "2.8.1",
-  "description": "Fuzzy string matching and fuzzy search for JavaScript and TypeScript: typo-tolerant similarity, search as you type (13x faster than Fuse.js, finds more), did you mean, find names in text, dedupe and join, map CSV columns, repair LLM JSON output. Drop-in for Fuse.js and string-similarity, React/Vue/Svelte helpers, CLI, MCP server. Zero dependencies, TypeScript, ESM + CommonJS.",
+  "version": "2.9.0",
+  "description": "Fuzzy string matching and fuzzy search for JavaScript and TypeScript: typo-tolerant similarity, search as you type (13x faster than Fuse.js, finds more), did you mean, find names in text, dedupe, standardize and join, map CSV columns, repair LLM JSON output. Drop-in for Fuse.js and string-similarity, React/Vue/Svelte helpers, Web Worker, CLI, MCP server. Zero dependencies, TypeScript, ESM + CommonJS.",
   "mcpName": "io.github.Tfoucher5/fuzzy-toolkit",
   "keywords": [
     "mcp",
