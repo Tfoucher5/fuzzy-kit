@@ -18,6 +18,16 @@ The project follows **semantic versioning**:
 
 ---
 
+## v2.8.1
+
+Nothing changes in the library.
+
+### Fixed
+
+- The MCP server is now listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.Tfoucher5/fuzzy-toolkit`: the registry matches the GitHub account name with its capital letter, so 2.8.0 could not be listed.
+
+---
+
 ## v2.8.0
 
 Scores, verdicts and defaults are unchanged. The one behavior change is in `fuzzy-toolkit/fuse`, for code that sets options 2.7.0 ignored.
@@ -41,7 +51,7 @@ Scores, verdicts and defaults are unchanged. The one behavior change is in `fuzz
 
 ### Project
 
-- The MCP server is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) at each release (`io.github.tfoucher5/fuzzy-toolkit`), so MCP clients can find it.
+- The MCP server is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) at each release (`io.github.Tfoucher5/fuzzy-toolkit`), so MCP clients can find it.
 - Benchmarks run on a GitHub runner (the Benchmarks workflow), so anyone can reproduce the published numbers.
 - The documentation pages each describe themselves to search engines, with a sitemap.
 
