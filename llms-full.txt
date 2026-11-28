@@ -1100,8 +1100,13 @@ fuzzy-toolkit is built to be used by AI coding assistants and agents as much as 
 | `join` | Each item of a list paired with its best match in another |
 | `check` | Grades an answer `correct`, `close` or `wrong` (quizzes, forms). It is the engine's verdict with the options given, not your app's: an app usually adds its own rules. |
 | `find` | Occurrences of a name inside a longer text, with positions |
+| `findAll` | Which items of a list are mentioned in a text (products in an order, cities in a trip), with positions |
+| `mapFields` | Field names paired with a schema: CSV headers, the keys of a JSON object |
+| `repair` | A JSON value repaired against its JSON Schema: keys, enum values, numbers written as text |
 
-Every tool takes the usual options: `threshold`, `preset` (`music`, `search`, `strict`), `phonetic`, `ignoreWords`, `languages`.
+Every matching tool takes the usual options: `threshold`, `preset` (`music`, `search`, `strict`), `phonetic`, `ignoreWords`, `languages` (`mapFields` and `repair` take a `threshold` and `synonyms`).
+
+The server is listed in the official [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.Tfoucher5/fuzzy-toolkit`, so clients that browse it can install it in one click.
 
 ### Claude Code
 

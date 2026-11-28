@@ -153,5 +153,13 @@ jobs:
         run: |
           test "$(node -p "require('./server.json').version")" = "${TAG#v}"
           test "$(node -p "require('./server.json').packages[0].version")" = "${TAG#v}"
+      # The registry checks the version on npm, which can take a minute to show it.
+      - name: Wait for npm to serve the release
+        run: |
+          for i in $(seq 1 30); do
+            if npm view "fuzzy-toolkit@${TAG#v}" version >/dev/null 2>&1; then exit 0; fi
+            sleep 10
+          done
+          echo "fuzzy-toolkit@${TAG#v} is not on npm after 5 minutes"; exit 1
       - run: ./mcp-publisher login github-oidc
       - run: ./mcp-publisher publish
